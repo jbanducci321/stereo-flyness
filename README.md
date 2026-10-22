@@ -45,9 +45,18 @@ git clone https://github.com/jbanducci321/stereo-flyness.git
 cd stereo-flyness
 uv sync
 uv run pytest
+uv run python scripts/download_data.py
 ```
 
-`uv sync` creates `.venv/` with the exact package versions in `uv.lock`. Data download steps will be added in [data/README.md](data/README.md).
+`uv sync` creates `.venv/` with the exact package versions in `uv.lock`. The last command downloads the connectome (about 104 MB) into `data/`. See [data/README.md](data/README.md).
+
+If Brian2 reports "Microsoft Visual C++ 14.0 or greater is required" even though Build Tools is installed, open the **Visual Studio Installer** and choose **Repair** on Build Tools. An incomplete install hides the compiler from Python.
+
+To check that the model works, reproduce the Shiu et al. sugar → MN9 result (takes several minutes):
+
+```bash
+uv run python scripts/reproduce_sugar.py --n-run 5 --n-proc 4
+```
 
 ## Layout
 

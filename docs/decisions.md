@@ -48,6 +48,14 @@ Jacob commits Step 0 work on main with Shannyn as co-author. After setup, each c
 **D13. Public repo, with no data committed** (2026-10-21)
 The GitHub repo is public. The FlyWire connectivity data is CC BY 4.0 and Shiu's code is MIT, but data files and level data are never committed either way. A code LICENSE (likely MIT) waits until the license check is complete.
 
+**D14. Shiu's model code is vendored unchanged** (2026-10-21)
+- `brain/shiu_model.py` and `brain/shiu_utils.py` are byte-for-byte copies of commit `91bdd1e`, with only a docstring added. The MIT license is kept in `brain/SHIU_LICENSE.txt`.
+- Why: results stay directly comparable to the paper. Our changes (closed-loop stepping, subcircuits) go in separate modules.
+
+**D15. Sugar GRN list mapped to v783** (2026-10-21)
+- `720575940620900446` (v630) was replaced by `720575940639259967` (v783), matching eonsystemspbc/fly-brain. We checked it ourselves: 95% of its downstream partners are shared with the other sugar GRNs.
+- Lesson: any neuron ID taken from a v630-era source must be checked against v783.
+
 ## Open
 
 These are to be decided after Step 0:
