@@ -14,8 +14,7 @@
 - **Machine:** Jacob's laptop. Windows 11, 12 logical cores, 34 GB RAM.
 - **Software:** Python 3.12.14 (via uv), Brian2 2.10.1, numpy 2.5.4, pandas 3.0.6. Shiu's code runs unmodified on these versions.
 - **Compiler:** Visual Studio 2026 Build Tools (MSVC 14.50). Both Brian2 Cython runtime mode and C++ standalone mode compile and run.
-  - **Issue on Jacob's machine:** the Build Tools install is registered as incomplete, so Brian2 can't find the compiler automatically. Repairing it in the Visual Studio Installer should fix this.
-  - Until then, Brian2 works when launched from a shell set up by `vcvarsall.bat x64` with `DISTUTILS_USE_SDK=1`.
+  - **Fixed issue on Jacob's machine:** the Build Tools setup had paused partway, so the install was marked incomplete and Python couldn't find the compiler. Clicking **Resume** in the Visual Studio Installer fixed it, and Brian2 now finds MSVC automatically.
 
 ## Reproducing Shiu et al.
 
