@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Environment (recreate with `uv sync`)
+.venv/
+
+# Tool caches
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# Data: never committed. Rebuild with the download scripts (see data/README.md).
+# This includes connectome files and any Geometry Dash level data extracted locally,
+# whose level design belongs to RobTop Games.
+data/*
+!data/README.md
+
+# Experiment outputs
+results/
+
+# Brian2 C++ standalone build output
+output/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+desktop.ini
