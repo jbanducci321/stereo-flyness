@@ -56,6 +56,14 @@ The GitHub repo is public. The FlyWire connectivity data is CC BY 4.0 and Shiu's
 - `720575940620900446` (v630) was replaced by `720575940639259967` (v783), matching eonsystemspbc/fly-brain. We checked it ourselves: 95% of its downstream partners are shared with the other sugar GRNs.
 - Lesson: any neuron ID taken from a v630-era source must be checked against v783.
 
+**D16. Frame stepping uses a changeable Poisson input equivalent to Shiu's** (2026-10-22)
+- Shiu's `PoissonInput` fixes its rate when the network is built, so the game couldn't change stimulation between frames.
+- `BrainStepper` instead gives each stimulated neuron its own `PoissonGroup` source, connected one-to-one with `v += w_syn * f_poi`. That's the same per-step event probability (`rate * dt`), weight, target variable and time slot, but with rates that can be reassigned at any time. Stimulated neurons get no refractory period, as in Shiu's code.
+- Alternatives considered: rebuilding the PoissonInputs every frame (forces code regeneration, slow), or adding a rate variable to the neuron equations (changes Shiu's model).
+- Evidence:
+  - on a tiny network, it matches Shiu's PoissonInput side by side (`tests/test_stepper.py`);
+  - on the whole brain, MN9 is 67.8 vs 67.7 Hz (Welch t = 0.03), and MN9 follows on/off input switching within ~2 frames (`scripts/validate_stepping.py`, FEASIBILITY.md).
+
 ## Open
 
 These are to be decided after Step 0:

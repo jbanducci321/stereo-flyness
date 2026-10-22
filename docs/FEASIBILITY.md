@@ -31,6 +31,37 @@
 - **Neuron IDs:** 20 of Shiu's 21 sugar GRN IDs are unchanged in v783. `720575940620900446` was re-segmented and replaced by `720575940639259967`, which shares 95% of the other GRNs' downstream partners. eonsystemspbc/fly-brain makes the same substitution. MN9 (`720575940660219265`) is unchanged.
 - **Speed:** each 1 s whole-brain trial takes about 2.5 min on one core. Most of that is rebuilding the network (15M synapses) every trial, not simulating. With 4 parallel workers, 10 trials took about 6 min.
 
+## Frame-by-frame stepping (closed loop)
+
+**Result: works, and matches Shiu's model.** `BrainStepper` (`src/stereo_flyness/brain/stepper.py`) builds the whole brain once and advances it in game frames, with input that can change between frames. Validated with `scripts/validate_stepping.py` (results in `results/stepping/`).
+
+**1. Stepped sugar test.** Sugar GRNs at 100 Hz for 1 s, delivered as 60 frames × 16.7 ms, 10 trials:
+
+| Run | MN9 rate (mean ± SD) |
+|---|---|
+| Stepped (our changeable input) | **67.8 ± 3.9 Hz** |
+| Unstepped (Shiu's PoissonInput) | 67.7 ± 5.2 Hz |
+
+Welch t = 0.03, so there's no meaningful difference. Stepping and the replacement input mechanism (D16) don't change the model's behaviour.
+
+**2. On/off switching.** Sugar input on 300 ms, off 300 ms, on 300 ms, 4 trials:
+
+| Phase | MN9 rate |
+|---|---|
+| On | 60.8 ± 8.3 Hz |
+| Off | 7.5 ± 2.8 Hz, all within the first ~1 frame after switching off |
+| On again | 65.8 ± 7.2 Hz |
+
+- MN9 starts firing about **2 frames (~35–50 ms) after input turns on** and stops within **~1 frame after it turns off**.
+- So the brain follows changing input frame by frame, which is exactly what the game loop needs.
+
+**First speed numbers** (preview of the benchmark):
+- After Brian2 has compiled once, building the whole brain takes about **10 s**.
+- Advancing it by one 16.7 ms frame takes about **1.8 s** of compute (median, 4 workers running in parallel). That's about 110× slower than real time.
+- At that speed, a 90 s Stereo Madness run (~5,400 frames) would take **~2.7 h** on the whole brain.
+- The cost is the simulation itself (15M connections), not the stepping overhead: an unstepped 1 s trial costs about the same.
+- **Implication:** the subcircuit, or a GPU, is necessary for tuning, which the plan already assumed. The full benchmark comes next.
+
 ## Target cell types (FlyWire v783)
 
 | Cell type | Role | # neurons | Notes |
