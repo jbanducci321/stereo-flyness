@@ -9,7 +9,7 @@ the way external input is delivered differs (see ``BrainStepper._build_inputs``)
 
 import numpy as np
 import pandas as pd
-from brian2 import Hz, Network, PoissonGroup, SpikeMonitor, Synapses, defaultclock, ms
+from brian2 import Hz, Network, PoissonGroup, SpikeMonitor, Synapses, defaultclock, ms, network_operation
 from brian2 import seed as set_seed
 
 from stereo_flyness.brain.shiu_model import create_model, default_params
@@ -108,6 +108,45 @@ class BrainStepper:
         """
         n_dt = int(round(float(duration / defaultclock.dt)))
         self.net.run(n_dt * defaultclock.dt)
+        return self._read_counts()
+
+    def run_frames(self, n_frames, frame, on_frame):
+        """Advance `n_frames` frames of length `frame` in a single Brian2 run.
+
+        After each frame, ``on_frame(i, counts)`` is called with the frame index and that
+        frame's watched spike counts (the same dict `step` returns). It may call `set_rate`
+        to change the input for the following frame.
+
+        This is the fast path for closed-loop use. Every `step` call is a separate
+        ``Network.run``, which makes Brian2 regenerate its code objects (about 100-200 ms
+        each time, whatever the network size). This pays that cost once. The results are
+        identical to calling `step(frame)` in a loop.
+        """
+        n_dt = int(round(float(frame / defaultclock.dt)))
+        frame_dt = n_dt * defaultclock.dt
+        if int(round(float(self.net.t / defaultclock.dt))) % n_dt:
+            raise ValueError("run_frames must start at a multiple of the frame length.")
+
+        state = {"i": 0, "first": True}
+
+        # 'start' slot of each frame-boundary time step = after exactly k frames of
+        # simulation. The call at the very start of the run has no finished frame to report.
+        @network_operation(dt=frame_dt, when="start")
+        def _frame_boundary():
+            if state["first"]:
+                state["first"] = False
+                return
+            on_frame(state["i"], self._read_counts())
+            state["i"] += 1
+
+        self.net.add(_frame_boundary)
+        try:
+            self.net.run(n_frames * frame_dt)
+        finally:
+            self.net.remove(_frame_boundary)
+        on_frame(state["i"], self._read_counts())  # the last frame ends with the run
+
+    def _read_counts(self):
         count = np.asarray(self._spk_mon.count[:])
         new, self._last_count = count - self._last_count, count
         return {name: new[idx] for name, idx in self._watch.items()}

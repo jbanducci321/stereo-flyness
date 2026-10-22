@@ -55,12 +55,9 @@ Welch t = 0.03, so there's no meaningful difference. Stepping and the replacemen
 - MN9 starts firing about **2 frames (~35–50 ms) after input turns on** and stops within **~1 frame after it turns off**.
 - So the brain follows changing input frame by frame, which is exactly what the game loop needs.
 
-**First speed numbers** (preview of the benchmark):
-- After Brian2 has compiled once, building the whole brain takes about **10 s**.
-- Advancing it by one 16.7 ms frame takes about **1.8 s** of compute (median, 4 workers running in parallel). That's about 110× slower than real time.
-- At that speed, a 90 s Stereo Madness run (~5,400 frames) would take **~2.7 h** on the whole brain.
-- The cost is the simulation itself (15M connections), not the stepping overhead: an unstepped 1 s trial costs about the same.
-- **Implication:** the subcircuit, or a GPU, is necessary for tuning, which the plan already assumed. The full benchmark comes next.
+**First speed numbers:** ~1.8 s per 16.7 ms frame on the whole brain, with 4 workers running in parallel and one `step()` per frame. These are superseded by the Benchmarks section below.
+- 4 brains running at once compete for the CPU and roughly double the per-brain cost.
+- Calling `step()` once per frame adds a large fixed overhead, which `run_frames()` removes.
 
 ## Target cell types (FlyWire v783)
 
@@ -80,8 +77,36 @@ Welch t = 0.03, so there's no meaningful difference. Stepping and the replacemen
 
 ## Benchmarks
 
-- ms of compute per simulated game step (subcircuit):
-- Whole-brain estimate:
+`scripts/benchmark_stepping.py` (raw results in `results/benchmark/stepping_benchmark.csv`).
+- **Setup:** one worker, no other brains running. Frames of 16.7 ms (60 fps) and 4.2 ms (240 Hz). Two conditions: quiet (no input) and active (sugar GRNs at 100 Hz).
+- **Networks:** smaller networks are neighbourhoods grown outward from the sugar GRNs. They're **timing stand-ins**, not real subcircuits.
+
+### Finding 1: one `step()` per frame is dominated by a fixed overhead
+- Every `Network.run` call makes Brian2 regenerate its code objects and run garbage collection. That costs **~100–250 ms per call, whatever the network size**: a 1,000-neuron network cost ~120–260 ms per frame.
+- **Fix:** `BrainStepper.run_frames()` (D17) runs many frames in one `Network.run`, with a Python callback at each frame boundary. It's tested to give results identical to a `step()` loop.
+
+### Finding 2: with `run_frames()`, cost tracks network size (connections), not frame count
+
+**Compute cost relative to real time** (ranges across quiet/active and both frame sizes):
+
+| Network | Neurons | Connections | `run_frames` | `step()` loop | One 90 s level with `run_frames` |
+|---|---|---|---|---|---|
+| Neighbourhood | 1,000 | 0.09 M | 0.2–1.9× | 7–62× | ~0.3–3 min |
+| Neighbourhood | 5,000 | 0.46 M | 0.9–5× | 8–57× | ~1–8 min |
+| Neighbourhood | 20,000 | 2.7 M | 1.2–5× | 13–48× | ~2–8 min |
+| Neighbourhood | 50,000 | 6.6 M | 5.5–9× | 23–59× | ~8–13 min |
+| **Whole brain** | 138,639 | 15.1 M | **16–26×** | 47–128× | **~25–40 min** |
+
+- **Build time** (after Brian2's one-time compile) is under 1 s for the neighbourhoods and ~2–10 s for the whole brain.
+- **Noise:** each value is one timing run, and repeats vary by up to ~2×. Treat them as order-of-magnitude.
+- **240 Hz is affordable.** With `run_frames()`, the cost depends on simulated time, not on how often the game talks to the brain, so querying the brain every 4.2 ms physics tick costs about the same per second of gameplay as every 16.7 ms frame.
+
+### What this means for the plan
+- **Subcircuit target: up to ~20k neurons / ~3M connections.** That keeps one 90 s level at a few minutes on one core.
+  - With 4 parallel workers (each slower from contention), a tuning grid of ~25 dial settings × 8 training levels (200 level runs) takes roughly **2–7 hours**. That's overnight-feasible on the laptop.
+  - Smaller subcircuits (~5k) are proportionally faster.
+- **The whole brain is usable for occasional runs:** ~25–40 min per level on CPU. A whole-brain Stereo Madness comparison (Step 7) is possible on the laptop overnight; a GPU would make it routine.
+- **Caveat:** the real looming input may drive more or less activity than the sugar input used here. Re-benchmark on the real subcircuit once it's extracted (J5).
 
 ## Risks and open questions
 

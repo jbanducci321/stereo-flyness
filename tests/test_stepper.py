@@ -111,6 +111,35 @@ def test_input_matches_shiu_poisson_input(connectome):
     assert abs(ours - shiu_count) < 4 * np.sqrt(2 * 200)
 
 
+def test_run_frames_matches_step_loop(connectome):
+    """The fast single-run path gives frame-by-frame results identical to calling step(),
+    including rate changes made from the callback."""
+    schedule = [100, 100, 0, 0, 200, 200, 0, 100]  # Hz for each frame
+
+    looped = make_stepper(connectome)
+    expected = []
+    for rate in schedule:
+        looped.set_rate("drive", rate * Hz)
+        expected.append(looped.step(20 * ms))
+
+    fast = make_stepper(connectome)
+    fast.set_rate("drive", schedule[0] * Hz)
+    got = []
+
+    def on_frame(i, counts):
+        got.append(counts)
+        if i + 1 < len(schedule):
+            fast.set_rate("drive", schedule[i + 1] * Hz)
+
+    fast.run_frames(len(schedule), 20 * ms, on_frame)
+
+    assert len(got) == len(schedule)
+    for i, (e, g) in enumerate(zip(expected, got)):
+        for name in WATCH:
+            assert e[name].sum() == g[name].sum(), (i, name)
+    assert float(fast.t) == pytest.approx(float(looped.t))
+
+
 def test_unknown_ids_raise(connectome):
     with pytest.raises(KeyError, match="999"):
         BrainStepper(*connectome, inputs={"drive": [999]}, watch=WATCH)

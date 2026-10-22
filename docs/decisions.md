@@ -64,6 +64,17 @@ The GitHub repo is public. The FlyWire connectivity data is CC BY 4.0 and Shiu's
   - on a tiny network, it matches Shiu's PoissonInput side by side (`tests/test_stepper.py`);
   - on the whole brain, MN9 is 67.8 vs 67.7 Hz (Welch t = 0.03), and MN9 follows on/off input switching within ~2 frames (`scripts/validate_stepping.py`, FEASIBILITY.md).
 
+**D17. Closed-loop runs use `BrainStepper.run_frames()`, not one `step()` per frame** (2026-10-22)
+- Each `step()` is a separate Brian2 `Network.run`, and Brian2 regenerates code objects and garbage-collects on every call, costing ~100–250 ms regardless of network size.
+- `run_frames(n, frame, on_frame)` runs all frames in one `Network.run` and calls `on_frame(i, counts)` at each frame boundary through a `network_operation` (in the 'start' slot, so each callback sees exactly k frames of simulation). The callback reads spikes and may call `set_rate` for the next frame.
+- Tested to give results identical to a `step()` loop, including rate changes. 5–100× faster for small networks (see FEASIBILITY.md Benchmarks).
+- `step()` stays for one-off experiments.
+- Consequence for the game loop: the game advances inside the callback, so the brain drives the loop. The game is still step-locked to the brain.
+
+**D18. Subcircuit size target: up to ~20k neurons / ~3M connections** (2026-10-22, provisional)
+- Based on benchmarks with neighbourhood stand-ins: one 90 s level in a few minutes on one core, and a tuning grid overnight.
+- The extraction rule itself is still open (Shannyn's S5). This only bounds its size. To be revisited with the real subcircuit (J5).
+
 ## Open
 
 These are to be decided after Step 0:
@@ -73,4 +84,4 @@ These are to be decided after Step 0:
 - Input encoding: looming → LC4/LPLC2 stimulation rate, and which neurons receive it.
 - Output rule: what Giant Fiber activity counts as a jump.
 - The dials and their allowed ranges.
-- Closed-loop simulation: Brian2 runtime mode with repeated short runs, or our own reimplementation of the same equations (validated against Brian2).
+- Closed-loop simulation: resolved for now by D17 (Brian2 runtime with `run_frames`). Our own reimplementation of the same equations (e.g. PyTorch, validated against Brian2) stays an option if subcircuit runs are still too slow, or for the GPU phase.

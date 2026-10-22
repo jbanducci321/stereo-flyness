@@ -75,6 +75,8 @@ The canonical, up-to-date log is **`docs/decisions.md`**. Read it first. Summary
 | D14 | Shiu's `model.py`/`utils.py` are **vendored byte-for-byte unchanged** (commit `91bdd1e`) as `brain/shiu_model.py` and `brain/shiu_utils.py`, with only a docstring added. **Never edit them.** Our changes go in separate modules. |
 | D15 | Sugar GRN v630 ID `720575940620900446` → v783 ID `720575940639259967`. We verified that 95% of its downstream partners are shared with the other sugar GRNs. Lesson: always check IDs against v783. |
 | D16 | Frame-stepping input: Shiu's `PoissonInput` (fixed rate) is replaced by a `PoissonGroup` + one-to-one `Synapses` with changeable rates. Validated as equivalent on the whole brain; see §6.3. |
+| D17 | Closed-loop runs use `BrainStepper.run_frames()` (one Brian2 run, callback per frame), not one `step()` per frame. This avoids ~100–250 ms of overhead per call, and the results are identical. |
+| D18 (provisional) | Subcircuit size target: up to ~20k neurons / ~3M connections, from benchmarks. The extraction rule itself is still open (S5). |
 
 ### Open decisions (not yet made; don't decide these unilaterally)
 - **Subcircuit rule:** which neurons to keep (core cell types + N hops, minimum synapse count). **Shannyn proposes** (task S5).
@@ -82,7 +84,7 @@ The canonical, up-to-date log is **`docs/decisions.md`**. Read it first. Summary
 - **Input encoding:** how looming becomes the LC4/LPLC2 stimulation rate, and which neurons receive it. LC4 neurons tile the visual field, so obstacle position could map to specific neurons.
 - **Output rule:** what Giant Fiber activity counts as "jump" (one spike? N spikes in a window?).
 - **The dials and their allowed ranges.**
-- **Closed-loop simulation approach:** currently Brian2 runtime stepping; the alternative is our own reimplementation validated against Brian2. This will be decided by benchmarks.
+- **Closed-loop simulation approach:** resolved for now by D17 (Brian2 with `run_frames`). Our own reimplementation (e.g. PyTorch, validated against Brian2) stays an option for speed or for the GPU phase.
 - **Code LICENSE.**
 
 ## 5. Repository, environment and workflow
@@ -192,7 +194,13 @@ stepper = BrainStepper(path_comp, path_con,
 stepper.set_rate("sugar", 100 * Hz)        # one rate for the group, or an array (one per neuron)
 counts = stepper.step(1000 / 60 * ms)      # advance one 60 fps frame; returns {"mn9": array_of_counts}
 stepper.t                                  # total simulated time
+
+# Fast closed-loop path (use this for the game; D17): one Brian2 run, callback per frame
+def on_frame(i, counts):                   # counts = this frame's watched spikes
+    stepper.set_rate("sugar", 0 * Hz if i > 30 else 100 * Hz)   # change input for the next frame
+stepper.run_frames(60, 1000 / 60 * ms, on_frame)
 ```
+Each `step()` call costs ~100–250 ms of Brian2 overhead regardless of network size. `run_frames()` pays it once and is tested to give identical results.
 
 **Implementation:**
 - The network comes from Shiu's `create_model`, unchanged.
@@ -210,9 +218,17 @@ stepper.t                                  # total simulated time
 **Validated on the whole brain (`scripts/validate_stepping.py`):**
 - **Stepped sugar test:** 60 × 16.7 ms frames give MN9 = 67.8 ± 3.9 Hz, against 67.7 ± 5.2 Hz unstepped (Welch t = 0.03).
 - **On/off switching:** MN9 is 61 Hz on, 7.5 Hz off (residual spikes only in the first frame), and 66 Hz on again. It starts ~2 frames after input turns on.
-- **Speed:** whole-brain build ~10 s; **~1.8 s of compute per 16.7 ms frame**, about 110× slower than real time. A 90 s level would take ~2.7 h on the whole brain, so the subcircuit (or a GPU) is necessary for tuning.
+**Benchmark (`scripts/benchmark_stepping.py`, one worker, using `run_frames`):**
 
-**Next (checkpoint 3):** benchmark milliseconds of compute per game frame (60 fps and 240 Hz), whole brain vs smaller networks, and project how long a 90-second Stereo Madness run would take.
+| Network | Speed vs real time | One 90 s level |
+|---|---|---|
+| 1k neurons | ~real time | ~0.3–3 min |
+| 5k–20k neurons | ~1–5× slower | ~2–8 min |
+| 50k neurons | ~5–9× slower | ~8–13 min |
+| Whole brain (138,639) | ~16–26× slower | ~25–40 min |
+
+- **240 Hz is affordable:** the cost tracks simulated time, not how often the game talks to the brain.
+- **Provisional subcircuit size target (D18): up to ~20k neurons / ~3M connections.** That puts a tuning grid at an overnight run on the laptop.
 
 ## 7. The game (Step 1, not started)
 - **Minimal headless Python clone:** plain shapes only, no RobTop art/music/assets, deterministic with seeds, plus a simple viewer.
