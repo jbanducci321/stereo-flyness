@@ -75,6 +75,19 @@ The GitHub repo is public. The FlyWire connectivity data is CC BY 4.0 and Shiu's
 - Based on benchmarks with neighbourhood stand-ins: one 90 s level in a few minutes on one core, and a tuning grid overnight.
 - The extraction rule itself is still open (Shannyn's S5). This only bounds its size. To be revisited with the real subcircuit (J5).
 
+**D19. End deliverable: a record-and-replay viewer of the fly playing Stereo Madness** (2026-10-22)
+- **Goal:** watch the fly brain play Stereo Madness at real speed, with its brain activity shown beside the game. Looming neurons (LC4/LPLC2) light up as obstacles approach, the Giant Fiber flashes when it fires, and the cube jumps. Steering neurons drive hold/release in ship sections.
+- **Approach: record, then replay.**
+  - Closed-loop runs log every frame (game state, input rates, watched spike counts) from the `run_frames` callback.
+  - A viewer plays the log back at true 60 fps, however long the simulation took. The whole brain runs ~16–26× slower than real time (D17/D18), so live whole-brain viewing isn't possible on a laptop.
+- **Live mode is optional:** only small subcircuits (~1k–5k neurons) run near real time.
+- **Honesty requirements:**
+  - The viewer must visibly separate our input encoding (the looming signal we compute) from the fly's own spikes.
+  - It must say it is a replay of a simulation.
+  - It must not smooth or alter recorded activity.
+- **Why:** it's the project's centerpiece and makes the "fly vs our code" distinction visible.
+- **Dependencies:** the viewer library (likely pygame) and any 3D/morphology rendering are chosen when the viewer is built, with the user's approval.
+
 ## Open
 
 These are to be decided after Step 0:

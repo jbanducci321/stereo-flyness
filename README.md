@@ -30,6 +30,8 @@ All of our design choices live in `src/stereo_flyness/interface/` and are logged
 6. Mixed levels, then Stereo Madness as the held-out final test. We never tune on it.
 7. The whole brain on a GPU, compared to the subcircuit.
 
+**End goal:** watch the fly play Stereo Madness, with its brain activity shown alongside the game. Looming neurons light up as obstacles approach, and the Giant Fiber fires as the cube jumps. Runs are recorded frame by frame and replayed at real speed, since the simulation itself runs slower than real time.
+
 ## Setup (Windows)
 
 You need:

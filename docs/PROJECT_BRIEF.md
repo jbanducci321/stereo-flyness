@@ -16,6 +16,8 @@
 
 The fly brain's connection weights stay **frozen**: they come from real synapse counts, and their signs from predicted neurotransmitters. We only tune 2–3 interface "dials". The final test is a faithful recreation of the first Geometry Dash level, **Stereo Madness**, which is held out and never tuned on.
 
+**End goal (D19):** a **replay viewer** where you watch the fly play Stereo Madness at real speed, with its brain activity beside the game. Looming neurons light up as obstacles approach, the Giant Fiber flashes, and the cube jumps. Runs are recorded frame by frame and played back, because the simulation runs slower than real time.
+
 It's a two-person portfolio and research project. **Jacob Banducci** (GitHub `jbanducci321`, final-semester CS/data science, psychology background) leads engineering. **Shannyn** (GitHub `shancabi`, heading toward biomedical/neuroscience) leads the neuroscience side.
 
 ## 2. The core scientific principle (never violate)
@@ -77,6 +79,7 @@ The canonical, up-to-date log is **`docs/decisions.md`**. Read it first. Summary
 | D16 | Frame-stepping input: Shiu's `PoissonInput` (fixed rate) is replaced by a `PoissonGroup` + one-to-one `Synapses` with changeable rates. Validated as equivalent on the whole brain; see §6.3. |
 | D17 | Closed-loop runs use `BrainStepper.run_frames()` (one Brian2 run, callback per frame), not one `step()` per frame. This avoids ~100–250 ms of overhead per call, and the results are identical. |
 | D18 (provisional) | Subcircuit size target: up to ~20k neurons / ~3M connections, from benchmarks. The extraction rule itself is still open (S5). |
+| D19 | End deliverable: a **record-and-replay viewer**. Closed-loop runs log every frame (game state, inputs, watched spikes) from the `run_frames` callback, and a viewer replays at real 60 fps with a brain-activity panel. It must visibly separate our input encoding from the fly's spikes, say it's a replay of a simulation, and never smooth or alter recorded activity. Live mode is optional, for small subcircuits only. |
 
 ### Open decisions (not yet made; don't decide these unilaterally)
 - **Subcircuit rule:** which neurons to keep (core cell types + N hops, minimum synapse count). **Shannyn proposes** (task S5).
@@ -231,7 +234,7 @@ Each `step()` call costs ~100–250 ms of Brian2 overhead regardless of network 
 - **Provisional subcircuit size target (D18): up to ~20k neurons / ~3M connections.** That puts a tuning grid at an overnight run on the laptop.
 
 ## 7. The game (Step 1, not started)
-- **Minimal headless Python clone:** plain shapes only, no RobTop art/music/assets, deterministic with seeds, plus a simple viewer.
+- **Minimal headless Python clone:** plain shapes only, no RobTop art/music/assets, deterministic with seeds, plus a viewer. The viewer should render from **recorded run logs** (not only live play), so it can grow into the replay viewer (D19).
 - **Mechanics:**
   - cube: blocks, spikes, floor;
   - ship: hold to rise, release to fall, avoid spikes, floor and ceiling.
@@ -252,14 +255,14 @@ Each `step()` call costs ~100–250 ms of Brian2 overhead regardless of network 
 | Step | What |
 |---|---|
 | 0 | Feasibility (current) |
-| 1 | Build the game |
-| 2 | Cube baseline with **default, untuned** values. Record this before any tuning; it's a key result. |
+| 1 | Build the game, including a viewer that can replay a recorded run log |
+| 2 | Cube baseline with **default, untuned** values. Record this before any tuning; it's a key result. Closed-loop runs log every frame from here on (R1), and the first brain panel appears in the viewer (R2). |
 | 3 | Tune at most 2–3 dials on generated levels, evaluate on held-out generated levels |
 | 4 | Controls and lesions: degree-preserving shuffled connectome; random network of the same size; LC4/LPLC2 silenced; Giant Fiber silenced. Does performance depend on the real wiring? |
 | 5 | Ship pathway: repeat Steps 2–4 |
-| 6 | Mixed levels, then Stereo Madness **once**, with everything frozen |
+| 6 | Mixed levels, then Stereo Madness **once**, with everything frozen. That run is recorded and becomes the showcase replay. |
 | 7 | Whole brain on a free GPU (Kaggle or Lightning AI), compared with the subcircuit |
-| 8 | Write-up: honest README, figures, reproducibility |
+| 8 | Write-up: honest README, figures, reproducibility, and the replay viewer showcase (Stereo Madness replay plus an exported video) |
 
 **Stretch:** evolutionary search over the dials, or mushroom-body dopamine-gated learning (only KC→MBON synapses plastic).
 
@@ -294,15 +297,26 @@ Each `step()` call costs ~100–250 ms of Brian2 overhead regardless of network 
 
 **Dependencies:** S2 → S4, S5 · S4 → J4 · S5 + J2 → J5 · J4 + J5 → T3 → T4 → Step 2 · J3 → Step 1.
 
+### Replay viewer tasks (D19), built alongside Steps 1–8
+
+| Task | Owner | When | What |
+|---|---|---|---|
+| **R1. Run recorder** | Jacob | Step 2 (with the closed loop) | Every closed-loop run writes a per-frame log from the `run_frames` callback: frame index, game state (player position, mode, alive/dead, obstacles in view), input rates per group, and watched spike counts per neuron. Saved alongside the run's config, seed and git commit. It feeds both the metrics and the viewer. |
+| **R2. Replay viewer engine** | Jacob | Steps 1–2 | Plays a recorded log at real 60 fps, with pause, scrub and slow motion: the game panel plus a brain panel. Exports to video. The library (likely pygame) is chosen when built, with approval. |
+| **R3. Brain panel design** | **Shannyn** | Steps 2–5 | Which neuron groups to show and how: LC4/LPLC2 laid out by visual-field position, the Giant Fiber, VS cells, the steering neurons. Plus biologically accurate labels and colours, and short explanations. It must visibly separate our computed input (the looming signal) from the fly's spikes. |
+| **R4. Showcase replay** | Both | Step 6 | Record the single frozen Stereo Madness run and produce the showcase replay and video. |
+| R5. Live mode (optional) | Jacob | After Step 3 | Run a small subcircuit (~1k–5k neurons, near real time) live in the viewer. |
+| R6. 3D neurons (stretch) | Shannyn + Jacob | After Step 6 | Render real FlyWire neuron positions/morphologies lighting up in the brain panel. Check the mesh licence and citation first. |
+
 ### Later steps: who leads
 | Step | Shannyn | Jacob |
 |---|---|---|
-| 1 | Owns the sealed Stereo Madness level; drafts the README "fly vs our code" section | Physics, level format, converter, bot, generators, viewer |
-| 2 | Checks encodings; spike-timing analysis; deaths by obstacle type | Interface code, closed loop, logging |
+| 1 | Owns the sealed Stereo Madness level; drafts the README "fly vs our code" section | Physics, level format, converter, bot, generators, replay-capable viewer (R2) |
+| 2 | Checks encodings; spike-timing analysis; deaths by obstacle type; starts the brain panel design (R3) | Interface code, closed loop, run recorder (R1) |
 | 3 | Biological plausibility of the tuned values | Grid search, held-out evaluation |
 | 4 | **Leads** lesion design and interpretation | Shuffled and random networks, runs |
 | 5 | **Leads** ship design (encoding, readout, hold/release rule) | Pipeline reuse |
-| 6 | Run Stereo Madness once, together | Mode switching, mixed levels |
+| 6 | Run Stereo Madness once, together; showcase replay (R4) | Mode switching, mixed levels |
 | 7 | Subcircuit vs whole-brain comparison | GPU runs |
 | 8 | Biology, methods, limitations | Engineering, reproducibility |
 
@@ -319,6 +333,7 @@ Each `step()` call costs ~100–250 ms of Brian2 overhead regardless of network 
 10. **Coordinate on shared files.** `docs/FEASIBILITY.md` and `docs/decisions.md` are edited by both people. Edit only your own sections to keep merge conflicts small (Shannyn: the cell-type table and neuroscience notes; Jacob: the environment and benchmark sections).
 11. **Tests must pass** (`uv run pytest`) before opening a PR.
 12. Refer to team members by name, and to Shannyn as "she".
+13. **Closed-loop runs must log every frame** (R1, D19). Don't add code paths that skip the recorder. Replays must show recorded activity exactly as simulated, and label our input encoding separately from the fly's spikes.
 
 ## 10. How Shannyn should start her Claude session
 1. Clone the repo (or pull `main`), then run `uv sync`, `uv run pytest` and `uv run python scripts/download_data.py`.

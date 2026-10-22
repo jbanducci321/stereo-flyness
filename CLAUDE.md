@@ -19,6 +19,7 @@ Before doing anything in this repo, read **[docs/PROJECT_BRIEF.md](docs/PROJECT_
 7. Don't copy code from camila314/gdp, pathfinder (unlicensed) or eonsystemspbc/fly-brain (GPL). Read them for facts only.
 8. Ask the human before big or irreversible choices, before changing a decision, or before touching the other person's task area.
 9. Be scientifically honest. Push back when something is wrong.
+10. Closed-loop runs log every frame for the replay viewer (D19). Replays show recorded activity unaltered and label our input encoding separately from the fly's spikes.
 
 ## Commands
 ```bash
