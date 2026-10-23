@@ -66,6 +66,9 @@ We use 64-bit floats with this same order (D20). Bit-exact float32 matching isn'
 | Jump peak | 63.97 units = **2.13 blocks** (community figure: 2.13 ✓) |
 | Airtime, flat ground | 103 ticks = 0.429 s |
 | Jump length, flat ground | 133.7 units = **4.46 blocks** |
+| **Timing window to clear one spike** (engine, single press) | **57 ticks = 238 ms**: pressing while the player's centre is 212–284 units along, for a spike centred at x 315 |
+
+The spike window matters for the brain interface (T4): the Giant Fiber responds ~35–50 ms after its input starts, so the looming input must begin early enough for the jump to land inside this window.
 
 ## 4. Ship
 
@@ -156,6 +159,8 @@ Only the 0.9 version is close enough for a 1-unit nudge to be meaningful.
 | ~~Ship area placement rule~~ | **Resolved (§10):** the rule fits all 3 Stereo Madness ship sections | — |
 | ~~Level-file y coordinates vs world y~~ | **Resolved (§10):** world y = level y + 90 | — |
 | Collision order within a tick for multiple overlapping objects | Process in order of x | Bot validation |
+| Does stair snapping apply to ordinary solid blocks? (§6) | Yes (implemented). The decompiled check requires the previous object's `getType()` to be non-zero, and `Solid` is 0 in OpenGD's enum, which would disable it for blocks. Either the decompile or our reading may be off. The effect is at most a 1-unit nudge per landing. | Bot on Stereo Madness's staircases; toggling `_stair_snap` shows whether it matters |
+| Hazard vs solid order in one tick | Solids resolved first (landing snap), then hazards checked at the snapped position | Bot validation |
 | Gravity on the cube's jump tick (§3) | Applied (64-unit jump), matching the community figure and video, not a literal reading of gdp | Bot on Stereo Madness: wrong jump arcs would show up as impossible staircases and slab gaps |
 
 ## 9. Video validation (2026-10-22)

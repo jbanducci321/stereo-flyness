@@ -19,6 +19,14 @@ X_PER_TICK = TICK_DT * SPEED_MULTIPLIER * PLAYER_SPEED  # 1.29825 units -> 311.5
 PLAYER_SIZE = 30.0  # outer hitbox, square, centred on the player
 HALF_PLAYER = PLAYER_SIZE / 2
 
+# Collisions [§5]
+INNER_HITBOX = PLAYER_SIZE * 0.3  # 9 x 9: only this kills when touching solids
+SNAP_UP_CUBE = 10.0  # land on a solid if the player's bottom is at most this far below its top
+
+# Stair snapping at normal speed [§6]: (dx, dy) between consecutive landed blocks' centres
+STAIR_STEPS = ((120.0, 30.0), (150.0, -30.0), (90.0, 60.0))
+STAIR_SNAP_TOLERANCE = 1.0  # max offset from a step, and max x nudge per landing
+
 # Cube [§3]
 CUBE_JUMP_VELOCITY = 11.1800318
 CUBE_GRAVITY = 0.958199024

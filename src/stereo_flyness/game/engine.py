@@ -7,12 +7,29 @@ deterministic: the same inputs always produce the same run.
 Per-tick order, as in the game [§2]:
 1. update vertical velocity (jump or gravity);
 2. move: x by the horizontal speed, y by the new vertical velocity;
-3. resolve collisions (so far only the ground).
+3. resolve collisions: the ground and solids (landing, death), then hazards;
+4. check for the end of the level.
 """
 
+import bisect
+from dataclasses import dataclass
+
 from stereo_flyness.game import physics as P
-from stereo_flyness.game.level import Level
+from stereo_flyness.game.level import Box, Level
 from stereo_flyness.game.player import Player
+
+_MAX_BOX_WIDTH = 30.0  # widest object kind; bounds the broad-phase search
+
+
+@dataclass(frozen=True)
+class Death:
+    """What killed the player, and where."""
+
+    kind: str
+    source_id: int | None
+    x: float
+    y: float
+    tick: int
 
 
 class Game:
@@ -20,22 +37,41 @@ class Game:
         self.level = level
         self.player = Player(mode=level.start_mode)
         self.ticks = 0
+        self.death: Death | None = None
+        self.finished = False
+        self._box_x0 = [b.x0 for b in level.boxes]  # level.boxes is sorted by x0
+        self._snapped_to: Box | None = None  # last solid landed on, for stair snapping [§6]
+        self._snap_offset = 0.0
 
     @property
     def time(self) -> float:
         """Seconds of game time elapsed."""
         return self.ticks / P.TICKS_PER_SECOND
 
+    @property
+    def over(self) -> bool:
+        return self.death is not None or self.finished
+
+    @property
+    def progress(self) -> float:
+        """Fraction of the level completed (0 to 1)."""
+        return min(self.player.x / self.level.length, 1.0)
+
     def tick(self, held: bool) -> None:
         """Advance one 240 Hz tick with the button `held` (True) or released (False)."""
-        p = self.player
-        if not p.alive:
+        if self.over:
             return
+        p = self.player
+        last_y = p.y
         self._update_velocity(p, held)
         p.x += P.X_PER_TICK
         p.y += p.vy * P.TICK_DT_Y
-        self._collide_ground(p)
         self.ticks += 1
+        self._collide(p, p.y - last_y)
+        if p.alive and p.x >= self.level.length:
+            self.finished = True
+
+    # -- velocity -----------------------------------------------------------------
 
     def _update_velocity(self, p: Player, held: bool) -> None:
         """Cube jump and gravity [§3].
@@ -54,11 +90,74 @@ class Game:
         if p.vy < -P.MAX_FALL_SPEED:
             p.vy = -P.MAX_FALL_SPEED
 
-    def _collide_ground(self, p: Player) -> None:
-        """The ground surface is y = 0: snap onto it and stop falling."""
-        if p.bottom <= 0.0:
-            p.y = P.HALF_PLAYER
-            p.vy = 0.0
+    # -- collisions -----------------------------------------------------------------
+
+    def _nearby(self, p: Player) -> list[Box]:
+        """Boxes whose x range can overlap the player's (broad phase)."""
+        lo = bisect.bisect_left(self._box_x0, p.x - P.HALF_PLAYER - _MAX_BOX_WIDTH)
+        hi = bisect.bisect_right(self._box_x0, p.x + P.HALF_PLAYER)
+        return self.level.boxes[lo:hi]
+
+    def _collide(self, p: Player, dy: float) -> None:
+        p.on_ground = False
+        if p.bottom <= 0.0:  # the ground surface, y = 0
+            p.y, p.vy, p.on_ground = P.HALF_PLAYER, 0.0, True
+
+        nearby = self._nearby(p)
+        for b in nearby:
+            if b.solid and _overlaps(p, b, P.PLAYER_SIZE):
+                self._collide_solid(p, b, dy)
+                if not p.alive:
+                    return
+        for b in nearby:
+            if not b.solid and _overlaps(p, b, P.PLAYER_SIZE):
+                self._die(p, b)
+                return
+
+    def _collide_solid(self, p: Player, b: Box, dy: float) -> None:
+        """Cube vs a solid [§5, gdp `collidedWithObjectInternal`].
+
+        - Land on top if the player's bottom is within SNAP_UP_CUBE of the solid's top, now or
+          before this tick's move, unless still rising.
+        - Otherwise the player dies only if the solid touches the 9 x 9 inner hitbox. The cube
+          can graze a block's edge, or clip into its underside, and survive.
+        """
+        reach = p.bottom + P.SNAP_UP_CUBE
+        if reach >= b.y1 or reach - dy >= b.y1:
+            if p.vy > 0:
+                return  # rising past the top edge: neither lands nor dies
+            p.y = b.y1 + P.HALF_PLAYER
+            p.vy = max(0.0, p.vy)
             p.on_ground = True
-        else:
-            p.on_ground = False
+            self._stair_snap(p, b)
+        elif _overlaps(p, b, P.INNER_HITBOX):
+            self._die(p, b)
+
+    def _stair_snap(self, p: Player, b: Box) -> None:
+        """Nudge x so held-jump staircases stay evenly spaced [§6, gdp `checkSnapJumpToObject`].
+
+        If this solid sits one of the standard step offsets from the previous landed solid, x is
+        moved towards keeping the same offset from it as from the previous one (by at most
+        STAIR_SNAP_TOLERANCE).
+        """
+        cx, cy = (b.x0 + b.x1) / 2, (b.y0 + b.y1) / 2
+        prev, x_before = self._snapped_to, p.x
+        if prev is not None and prev is not b:
+            dx = cx - (prev.x0 + prev.x1) / 2
+            dyc = cy - (prev.y0 + prev.y1) / 2
+            tol = P.STAIR_SNAP_TOLERANCE
+            if any(abs(dx - sx) <= tol and abs(dyc - sy) <= tol for sx, sy in P.STAIR_STEPS):
+                target = cx + self._snap_offset
+                p.x = min(max(target, x_before - tol), x_before + tol)
+        self._snapped_to = b
+        self._snap_offset = x_before - cx
+
+    def _die(self, p: Player, b: Box) -> None:
+        p.alive = False
+        self.death = Death(b.kind, b.source_id, p.x, p.y, self.ticks)
+
+
+def _overlaps(p: Player, b: Box, size: float) -> bool:
+    """Does a `size` x `size` square centred on the player touch box `b`? Touching counts."""
+    h = size / 2
+    return not (p.x + h < b.x0 or b.x1 < p.x - h or p.y + h < b.y0 or b.y1 < p.y - h)
