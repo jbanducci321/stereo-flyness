@@ -7,7 +7,8 @@ deterministic: the same inputs always produce the same run.
 Per-tick order, as in the game [§2]:
 1. update vertical velocity (jump or gravity);
 2. move: x by the horizontal speed, y by the new vertical velocity;
-3. resolve collisions: the ground and solids (landing, death), then hazards;
+3. resolve collisions: the ground or ship floor/ceiling, solids (landing, bumping, death),
+   hazards, then portals;
 4. check for the end of the level.
 """
 
@@ -15,7 +16,7 @@ import bisect
 from dataclasses import dataclass
 
 from stereo_flyness.game import physics as P
-from stereo_flyness.game.level import Box, Level
+from stereo_flyness.game.level import Box, Level, Portal, ship_bounds
 from stereo_flyness.game.player import Player
 
 _MAX_BOX_WIDTH = 30.0  # widest object kind; bounds the broad-phase search
@@ -42,6 +43,11 @@ class Game:
         self._box_x0 = [b.x0 for b in level.boxes]  # level.boxes is sorted by x0
         self._snapped_to: Box | None = None  # last solid landed on, for stair snapping [§6]
         self._snap_offset = 0.0
+        self._next_portal = 0  # level.portals is sorted by x; each triggers once
+        # Floor and ceiling of the current ship area (None in cube mode)
+        self.bounds: tuple[float, float] | None = (
+            ship_bounds(self.player.y) if self.player.mode == "ship" else None
+        )
 
     @property
     def time(self) -> float:
@@ -74,6 +80,29 @@ class Game:
     # -- velocity -----------------------------------------------------------------
 
     def _update_velocity(self, p: Player, held: bool) -> None:
+        if p.mode == "ship":
+            self._update_ship_velocity(p, held)
+        else:
+            self._update_cube_velocity(p, held)
+
+    @staticmethod
+    def _update_ship_velocity(p: Player, held: bool) -> None:
+        """Ship acceleration [§4, gdp `updateJump` ship branch].
+
+        Held: accelerate up, harder while falling. Released: accelerate down, harder while still
+        rising. Then clamp to the speed limits.
+        """
+        falling = p.vy < 0
+        if held:
+            factor = P.SHIP_HOLD_FALLING if falling else P.SHIP_HOLD_RISING
+            p.vy += P.SHIP_GRAVITY * P.TICK_DT_Y * factor
+        else:
+            factor = P.SHIP_RELEASE_FALLING if falling else P.SHIP_RELEASE_RISING
+            p.vy -= P.SHIP_GRAVITY * P.TICK_DT_Y * factor
+        p.vy = min(max(p.vy, -P.SHIP_MAX_DOWN), P.SHIP_MAX_UP)
+
+    @staticmethod
+    def _update_cube_velocity(p: Player, held: bool) -> None:
         """Cube jump and gravity [§3].
 
         A jump happens on any tick where the cube is on the ground (as of the previous tick's
@@ -100,7 +129,9 @@ class Game:
 
     def _collide(self, p: Player, dy: float) -> None:
         p.on_ground = False
-        if p.bottom <= 0.0:  # the ground surface, y = 0
+        if p.mode == "ship":
+            self._collide_ship_bounds(p)
+        elif p.bottom <= 0.0:  # the ground surface, y = 0
             p.y, p.vy, p.on_ground = P.HALF_PLAYER, 0.0, True
 
         nearby = self._nearby(p)
@@ -113,25 +144,64 @@ class Game:
             if not b.solid and _overlaps(p, b, P.PLAYER_SIZE):
                 self._die(p, b)
                 return
+        self._check_portals(p)
+
+    def _collide_ship_bounds(self, p: Player) -> None:
+        """The ship slides along its area's floor and ceiling without dying [§4]."""
+        floor, ceiling = self.bounds
+        if p.bottom <= floor:
+            p.y, p.vy, p.on_ground = floor + P.HALF_PLAYER, 0.0, True
+        elif p.top >= ceiling:
+            p.y, p.vy = ceiling - P.HALF_PLAYER, 0.0
 
     def _collide_solid(self, p: Player, b: Box, dy: float) -> None:
-        """Cube vs a solid [§5, gdp `collidedWithObjectInternal`].
+        """Player vs a solid [§5, gdp `collidedWithObjectInternal`].
 
-        - Land on top if the player's bottom is within SNAP_UP_CUBE of the solid's top, now or
-          before this tick's move, unless still rising.
+        - Land on top if the player's bottom is within the snap distance of the solid's top
+          (10 for the cube, 6 for the ship), now or before this tick's move, unless still rising.
+        - Ship only: bump along the underside if the player's top is within 6 of the solid's
+          bottom (now or before the move), while not moving down.
         - Otherwise the player dies only if the solid touches the 9 x 9 inner hitbox. The cube
           can graze a block's edge, or clip into its underside, and survive.
         """
-        reach = p.bottom + P.SNAP_UP_CUBE
+        ship = p.mode == "ship"
+        snap = P.SNAP_UP_SHIP if ship else P.SNAP_UP_CUBE
+        reach = p.bottom + snap
         if reach >= b.y1 or reach - dy >= b.y1:
             if p.vy > 0:
                 return  # rising past the top edge: neither lands nor dies
             p.y = b.y1 + P.HALF_PLAYER
             p.vy = max(0.0, p.vy)
             p.on_ground = True
-            self._stair_snap(p, b)
-        elif _overlaps(p, b, P.INNER_HITBOX):
+            if not ship:
+                self._stair_snap(p, b)
+            return
+        if ship:
+            head = p.top - snap
+            if (b.y0 >= head or head - dy <= b.y0) and p.vy >= 0:
+                p.y = b.y0 - P.HALF_PLAYER
+                p.vy = 0.0
+                return
+        if _overlaps(p, b, P.INNER_HITBOX):
             self._die(p, b)
+
+    def _check_portals(self, p: Player) -> None:
+        """Switch mode when the 30 x 30 hitbox touches the next portal [§4, §5].
+
+        Each portal triggers once. A ship portal sets new ship bounds from its height (even
+        when already a ship). Vertical speed carries over unchanged (an assumption; §8).
+        """
+        portals = self.level.portals
+        while self._next_portal < len(portals):
+            portal = portals[self._next_portal]
+            if p.x + P.HALF_PLAYER < portal.x - P.PORTAL_WIDTH / 2:
+                return  # not reached yet
+            if _touches_portal(p, portal):
+                p.mode = portal.mode
+                self.bounds = ship_bounds(portal.y) if portal.mode == "ship" else None
+            elif p.x - P.HALF_PLAYER <= portal.x + P.PORTAL_WIDTH / 2:
+                return  # within its x range but not touching (yet)
+            self._next_portal += 1  # triggered, or passed without touching
 
     def _stair_snap(self, p: Player, b: Box) -> None:
         """Nudge x so held-jump staircases stay evenly spaced [§6, gdp `checkSnapJumpToObject`].
@@ -155,6 +225,12 @@ class Game:
     def _die(self, p: Player, b: Box) -> None:
         p.alive = False
         self.death = Death(b.kind, b.source_id, p.x, p.y, self.ticks)
+
+
+def _touches_portal(p: Player, portal: Portal) -> bool:
+    hw, hh = P.PORTAL_WIDTH / 2, P.PORTAL_HEIGHT / 2
+    return not (p.x + P.HALF_PLAYER < portal.x - hw or portal.x + hw < p.x - P.HALF_PLAYER
+                or p.top < portal.y - hh or portal.y + hh < p.bottom)
 
 
 def _overlaps(p: Player, b: Box, size: float) -> bool:

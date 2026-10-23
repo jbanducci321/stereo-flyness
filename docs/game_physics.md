@@ -160,6 +160,8 @@ Only the 0.9 version is close enough for a 1-unit nudge to be meaningful.
 | ~~Level-file y coordinates vs world y~~ | **Resolved (§10):** world y = level y + 90 | — |
 | Collision order within a tick for multiple overlapping objects | Process in order of x | Bot validation |
 | Does stair snapping apply to ordinary solid blocks? (§6) | Yes (implemented). The decompiled check requires the previous object's `getType()` to be non-zero, and `Solid` is 0 in OpenGD's enum, which would disable it for blocks. Either the decompile or our reading may be off. The effect is at most a 1-unit nudge per landing. | Bot on Stereo Madness's staircases; toggling `_stair_snap` shows whether it matters |
+| Vertical speed when passing through a portal (cube → ship, ship → cube) | Carried over unchanged | Bot on Stereo Madness's mode switches; the video at the first ship portal |
+| Ship bumping under a block while moving down | No bump; dies only via the inner hitbox (a literal reading of gdp's `vy >= 0` condition) | Bot validation |
 | Hazard vs solid order in one tick | Solids resolved first (landing snap), then hazards checked at the snapped position | Bot validation |
 | Gravity on the cube's jump tick (§3) | Applied (64-unit jump), matching the community figure and video, not a literal reading of gdp | Bot on Stereo Madness: wrong jump arcs would show up as impossible staircases and slab gaps |
 

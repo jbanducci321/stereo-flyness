@@ -31,3 +31,17 @@ STAIR_SNAP_TOLERANCE = 1.0  # max offset from a step, and max x nudge per landin
 CUBE_JUMP_VELOCITY = 11.1800318
 CUBE_GRAVITY = 0.958199024
 MAX_FALL_SPEED = 15.0  # vy is clamped to >= -15 while falling
+
+# Ship [§4] ("falling" means vy < 0; see the open questions in §8)
+SHIP_GRAVITY = 0.9582
+SHIP_HOLD_RISING = 0.4  # held: vy += SHIP_GRAVITY * dt_y * factor
+SHIP_HOLD_FALLING = 0.5
+SHIP_RELEASE_RISING = 0.4 * 1.2  # released: vy -= SHIP_GRAVITY * dt_y * factor
+SHIP_RELEASE_FALLING = 0.4 * 0.8
+SHIP_MAX_UP = 8.0
+SHIP_MAX_DOWN = 6.4
+SNAP_UP_SHIP = 6.0  # landing on top / bumping under solids
+
+# Portals [§5]
+PORTAL_WIDTH = 34.0
+PORTAL_HEIGHT = 86.0
