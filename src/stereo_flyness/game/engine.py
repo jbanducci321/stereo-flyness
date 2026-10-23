@@ -40,6 +40,9 @@ class Game:
         self.ticks = 0
         self.death: Death | None = None
         self.finished = False
+        # What happened in the last tick: "jump", "land", "portal_ship", "portal_cube", "death",
+        # "finish". Used by the run recorder and, later, replay sound effects.
+        self.events: list[str] = []
         self._box_x0 = [b.x0 for b in level.boxes]  # level.boxes is sorted by x0
         self._snapped_to: Box | None = None  # last solid landed on, for stair snapping [§6]
         self._snap_offset = 0.0
@@ -67,15 +70,21 @@ class Game:
         """Advance one 240 Hz tick with the button `held` (True) or released (False)."""
         if self.over:
             return
+        self.events = []
         p = self.player
-        last_y = p.y
+        last_y, was_on_ground = p.y, p.on_ground
+        if p.mode == "cube" and p.on_ground and held:
+            self.events.append("jump")
         self._update_velocity(p, held)
         p.x += P.X_PER_TICK
         p.y += p.vy * P.TICK_DT_Y
         self.ticks += 1
         self._collide(p, p.y - last_y)
+        if p.alive and p.on_ground and not was_on_ground:
+            self.events.append("land")
         if p.alive and p.x >= self.level.length:
             self.finished = True
+            self.events.append("finish")
 
     # -- velocity -----------------------------------------------------------------
 
@@ -199,6 +208,7 @@ class Game:
             if _touches_portal(p, portal):
                 p.mode = portal.mode
                 self.bounds = ship_bounds(portal.y) if portal.mode == "ship" else None
+                self.events.append(f"portal_{portal.mode}")
             elif p.x - P.HALF_PLAYER <= portal.x + P.PORTAL_WIDTH / 2:
                 return  # within its x range but not touching (yet)
             self._next_portal += 1  # triggered, or passed without touching
@@ -225,6 +235,7 @@ class Game:
     def _die(self, p: Player, b: Box) -> None:
         p.alive = False
         self.death = Death(b.kind, b.source_id, p.x, p.y, self.ticks)
+        self.events.append("death")
 
 
 def _touches_portal(p: Player, portal: Portal) -> bool:
