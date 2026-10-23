@@ -56,6 +56,7 @@ We use 64-bit floats with this same order (D20). Bit-exact float32 matching isn'
 | Gravity | **0.958199024** per frame², applied as `vy -= gravity * dt_y` each tick | gdp `updateTimeMod` (`m_gravity`) + `updateJump` | High |
 | Max fall speed | vy is clamped to ≥ **−15** while falling | gdp `updateJump` | High |
 | When a jump happens | Every tick where the cube is **on the ground and the button is held**. Holding therefore re-jumps the instant it lands. | gdp `updateJump` (`m_isOnGround && m_jumpBuffered`) | High (whether `m_jumpBuffered` means exactly "held" is medium) |
+| Gravity on the jump tick | **Applied:** the jump sets vy = 11.18, then gravity acts in that same tick. Read literally, gdp's `updateJump` skips gravity on the jump tick, but that gives a **66.5**-unit jump (105 ticks). The community figure (2.133 blocks = **64.0**) and our video (≈ 64, §9) match applying it (63.97, 103 ticks). The real game probably registers the jump earlier in its update order. | Engine checkpoint 1 test vs community + video | Medium-high (the bot confirms it on the real level) |
 | No ceiling in cube mode | Only the ground (y = 90) | OpenGD `checkCollisions` | Medium |
 
 **Derived numbers** (simulated from the constants above, 240 Hz with the 0.9 vertical scaling):
@@ -155,6 +156,7 @@ Only the 0.9 version is close enough for a 1-unit nudge to be meaningful.
 | ~~Ship area placement rule~~ | **Resolved (§10):** the rule fits all 3 Stereo Madness ship sections | — |
 | ~~Level-file y coordinates vs world y~~ | **Resolved (§10):** world y = level y + 90 | — |
 | Collision order within a tick for multiple overlapping objects | Process in order of x | Bot validation |
+| Gravity on the cube's jump tick (§3) | Applied (64-unit jump), matching the community figure and video, not a literal reading of gdp | Bot on Stereo Madness: wrong jump arcs would show up as impossible staircases and slab gaps |
 
 ## 9. Video validation (2026-10-22)
 
