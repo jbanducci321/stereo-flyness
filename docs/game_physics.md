@@ -56,6 +56,7 @@ We use 64-bit floats with this same order (D20). Bit-exact float32 matching isn'
 | Gravity | **0.958199024** per frame², applied as `vy -= gravity * dt_y` each tick | gdp `updateTimeMod` (`m_gravity`) + `updateJump` | High |
 | Max fall speed | vy is clamped to ≥ **−15** while falling | gdp `updateJump` | High |
 | When a jump happens | Every tick where the cube is **on the ground and the button is held**. Holding therefore re-jumps the instant it lands. | gdp `updateJump` (`m_isOnGround && m_jumpBuffered`) | High (whether `m_jumpBuffered` means exactly "held" is medium) |
+| Gravity on the jump tick | **Applied:** the jump sets vy = 11.18, then gravity acts in that same tick. Read literally, gdp's `updateJump` skips gravity on the jump tick, but that gives a **66.5**-unit jump (105 ticks). The community figure (2.133 blocks = **64.0**) and our video (≈ 64, §9) match applying it (63.97, 103 ticks). The real game probably registers the jump earlier in its update order. | Engine checkpoint 1 test vs community + video | Medium-high (the bot confirms it on the real level) |
 | No ceiling in cube mode | Only the ground (y = 90) | OpenGD `checkCollisions` | Medium |
 
 **Derived numbers** (simulated from the constants above, 240 Hz with the 0.9 vertical scaling):
@@ -65,6 +66,9 @@ We use 64-bit floats with this same order (D20). Bit-exact float32 matching isn'
 | Jump peak | 63.97 units = **2.13 blocks** (community figure: 2.13 ✓) |
 | Airtime, flat ground | 103 ticks = 0.429 s |
 | Jump length, flat ground | 133.7 units = **4.46 blocks** |
+| **Timing window to clear one spike** (engine, single press) | **57 ticks = 238 ms**: pressing while the player's centre is 212–284 units along, for a spike centred at x 315 |
+
+The spike window matters for the brain interface (T4): the Giant Fiber responds ~35–50 ms after its input starts, so the looming input must begin early enough for the jump to land inside this window.
 
 ## 4. Ship
 
@@ -155,6 +159,11 @@ Only the 0.9 version is close enough for a 1-unit nudge to be meaningful.
 | ~~Ship area placement rule~~ | **Resolved (§10):** the rule fits all 3 Stereo Madness ship sections | — |
 | ~~Level-file y coordinates vs world y~~ | **Resolved (§10):** world y = level y + 90 | — |
 | Collision order within a tick for multiple overlapping objects | Process in order of x | Bot validation |
+| Does stair snapping apply to ordinary solid blocks? (§6) | Yes (implemented). The decompiled check requires the previous object's `getType()` to be non-zero, and `Solid` is 0 in OpenGD's enum, which would disable it for blocks. Either the decompile or our reading may be off. The effect is at most a 1-unit nudge per landing. | Bot on Stereo Madness's staircases; toggling `_stair_snap` shows whether it matters |
+| Vertical speed when passing through a portal (cube → ship, ship → cube) | Carried over unchanged | Bot on Stereo Madness's mode switches; the video at the first ship portal |
+| Ship bumping under a block while moving down | No bump; dies only via the inner hitbox (a literal reading of gdp's `vy >= 0` condition) | Bot validation |
+| Hazard vs solid order in one tick | Solids resolved first (landing snap), then hazards checked at the snapped position | Bot validation |
+| Gravity on the cube's jump tick (§3) | Applied (64-unit jump), matching the community figure and video, not a literal reading of gdp | Bot on Stereo Madness: wrong jump arcs would show up as impossible staircases and slab gaps |
 
 ## 9. Video validation (2026-10-22)
 

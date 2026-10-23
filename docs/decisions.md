@@ -111,6 +111,16 @@ The GitHub repo is public. The FlyWire connectivity data is CC BY 4.0 and Shiu's
   - storing raw GD object IDs and resolving hitboxes at runtime (more engine logic, and the GD table leaks into the generators);
   - precomputed ship bounds in the file (the rule would live in two places).
 
+**D23. Engine interface: one boolean input per 240 Hz tick; every run is logged** (2026-10-23)
+- **Input:** `Game.tick(held)` advances one physics tick with the button held or not. That's the only input. The bot, test scripts and the brain interface all drive the game this way.
+- **Frames:** one 60 fps frame = 4 ticks. How often the brain is consulted, and how spikes map to presses, stays open (T4).
+- **Rules:** the engine is deterministic, and `game/` never imports `brain/` or `interface/`.
+- **Logging:** runs are logged per tick (`game/recorder.py`, R1). Replaying a log's inputs reproduces the run exactly.
+- **Alternatives considered:**
+  - Frame-level input (60 Hz): loses the physics' 240 Hz resolution.
+  - Separate press/release events: equivalent, but harder to log and to drive from spikes.
+- Spec: `docs/game_engine.md`.
+
 ## Open
 
 These are to be decided after Step 0:
