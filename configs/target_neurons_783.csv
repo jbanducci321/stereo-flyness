@@ -313,8 +313,8 @@ LPLC2,right,720575940645699124,flywire_annotations v3.1.0 (cell_type),
 LPLC2,right,720575940647358243,flywire_annotations v3.1.0 (cell_type),
 LPLC2,right,720575940653742753,flywire_annotations v3.1.0 (cell_type),
 LPLC2,right,720575940661316993,flywire_annotations v3.1.0 (cell_type),
-DNp01,left,720575940622838154,flywire_annotations v3.1.0 (cell_type),
-DNp01,right,720575940632499757,flywire_annotations v3.1.0 (cell_type),
+DNp01,left,720575940622838154,flywire_annotations v3.1.0 (cell_type),Giant Fiber
+DNp01,right,720575940632499757,flywire_annotations v3.1.0 (cell_type),Giant Fiber
 T4c,left,720575940604766688,flywire_annotations v3.1.0 (cell_type),
 T4c,left,720575940604943906,flywire_annotations v3.1.0 (cell_type),
 T4c,left,720575940604951840,flywire_annotations v3.1.0 (cell_type),
@@ -6618,3 +6618,7 @@ VS7,left,720575940624931564,flywire_annotations v3.1.0 (cell_type),
 VS7,right,720575940618681709,flywire_annotations v3.1.0 (cell_type),
 VS8,left,720575940633923298,flywire_annotations v3.1.0 (cell_type),
 VS8,right,720575940636972400,flywire_annotations v3.1.0 (cell_type),
+DNp20,left,720575940629390123,flywire_annotations v3.1.0 (cell_type),"similar to DNOVS1 by morphology (Namiki et al. 2018 eLife, Supplementary file 2)"
+DNp20,right,720575940644166048,flywire_annotations v3.1.0 (cell_type),"similar to DNOVS1 by morphology (Namiki et al. 2018 eLife, Supplementary file 2)"
+DNp22,left,720575940615043368,flywire_annotations v3.1.0 (cell_type),"similar to DNOVS2 or DNOVS3, uncertain (Namiki et al. 2018 eLife, Supplementary file 2)"
+DNp22,right,720575940631225996,flywire_annotations v3.1.0 (cell_type),"similar to DNOVS2 or DNOVS3, uncertain (Namiki et al. 2018 eLife, Supplementary file 2)"

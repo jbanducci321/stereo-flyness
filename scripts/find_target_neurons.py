@@ -8,9 +8,10 @@ The annotation table comes from github.com/flyconnectome/flywire_annotations, pi
 v3.1.0. Its `root_id` column is already in the v783 release. It is downloaded into data/ (never
 committed) and checked against a SHA-256.
 
-DNOVS1/2 are not in the table under those names, so they are NOT in the output. Instead the
-script lists the descending neurons that VS cells connect to most strongly, as candidates to
-match against the literature by hand.
+DNOVS1/2 are not in the table under those names. Namiki et al. (2018, eLife, Supplementary file 2)
+list DNp20 as similar to DNOVS1 and DNp22 as similar to "DNOVS2 or DNOVS3", so we use those
+types (see NOTES). The script also lists every descending neuron VS cells connect to, strongest
+first, as a cross-check.
 
 Usage:
     uv run python scripts/download_data.py        # connectome files first
@@ -37,16 +38,27 @@ ANN_URL = (
 ANN_SHA256 = "9a4f8b2f843196074431ebd7cd883536afa1be86c8a4ce90970441e8be81d1be"
 SOURCE = f"flywire_annotations {ANN_RELEASE} (cell_type)"
 
+VS_TYPES = [f"VS{i}" for i in range(1, 9)]
+
 # Cell types to collect, grouped by pathway. Names are exact `cell_type` values.
 TARGETS = {
     "escape": ["LC4", "LPLC2", "DNp01"],
-    "steering": ["T4c", "T4d", "T5c", "T5d"] + [f"VS{i}" for i in range(1, 9)],
+    "steering": ["T4c", "T4d", "T5c", "T5d"] + VS_TYPES + ["DNp20", "DNp22"],
+}
+# Written into the `notes` column for every neuron of that type.
+NAMIKI = "Namiki et al. 2018 eLife, Supplementary file 2"
+NOTES = {
+    "DNp01": "Giant Fiber",
+    "DNp20": f"similar to DNOVS1 by morphology ({NAMIKI})",
+    "DNp22": f"similar to DNOVS2 or DNOVS3, uncertain ({NAMIKI})",
 }
 # Connections to summarise: (presynaptic types, postsynaptic types).
 CONNECTIONS = [
     (["LC4"], ["DNp01"]),
     (["LPLC2"], ["DNp01"]),
-    (["T4c", "T4d", "T5c", "T5d"], [f"VS{i}" for i in range(1, 9)]),
+    (["T4c", "T4d", "T5c", "T5d"], VS_TYPES),
+    (VS_TYPES, ["DNp20"]),
+    (VS_TYPES, ["DNp22"]),
 ]
 
 
@@ -90,7 +102,7 @@ def to_config(sel: pd.DataFrame) -> pd.DataFrame:
             "side": sel["side"].fillna("").values,
             "flywire_id": sel["flywire_id"].values,
             "source": SOURCE,
-            "notes": "",
+            "notes": sel["cell_type"].map(NOTES).fillna("").values,
         }
     )
     return out
@@ -167,12 +179,13 @@ def main() -> int:
     id2type = dict(zip(good["flywire_id"], good["cell_type"]))
     id2side = dict(zip(good["flywire_id"], good["side"]))
     for pre, post in CONNECTIONS:
-        print(f"\n== {'/'.join(pre)} -> {post[0] if len(post) == 1 else 'VS cells'} ==")
+        pre_name = "VS cells" if pre == VS_TYPES else "/".join(pre)
+        post_name = "VS cells" if post == VS_TYPES else "/".join(post)
+        print(f"\n== {pre_name} -> {post_name} ==")
         print(connection_summary(con, id2type, id2side, pre, post).to_string(index=False))
 
-    print("\n== DNOVS candidates: descending neurons VS cells synapse onto (strongest first) ==")
-    print("Match these to DNOVS1/2 from the literature before adding them to the config.")
-    print(vs_descending_partners(con, ann, TARGETS["steering"][4:]).to_string(index=False))
+    print("\n== Cross-check: descending neurons VS cells synapse onto (strongest first) ==")
+    print(vs_descending_partners(con, ann, VS_TYPES).to_string(index=False))
 
     OUT_CSV.parent.mkdir(exist_ok=True)
     to_config(good).to_csv(OUT_CSV, index=False)
