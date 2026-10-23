@@ -88,6 +88,29 @@ The GitHub repo is public. The FlyWire connectivity data is CC BY 4.0 and Shiu's
 - **Why:** it's the project's centerpiece and makes the "fly vs our code" distinction visible.
 - **Dependencies:** the viewer library (likely pygame) and any 3D/morphology rendering are chosen when the viewer is built, with the user's approval.
 
+**D20. Game physics: Geometry Dash 2.2, exact gameplay, native units** (2026-10-22)
+- **Version:** 2.2 physics: fixed 240 Hz tick, deterministic, and the best documented (camila314/gdp 2.2). The Stereo Madness copies are 2.1 uploads, but its layout is believed unchanged. Revisit only if the bot can't beat the converted level.
+- **Fidelity:** exact for everything that affects gameplay (gravity, jump, ship acceleration and limits, speed, tick rate, hitboxes, landing and death rules, stair snapping). Visuals don't need to match.
+- **Units:** GD native units internally (1 block = 30 units, velocities per 1/60 s, 240 Hz ticks). Convert only for display.
+- **Numerics:** 64-bit floats with the game's update order (velocity, then position, then collisions). No bit-exact float32 matching.
+- **Sources:** facts only, each cited in `docs/game_physics.md`. No code copied from camila314/gdp (no license) or OpenGD (GPL-3.0).
+- **Audio:** the song and sound effects (copyrighted) are loaded from the user's own local files for replays and never committed.
+
+**D21. Stereo Madness layout source: official main-level data, cross-checked** (2026-10-23)
+- The layout comes from the official main-level data in Open-GD/OpenGD `mainLevels.json` (pinned commit and SHA-256). It's decoded with the standard library, so no new dependency.
+- It's cross-checked against the archived server copy 77236587: all 1,399 gameplay objects are identical.
+- Server level 94729537 was rejected: it's a different level, despite its name.
+- Fetched and decoded by `scripts/fetch_stereo_madness.py` into git-ignored `data/gd/` (D9).
+
+**D22. Level format: JSON hitboxes, ground at y = 0** (2026-10-23)
+- **Structure:** one JSON file per level, in GD units with the ground at y = 0. Gameplay objects are stored as ready-made axis-aligned hitboxes (`kind`, corners, original GD ID), so the engine only does rectangle overlaps.
+- **Portals** store x/y/mode. The engine derives ship floor/ceiling from the portal's y with the GD rule, keeping it in one place for Stereo Madness and generated levels.
+- **Dropped:** decoration, triggers and coins.
+- **Where it lives:** spec in `docs/level_format.md`; code in `src/stereo_flyness/game/level.py` and `objects.py`.
+- **Alternatives considered:**
+  - storing raw GD object IDs and resolving hitboxes at runtime (more engine logic, and the GD table leaks into the generators);
+  - precomputed ship bounds in the file (the rule would live in two places).
+
 ## Open
 
 These are to be decided after Step 0:
