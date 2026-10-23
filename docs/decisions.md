@@ -96,6 +96,12 @@ The GitHub repo is public. The FlyWire connectivity data is CC BY 4.0 and Shiu's
 - **Sources:** facts only, each cited in `docs/game_physics.md`. No code copied from camila314/gdp (no license) or OpenGD (GPL-3.0).
 - **Audio:** the song and sound effects (copyrighted) are loaded from the user's own local files for replays and never committed.
 
+**D21. Stereo Madness layout source: official main-level data, cross-checked** (2026-10-23)
+- The layout comes from the official main-level data in Open-GD/OpenGD `mainLevels.json` (pinned commit and SHA-256). It's decoded with the standard library, so no new dependency.
+- It's cross-checked against the archived server copy 77236587: all 1,399 gameplay objects are identical.
+- Server level 94729537 was rejected: it's a different level, despite its name.
+- Fetched and decoded by `scripts/fetch_stereo_madness.py` into git-ignored `data/gd/` (D9).
+
 ## Open
 
 These are to be decided after Step 0:

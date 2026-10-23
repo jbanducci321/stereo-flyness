@@ -80,6 +80,7 @@ The canonical, up-to-date log is **`docs/decisions.md`**. Read it first. Summary
 | D17 | Closed-loop runs use `BrainStepper.run_frames()` (one Brian2 run, callback per frame), not one `step()` per frame. This avoids ~100–250 ms of overhead per call, and the results are identical. |
 | D18 (provisional) | Subcircuit size target: up to ~20k neurons / ~3M connections, from benchmarks. The extraction rule itself is still open (S5). |
 | D20 | Game physics: GD **2.2** (240 Hz tick), exact gameplay, native units (1 block = 30), 64-bit floats with the game's update order. Facts only from camila314/gdp and OpenGD; every constant is cited in `docs/game_physics.md`. The song and SFX come from the user's local files and are never committed. |
+| D21 | Stereo Madness layout: the official main-level data (OpenGD `mainLevels.json`, pinned), identical to server copy 77236587 on all 1,399 gameplay objects. Level 94729537 was rejected (a different level). `scripts/fetch_stereo_madness.py` writes it to git-ignored `data/gd/`. |
 | D19 | End deliverable: a **record-and-replay viewer**. Closed-loop runs log every frame (game state, inputs, watched spikes) from the `run_frames` callback, and a viewer replays at real 60 fps with a brain-activity panel. It must visibly separate our input encoding from the fly's spikes, say it's a replay of a simulation, and never smooth or alter recorded activity. Live mode is optional, for small subcircuits only. |
 
 ### Open decisions (not yet made; don't decide these unilaterally)
@@ -245,9 +246,10 @@ Each `step()` call costs ~100–250 ms of Brian2 overhead regardless of network 
   - Flag 2.1 vs 2.2 differences. 2.2 likely uses a fixed **240 Hz** physics tick.
   - `camila314/pathfinder` (full support only up to GD 1.7, not licensed for redistribution) is a weak, optional cross-check.
 - **Stereo Madness layout:**
-  - Candidate server copies: level IDs **94729537** (primary, "stereo madness copy" by RobTopArchiver, GD 2.1), 77236587 (backup), 1556066 (1.7 copy). Not yet verified.
-  - Fetch with gd.py (MIT, **archived March 2025**: test it first; alternatives are the GDBrowser API or a direct server request), and decode with **gdparse** (MIT).
-  - Keep only gameplay objects (blocks, spikes, ship/cube portals, plus the ship-mode floor/ceiling bounds). If pads or orbs appear, the copy or conversion is wrong.
+  - **Done (D21):** `uv run python scripts/fetch_stereo_madness.py [--cross-check]` downloads the official main-level data and decodes it with the standard library. No gd.py or gdparse is needed.
+  - It writes `data/gd/stereo_madness_objects.csv`: 2,291 objects, 1,399 of them gameplay; no pads or orbs.
+  - The format, coordinates (world y = level y + 90), ID categories and portal timings are in `docs/game_physics.md` §10.
+  - Next (checkpoint 3): convert to our own level format, keeping only gameplay objects plus the ship-mode floor/ceiling bounds.
 - **Validation:** a search-based bot must be able to beat every level, including converted Stereo Madness. If it can't, our physics or conversion is wrong.
 - **Ownership of the held-out test:** Shannyn runs the converter, checks total length and the cube/ship section boundaries against a playthrough video, and keeps it sealed. Jacob, who tunes, never tunes on it.
 

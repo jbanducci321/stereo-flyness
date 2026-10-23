@@ -151,9 +151,9 @@ Only the 0.9 version is close enough for a 1-unit nudge to be meaningful.
 |---|---|---|
 | Exact meaning of gdp's `playerIsFallingBugged()` (selects the ship 0.5/0.4 and 0.8/1.2 factors) | Falling ⇔ vy < 0 (normal gravity) | Ship arcs vs gameplay video; the bot beating the ship sections |
 | Does `m_jumpBuffered` mean "button currently held"? Are presses buffered in mid-air? | Held = buffered; no mid-air buffer for the cube | Bot + video; relevant to the brain readout rule (T4) |
-| Vertical offsets of the half-spike (39) and slab (40) hitboxes | Centred (as OpenGD), **but the video suggests slabs are top-aligned in their cell** | Checkpoint 2 level data (slab y values); a close-up Show Hitboxes screenshot if needed |
-| Ship area placement rule in 2.2 | OpenGD's 2.1-era rule (§4) | Ship sections of the converted level (checkpoint 3) |
-| Level-file y coordinates vs world y (ground at 90) | Offset determined from the data | Checkpoint 2 (blocks resting on the ground) |
+| ~~Vertical offsets of the half-spike (39) and slab (40) hitboxes~~ | **Resolved (§10):** hitboxes are centred on the object's *position*, and the level places these objects off-centre in their cell (slab at cell centre + 8, so its top is flush with the cell top, as in the video) | — |
+| Ship area placement rule in 2.2 | OpenGD's 2.1-era rule (§4). The first ship section fits it (ceiling pits at level y 297 under a ceiling at 300). | All 3 ship portals checked in checkpoint 3 |
+| ~~Level-file y coordinates vs world y~~ | **Resolved (§10):** world y = level y + 90 | — |
 | Collision order within a tick for multiple overlapping objects | Process in order of x | Bot validation |
 
 ## 9. Video validation (2026-10-22)
@@ -181,6 +181,70 @@ Only the 0.9 version is close enough for a 1-unit nudge to be meaningful.
 - the half-spike hitbox (none was seen close up).
 
 Those are left to the level data (checkpoint 2–3) and the bot (Step 1).
+
+## 10. Stereo Madness level data (checkpoint 2, 2026-10-23)
+
+### Source
+- **Official layout:** the main-level data in Open-GD/OpenGD `Content/Custom/mainLevels.json` (commit `2a0e307`, SHA-256 pinned), key `"1"`.
+  - It's RobTop's level data, not OpenGD code. It's downloaded locally by `scripts/fetch_stereo_madness.py` and never committed (D9).
+- **Decoding:** main-level strings are stored without the standard gzip header (`H4sIAAAAAAAAA`). With it restored, they decode with Python's standard library (base64 + gzip). **No new dependency.**
+- **Cross-check:** the archived server copy, level **77236587** ("Stereo Madness", GD 2.1 upload).
+  - **All 1,399 gameplay objects are identical.** The only differences are 3 secret coins stored under different IDs (142 vs 1329).
+  - Level **94729537** ("stereo madness copy") is **not** Stereo Madness: its first spike is at x = 20,295, and it uses gravity portals. **Rejected.**
+
+### Format
+- **Level string:** `settings;object;object;…`.
+- **Each object:** `key,value,key,value,…`. Keys used in Stereo Madness:
+
+| Key | Meaning |
+|---|---|
+| 1 | Object ID |
+| 2 | x |
+| 3 | y |
+| 4 | Flip x |
+| 5 | Flip y |
+| 6 | Rotation (degrees) |
+| 7–13 | Trigger and coin settings (not gameplay) |
+
+### Coordinates
+
+| Fact | Value | Confidence |
+|---|---|---|
+| Position meaning | Object positions (keys 2, 3) are the object's **centre**, in level units | High |
+| Ground in level coordinates | y = 0 (objects resting on it sit at y = 15) | High |
+| Level to world | **world y = level y + 90** (§1: ground surface at world y 90) | High |
+| Hitboxes | Centred on the object's position (§5). Objects that sit low or high in their cell have that offset built into their y. | High |
+| Examples | Spike: y = 15. Half spike (39): y = 6. Ground pit (9): y = 2, so its hitbox straddles the ground (matches the video). Slab (40): y = 23/53/83 = cell centre + 8, so a 14-unit hitbox has its top flush with the cell top (matches the video). | High |
+
+### Inventory (2,291 objects)
+
+| Category | IDs (count) | Total |
+|---|---|---|
+| **Solid** | 2 (356), 1 (168), 40 slab (111), 7 (69), 3 (32), 6 (30), 4 (18), 62 (1), 65 (1) | 786 |
+| **Hazard** | 9 ground pit (423), 8 spike (166), 103 small spike (14), 39 half spike (7) | 610 |
+| **Ship portal** | 13 | 3 |
+| **Cube portal** | 12 | 1 |
+| Decoration (no collision) | 5 (661), 17/16/15 rods, 18–21 decorative spikes, 41 chains, 54 ball | 869 |
+| Trigger (colour changes etc.; no collision) | 29, 30, 22, 23, 27 | 19 |
+| Collectible (secret coins; ignored) | 142 | 3 |
+
+- **No jump pads, orbs, speed portals, gravity portals, slopes or mini portals** ✅ (D6).
+- **The decorative spikes (18–21) are not hazards.** These are the magenta background spikes in the video.
+- **Rotation and flips:**
+  - Hazards are only flipped vertically or rotated 180°. Their centred hitbox doesn't change.
+  - Solids are rotated by ±90°; all solids used are 30 × 30 except the unrotated slabs.
+  - So no hitbox rotation logic is needed for this level.
+- **Confidence:** IDs 1–103 are classified from OpenGD's object table (high). Trigger IDs 22/23/27/29/30 and coin ID 142 aren't in that table and are classified from community knowledge (medium). They have no collision either way.
+
+### Portals and timing (at 311.58 units/s)
+
+| Portal | x | Level y | ≈ time | Matches video? |
+|---|---|---|---|---|
+| Ship | 7,995 | 165 | 25.7 s | ✅ (ship entered ≈ 25 s) |
+| Cube | 12,555 | 149 | 40.3 s | ✅ (cube portal ≈ 40 s) |
+| Ship | 22,935 | 149 | 73.6 s | Not in video |
+| Ship (while already a ship: re-sets the bounds) | 24,045 | 315 | 77.2 s | Not in video |
+| **Level end** | 26,384 | — | **84.7 s** | — |
 
 **Overall validation (Step 1):** our engine is "correct" when:
 1. the jump arc matches §3;

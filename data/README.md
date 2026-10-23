@@ -13,7 +13,7 @@ uv run python scripts/download_data.py
 | `Connectivity_783.parquet` | [Shiu et al. model repo](https://github.com/philshiu/Drosophila_brain_model), commit `91bdd1e` | FlyWire v783 | Repo: MIT. Underlying FlyWire data: CC BY 4.0 ([Zenodo](https://zenodo.org/records/10676866)) | `download_data.py` |
 | `Completeness_783.csv` | Same as above | FlyWire v783 | Same as above | `download_data.py` |
 | Cell-type labels | [Codex](https://codex.flywire.ai/) (requires sign-in) or [flywire_annotations](https://github.com/flyconnectome/flywire_annotations) | v783 | To be checked: see the Codex download page's citation requirements | Not yet downloaded |
-| Stereo Madness level data | Extracted locally from Geometry Dash level data | GD 2.1 copy | Level design © RobTop Games. **Never commit.** | Not yet extracted |
+| Stereo Madness level data (`gd/`) | Official main-level data via [Open-GD/OpenGD](https://github.com/Open-GD/OpenGD) `mainLevels.json`, commit `2a0e307`, cross-checked with server copy 77236587 | GD 2.1 layout (portal timings match a 2.2 playthrough) | Level design © RobTop Games. **Never commit.** | `uv run python scripts/fetch_stereo_madness.py` |
 
 ## What's in the connectome files
 
