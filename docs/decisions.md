@@ -102,6 +102,15 @@ The GitHub repo is public. The FlyWire connectivity data is CC BY 4.0 and Shiu's
 - Server level 94729537 was rejected: it's a different level, despite its name.
 - Fetched and decoded by `scripts/fetch_stereo_madness.py` into git-ignored `data/gd/` (D9).
 
+**D22. Level format: JSON hitboxes, ground at y = 0** (2026-10-23)
+- **Structure:** one JSON file per level, in GD units with the ground at y = 0. Gameplay objects are stored as ready-made axis-aligned hitboxes (`kind`, corners, original GD ID), so the engine only does rectangle overlaps.
+- **Portals** store x/y/mode. The engine derives ship floor/ceiling from the portal's y with the GD rule, keeping it in one place for Stereo Madness and generated levels.
+- **Dropped:** decoration, triggers and coins.
+- **Where it lives:** spec in `docs/level_format.md`; code in `src/stereo_flyness/game/level.py` and `objects.py`.
+- **Alternatives considered:**
+  - storing raw GD object IDs and resolving hitboxes at runtime (more engine logic, and the GD table leaks into the generators);
+  - precomputed ship bounds in the file (the rule would live in two places).
+
 ## Open
 
 These are to be decided after Step 0:

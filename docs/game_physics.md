@@ -78,7 +78,7 @@ Values are for normal size and normal gravity, as in Stereo Madness. Velocities 
 | Speed limits | **−6.4 ≤ vy ≤ +8.0** | gdp `updateJump` (clamps 8.0 and 0.8 × −8) | High |
 | Floor/ceiling contact | Position snaps to the boundary and vy is set to 0. **No death**: the ship slides along floor and ceiling. | OpenGD `checkCollisions` | Medium |
 | Play area | **10 blocks (300 units)** between floor and ceiling | Community wiki + OpenGD | High |
-| Area placement | On entering a ship portal: centre = 240 if portal y < 270, otherwise `floor(portalY/30)*30`. Floor = centre − 150, ceiling = centre + 150. For a low portal, the floor is the ground (90) and the ceiling is 390. | OpenGD `PlayLayer` (portal activation + bounds) | Medium (2.1-era; checked against the level in checkpoint 3) |
+| Area placement | On entering a ship portal: centre = 240 if portal y < 270, otherwise `floor(portalY/30)*30`. Floor = centre − 150, ceiling = centre + 150. For a low portal, the floor is the ground (90) and the ceiling is 390. | OpenGD `PlayLayer` (portal activation + bounds); **validated on all 3 Stereo Madness ship sections (§10)** | High |
 
 **Derived numbers** (from rest / from limits):
 
@@ -152,7 +152,7 @@ Only the 0.9 version is close enough for a 1-unit nudge to be meaningful.
 | Exact meaning of gdp's `playerIsFallingBugged()` (selects the ship 0.5/0.4 and 0.8/1.2 factors) | Falling ⇔ vy < 0 (normal gravity) | Ship arcs vs gameplay video; the bot beating the ship sections |
 | Does `m_jumpBuffered` mean "button currently held"? Are presses buffered in mid-air? | Held = buffered; no mid-air buffer for the cube | Bot + video; relevant to the brain readout rule (T4) |
 | ~~Vertical offsets of the half-spike (39) and slab (40) hitboxes~~ | **Resolved (§10):** hitboxes are centred on the object's *position*, and the level places these objects off-centre in their cell (slab at cell centre + 8, so its top is flush with the cell top, as in the video) | — |
-| Ship area placement rule in 2.2 | OpenGD's 2.1-era rule (§4). The first ship section fits it (ceiling pits at level y 297 under a ceiling at 300). | All 3 ship portals checked in checkpoint 3 |
+| ~~Ship area placement rule~~ | **Resolved (§10):** the rule fits all 3 Stereo Madness ship sections | — |
 | ~~Level-file y coordinates vs world y~~ | **Resolved (§10):** world y = level y + 90 | — |
 | Collision order within a tick for multiple overlapping objects | Process in order of x | Bot validation |
 
@@ -245,6 +245,20 @@ Those are left to the level data (checkpoint 2–3) and the bot (Step 1).
 | Ship | 22,935 | 149 | 73.6 s | Not in video |
 | Ship (while already a ship: re-sets the bounds) | 24,045 | 315 | 77.2 s | Not in video |
 | **Level end** | 26,384 | — | **84.7 s** | — |
+
+### Conversion and ship-area check (checkpoint 3)
+
+`scripts/convert_stereo_madness.py` builds our level format (D22, `docs/level_format.md`).
+- **Result:** **1,396 hitboxes** (675 blocks, 111 slabs, 423 pits, 166 spikes, 14 small spikes, 7 half spikes) and 4 portals. It's written to git-ignored `data/gd/stereo_madness.json`, with an overview SVG in `results/levels/`.
+- **Ship areas from the rule in §4,** with all objects in each section classified:
+
+| Ship section | Floor / ceiling (level y) | Inside | Straddling a boundary | Beyond (unreachable) | Evidence for the bounds |
+|---|---|---|---|---|---|
+| 25.7–40.3 s | 0 / 300 | 130 | 0 | 4 above (portal-entrance walls) | Blocks line both floor and ceiling (8/8); hanging spikes stop at y 291 |
+| 73.6–77.2 s | 0 / 300 | 39 | 16 (pits hanging from or resting on the lines) | 11 above (walls) | Pits straddle exactly y 0 and y 300 |
+| 77.2–84.7 s | **150 / 450** | 300 | 0 | 102 below (ground scenery under the raised area) | **78 blocks line the ceiling at exactly y 450**; no reachable hazard below y 219 |
+
+**Verdict:** the ship-bounds rule matches the level in every section. With a wrong rule, playable objects would sit outside the area, or the boundaries would have no lining blocks.
 
 **Overall validation (Step 1):** our engine is "correct" when:
 1. the jump arc matches §3;

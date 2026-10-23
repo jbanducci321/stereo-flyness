@@ -81,6 +81,7 @@ The canonical, up-to-date log is **`docs/decisions.md`**. Read it first. Summary
 | D18 (provisional) | Subcircuit size target: up to ~20k neurons / ~3M connections, from benchmarks. The extraction rule itself is still open (S5). |
 | D20 | Game physics: GD **2.2** (240 Hz tick), exact gameplay, native units (1 block = 30), 64-bit floats with the game's update order. Facts only from camila314/gdp and OpenGD; every constant is cited in `docs/game_physics.md`. The song and SFX come from the user's local files and are never committed. |
 | D21 | Stereo Madness layout: the official main-level data (OpenGD `mainLevels.json`, pinned), identical to server copy 77236587 on all 1,399 gameplay objects. Level 94729537 was rejected (a different level). `scripts/fetch_stereo_madness.py` writes it to git-ignored `data/gd/`. |
+| D22 | Level format: one JSON file per level, GD units with the ground at y = 0, gameplay objects as ready-made hitboxes (`kind` + corners), portals with x/y/mode. The engine derives ship bounds with `ship_bounds()`. Spec: `docs/level_format.md`; code: `game/level.py`, `game/objects.py`. |
 | D19 | End deliverable: a **record-and-replay viewer**. Closed-loop runs log every frame (game state, inputs, watched spikes) from the `run_frames` callback, and a viewer replays at real 60 fps with a brain-activity panel. It must visibly separate our input encoding from the fly's spikes, say it's a replay of a simulation, and never smooth or alter recorded activity. Live mode is optional, for small subcircuits only. |
 
 ### Open decisions (not yet made; don't decide these unilaterally)
@@ -249,7 +250,7 @@ Each `step()` call costs ~100–250 ms of Brian2 overhead regardless of network 
   - **Done (D21):** `uv run python scripts/fetch_stereo_madness.py [--cross-check]` downloads the official main-level data and decodes it with the standard library. No gd.py or gdparse is needed.
   - It writes `data/gd/stereo_madness_objects.csv`: 2,291 objects, 1,399 of them gameplay; no pads or orbs.
   - The format, coordinates (world y = level y + 90), ID categories and portal timings are in `docs/game_physics.md` §10.
-  - Next (checkpoint 3): convert to our own level format, keeping only gameplay objects plus the ship-mode floor/ceiling bounds.
+  - **Converted (D22):** `uv run python scripts/convert_stereo_madness.py` writes `data/gd/stereo_madness.json` in our level format (`docs/level_format.md`): 1,396 hitboxes + 4 portals. The ship-bounds rule is validated on all 3 ship sections (`docs/game_physics.md` §10).
 - **Validation:** a search-based bot must be able to beat every level, including converted Stereo Madness. If it can't, our physics or conversion is wrong.
 - **Ownership of the held-out test:** Shannyn runs the converter, checks total length and the cube/ship section boundaries against a playthrough video, and keeps it sealed. Jacob, who tunes, never tunes on it.
 
