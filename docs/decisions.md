@@ -88,6 +88,14 @@ The GitHub repo is public. The FlyWire connectivity data is CC BY 4.0 and Shiu's
 - **Why:** it's the project's centerpiece and makes the "fly vs our code" distinction visible.
 - **Dependencies:** the viewer library (likely pygame) and any 3D/morphology rendering are chosen when the viewer is built, with the user's approval.
 
+**D20. Game physics: Geometry Dash 2.2, exact gameplay, native units** (2026-10-22)
+- **Version:** 2.2 physics: fixed 240 Hz tick, deterministic, and the best documented (camila314/gdp 2.2). The Stereo Madness copies are 2.1 uploads, but its layout is believed unchanged. Revisit only if the bot can't beat the converted level.
+- **Fidelity:** exact for everything that affects gameplay (gravity, jump, ship acceleration and limits, speed, tick rate, hitboxes, landing and death rules, stair snapping). Visuals don't need to match.
+- **Units:** GD native units internally (1 block = 30 units, velocities per 1/60 s, 240 Hz ticks). Convert only for display.
+- **Numerics:** 64-bit floats with the game's update order (velocity, then position, then collisions). No bit-exact float32 matching.
+- **Sources:** facts only, each cited in `docs/game_physics.md`. No code copied from camila314/gdp (no license) or OpenGD (GPL-3.0).
+- **Audio:** the song and sound effects (copyrighted) are loaded from the user's own local files for replays and never committed.
+
 ## Open
 
 These are to be decided after Step 0:
