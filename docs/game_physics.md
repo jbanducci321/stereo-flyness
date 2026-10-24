@@ -82,7 +82,7 @@ Values are for normal size and normal gravity, as in Stereo Madness. Velocities 
 | Speed limits | **−6.4 ≤ vy ≤ +8.0** | gdp `updateJump` (clamps 8.0 and 0.8 × −8) | High |
 | Floor/ceiling contact | Position snaps to the boundary and vy is set to 0. **No death**: the ship slides along floor and ceiling. | OpenGD `checkCollisions` | Medium |
 | Play area | **10 blocks (300 units)** between floor and ceiling | Community wiki + OpenGD | High |
-| Area placement | On entering a ship portal: centre = 240 if portal y < 270, otherwise `floor(portalY/30)*30`. Floor = centre − 150, ceiling = centre + 150. For a low portal, the floor is the ground (90) and the ceiling is 390. | OpenGD `PlayLayer` (portal activation + bounds); **validated on all 3 Stereo Madness ship sections (§10)** | High |
+| Area placement | On entering a ship portal: centre = 240 if portal y < 270, otherwise `floor(portalY/30)*30`. Floor = centre − 150, ceiling = centre + 150. For a low portal, the floor is the ground (90) and the ceiling is 390. | OpenGD `PlayLayer` (portal activation + bounds); fits both reachable Stereo Madness ship portals (§10) | High |
 
 **Derived numbers** (from rest / from limits):
 
@@ -156,7 +156,7 @@ Only the 0.9 version is close enough for a 1-unit nudge to be meaningful.
 | Exact meaning of gdp's `playerIsFallingBugged()` (selects the ship 0.5/0.4 and 0.8/1.2 factors) | Falling ⇔ vy < 0 (normal gravity) | Ship arcs vs gameplay video; the bot beating the ship sections |
 | Does `m_jumpBuffered` mean "button currently held"? Are presses buffered in mid-air? | Held = buffered; no mid-air buffer for the cube | Bot + video; relevant to the brain readout rule (T4) |
 | ~~Vertical offsets of the half-spike (39) and slab (40) hitboxes~~ | **Resolved (§10):** hitboxes are centred on the object's *position*, and the level places these objects off-centre in their cell (slab at cell centre + 8, so its top is flush with the cell top, as in the video) | — |
-| ~~Ship area placement rule~~ | **Resolved (§10):** the rule fits all 3 Stereo Madness ship sections | — |
+| ~~Ship area placement rule~~ | **Resolved (§10):** the rule fits both reachable Stereo Madness ship portals. The third ship portal is unreachable (§10 correction). | — |
 | ~~Level-file y coordinates vs world y~~ | **Resolved (§10):** world y = level y + 90 | — |
 | Collision order within a tick for multiple overlapping objects | Process in order of x | Bot validation |
 | Does stair snapping apply to ordinary solid blocks? (§6) | Yes (implemented). The decompiled check requires the previous object's `getType()` to be non-zero, and `Solid` is 0 in OpenGD's enum, which would disable it for blocks. Either the decompile or our reading may be off. The effect is at most a 1-unit nudge per landing. | Bot on Stereo Madness's staircases; toggling `_stair_snap` shows whether it matters |
@@ -252,7 +252,7 @@ Those are left to the level data (checkpoint 2–3) and the bot (Step 1).
 | Ship | 7,995 | 165 | 25.7 s | ✅ (ship entered ≈ 25 s) |
 | Cube | 12,555 | 149 | 40.3 s | ✅ (cube portal ≈ 40 s) |
 | Ship | 22,935 | 149 | 73.6 s | Not in video |
-| Ship (while already a ship: re-sets the bounds) | 24,045 | 315 | 77.2 s | Not in video |
+| Ship, **rotated 90°, unreachable** (see the correction below) | 24,045 | 315 | 77.2 s | Not in video |
 | **Level end** | 26,384 | — | **84.7 s** | — |
 
 ### Conversion and ship-area check (checkpoint 3)
@@ -268,6 +268,41 @@ Those are left to the level data (checkpoint 2–3) and the bot (Step 1).
 | 77.2–84.7 s | **150 / 450** | 300 | 0 | 102 below (ground scenery under the raised area) | **78 blocks line the ceiling at exactly y 450**; no reachable hazard below y 219 |
 
 **Verdict:** the ship-bounds rule matches the level in every section. With a wrong rule, playable objects would sit outside the area, or the boundaries would have no lining blocks.
+
+**Correction (bot checkpoint 4, 2026-10-24): the last row is wrong.** It assumed every portal is touched.
+- **The geometry:** the third ship portal (x 24,045, y 315) is **rotated 90°** and sits above the roof of a tunnel. Blocks at y 60–90 and 210–240 span its whole width, so the playable path runs at y 90–210 and **can't touch it**. The ship area therefore stays at **0 / 300** through the end of the level.
+- **The level agrees:** pits hang from y 297 (under a ceiling at 300) and sit on the ground at y 2 along the entire final stretch. The "102 objects below the floor" in that row are the actual final corridor's obstacles. The structures at 300–450 are scenery above the ceiling.
+- **The search bot,** which plays by touching portals, never reaches it, and finishes the level in that lower corridor.
+- **Limitations:**
+  - portal rotation isn't modelled; here the portal is unreachable either way;
+  - `Level.sections()` and the converter's report assume every portal is touched.
+
+## 11. Bot validation on Stereo Madness (bot checkpoint 4, 2026-10-24)
+
+`scripts/bot_stereo_madness.py` (search bot, `docs/bot.md`):
+- **Result:** the bot **beats the full level**: 71,942 states searched in ~5 s; the winning run is 84.6 s long with 77 jumps.
+- **Mode switches:** ship at 25.5 s, cube at 40.2 s, ship at 73.4 s. These match the level data and Jacob's video (ship ≈ 25.3 s, cube ≈ 40 s).
+
+**Sensitivity check: what does "beatable" prove?** Re-running the bot with each assumption changed:
+
+| Physics changed to... | Beatable? |
+|---|---|
+| Our choices | ✅ |
+| No gravity on the jump tick (66.5-unit jump) | ✅ |
+| No stair snapping | ✅ |
+| No 0.9 vertical scaling | ✅ |
+| Jump speed −3% / −7% / −10% | ✅ |
+| Cube gravity +10% | ✅ |
+| **Cube gravity +25%** | ❌ stuck at 64% |
+| Ship max climb −10% / −25% | ✅ |
+
+**Conclusion: Stereo Madness is forgiving.** Beating it confirms:
+- **the conversion is correct:** no impossible sections, wrong positions or broken portals;
+- **the physics is in the right ballpark:** only gross errors fail.
+
+It does **not** pin down fine details like jump-tick gravity, stair snapping or the 0.9 factor. Those rest on the decompiled code and the video measurements (§3, §9), and stay "medium-high" confidence.
+- **A sharper future test:** compare our engine tick by tick against a real GD run with logged inputs (e.g. via an input-logging mod).
+- **For the fly:** a forgiving level is good news. Timing errors of a few percent won't decide success.
 
 **Overall validation (Step 1):** our engine is "correct" when:
 1. the jump arc matches §3;
