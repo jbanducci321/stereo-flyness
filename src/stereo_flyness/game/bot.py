@@ -9,10 +9,17 @@ States that have already been fully explored and failed are remembered, so each 
 expanded once. For the cube, holding vs releasing in mid-air often leads to the same state, and
 that merging is what keeps the search small.
 
+The ship changes height and speed on every choice, so exact states almost never repeat. In ship
+mode, states are merged when they agree to within a height step and a vertical-speed step. That's
+an approximation: two merged states can differ in outcome. Too coarse (e.g. 2 units / 0.5 speed)
+and beatable levels look impossible, which the tests demonstrate. So `solve` searches with
+MERGE_STEPS[0] (fast) and, before declaring a level impossible, re-checks it with each finer step.
+
 If no path exists, the result reports the farthest point any branch reached and what killed the
 branches there. A level that can't be beaten in our engine points at a physics or conversion gap.
 """
 
+import functools
 from collections import Counter
 from dataclasses import dataclass, field
 
@@ -21,6 +28,10 @@ from stereo_flyness.game.level import Level
 from stereo_flyness.game.recorder import RunLog, play
 
 CHOICES = (False, True)  # release first: the bot prefers not to press
+# Ship merge steps (height in units, a block being 30; vertical speed in units/frame, range -6.4..+8),
+# coarse to fine. solve() tries them in order until one succeeds.
+MERGE_STEPS = ((1.0, 0.25), (0.5, 0.1))
+SHIP_Y_STEP, SHIP_VY_STEP = MERGE_STEPS[0]
 
 
 @dataclass
@@ -32,17 +43,23 @@ class BotResult:
     farthest_x: float  # farthest x any branch reached
     stuck: Counter = field(default_factory=Counter)  # (kind, source_id, x) of deaths near farthest_x
     budget_exhausted: bool = False
+    merge_steps: tuple[float, float] = MERGE_STEPS[0]  # ship merge steps used for this result
 
     @property
     def tick_inputs(self) -> list[bool]:
         return [held for held in self.frame_inputs for _ in range(self.frame_ticks)]
 
 
-def _key(game: Game) -> tuple:
-    """Everything that affects the rest of the run (positions rounded to absorb float noise)."""
+def _key(game: Game, ship_y_step: float = SHIP_Y_STEP, ship_vy_step: float = SHIP_VY_STEP) -> tuple:
+    """Everything that affects the rest of the run. Cube states are rounded only to absorb float
+    noise; ship states are bucketed by height and speed (see the module docstring)."""
     p = game.player
-    return (game.ticks, round(p.x, 6), round(p.y, 6), round(p.vy, 6), p.on_ground, p.mode,
-            game.bounds, game._next_portal, id(game._snapped_to), round(game._snap_offset, 6))
+    if p.mode == "ship":
+        y, vy = round(p.y / ship_y_step), round(p.vy / ship_vy_step)
+    else:
+        y, vy = round(p.y, 6), round(p.vy, 6)
+    return (game.ticks, round(p.x, 6), y, vy, p.on_ground, p.mode, game.bounds,
+            game._next_portal, id(game._snapped_to), round(game._snap_offset, 6))
 
 
 def search(level: Level, frame_ticks: int = 4, max_nodes: int = 2_000_000, key=_key) -> BotResult:
@@ -84,6 +101,17 @@ def search(level: Level, frame_ticks: int = 4, max_nodes: int = 2_000_000, key=_
         stack.append([game.snapshot(), 0, k])
 
     return _failure(frame_ticks, nodes, farthest_x, deaths)
+
+
+def solve(level: Level, steps=MERGE_STEPS, frame_ticks: int = 4, max_nodes: int = 2_000_000) -> BotResult:
+    """Search with the coarsest ship merge step first; only report failure if every finer step fails too."""
+    for y_step, vy_step in steps:
+        key = functools.partial(_key, ship_y_step=y_step, ship_vy_step=vy_step)
+        result = search(level, frame_ticks, max_nodes, key)
+        result.merge_steps = (y_step, vy_step)
+        if result.success:
+            return result
+    return result
 
 
 def _failure(frame_ticks, nodes, farthest_x, deaths, budget_exhausted=False) -> BotResult:
