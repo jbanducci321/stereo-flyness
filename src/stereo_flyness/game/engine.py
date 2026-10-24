@@ -13,13 +13,28 @@ Per-tick order, as in the game [§2]:
 """
 
 import bisect
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from stereo_flyness.game import physics as P
 from stereo_flyness.game.level import Box, Level, Portal, ship_bounds
 from stereo_flyness.game.player import Player
 
 _MAX_BOX_WIDTH = 30.0  # widest object kind; bounds the broad-phase search
+
+
+@dataclass(frozen=True)
+class Snapshot:
+    """Everything that changes during a run, for `Game.restore` (the level never changes)."""
+
+    player: Player
+    ticks: int
+    death: "Death | None"
+    finished: bool
+    events: tuple[str, ...]
+    snapped_to: Box | None
+    snap_offset: float
+    next_portal: int
+    bounds: tuple[float, float] | None
 
 
 @dataclass(frozen=True)
@@ -65,6 +80,20 @@ class Game:
     def progress(self) -> float:
         """Fraction of the level completed (0 to 1)."""
         return min(self.player.x / self.level.length, 1.0)
+
+    def snapshot(self) -> Snapshot:
+        """Save the full run state, so a search can rewind instead of replaying from the start."""
+        return Snapshot(replace(self.player), self.ticks, self.death, self.finished,
+                        tuple(self.events), self._snapped_to, self._snap_offset,
+                        self._next_portal, self.bounds)
+
+    def restore(self, s: Snapshot) -> None:
+        """Return to a saved state. Continuing with the same inputs gives the same run."""
+        self.player = replace(s.player)
+        self.ticks, self.death, self.finished = s.ticks, s.death, s.finished
+        self.events = list(s.events)
+        self._snapped_to, self._snap_offset = s.snapped_to, s.snap_offset
+        self._next_portal, self.bounds = s.next_portal, s.bounds
 
     def tick(self, held: bool) -> None:
         """Advance one 240 Hz tick with the button `held` (True) or released (False)."""

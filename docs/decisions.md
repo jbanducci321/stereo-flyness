@@ -121,6 +121,13 @@ The GitHub repo is public. The FlyWire connectivity data is CC BY 4.0 and Shiu's
   - Separate press/release events: equivalent, but harder to log and to drive from spikes.
 - Spec: `docs/game_engine.md`.
 
+**D24. Search bot validates levels; Stereo Madness is beatable in our engine** (2026-10-24)
+- **The bot:** a depth-first search over per-frame hold/release with rewinding and failed-state memory (`game/bot.py`, `docs/bot.md`). Ship states are merged in buckets, with a mandatory finer re-check before any "impossible" verdict.
+- **The result:** it beats Stereo Madness in ~5 s, with portal timings matching the data and the video.
+- **What that proves:** a sensitivity check shows the level stays beatable under several plausible physics errors. So this validates the conversion and the rough physics, not fine details (`game_physics.md` §11).
+- **A correction it found:** the third ship portal is unreachable (rotated 90°, above a tunnel roof), so the final section keeps the 0/300 area. This corrects the J3 conversion report.
+- **Going forward:** every generated level must be bot-beatable (Step 1.4).
+
 ## Open
 
 These are to be decided after Step 0:
