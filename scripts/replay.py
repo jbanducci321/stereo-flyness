@@ -1,6 +1,9 @@
 """Replay a recorded run (Step 1.3).
 
 Usage:
+    uv run python scripts/replay.py results/runs/bot_stereo_madness
+        open a window and play the run (Space pause, Left/Right +-1 s, , . frame step,
+        - + speed, R restart, Esc quit)
     uv run python scripts/replay.py results/runs/bot_stereo_madness --still 30
         save a picture of the run at 30 s (default: results/replays/<run>_<seconds>s.png)
 
@@ -15,6 +18,7 @@ from pathlib import Path
 
 from stereo_flyness.game.level import Level
 from stereo_flyness.game.recorder import RunLog
+from stereo_flyness.viewer.playback import run_window
 from stereo_flyness.viewer.render import save_still
 from stereo_flyness.viewer.timeline import Timeline
 
@@ -38,8 +42,11 @@ def main() -> int:
     timeline = Timeline(Level.load(level_path), log)
 
     if args.still is None:
-        print("Pass --still SECONDS (live playback comes in the next checkpoint).")
-        return 1
+        s = log.summary
+        outcome = "completed" if s.completed else f"died on {s.death_kind} at {s.progress:.1%}"
+        print(f"Playing {s.level}: {s.seconds:.1f} s, {outcome}. Esc to quit.")
+        run_window(timeline)
+        return 0
     out = args.out or ROOT / "results" / "replays" / f"{args.run.name}_{args.still:g}s.png"
     out.parent.mkdir(parents=True, exist_ok=True)
     save_still(timeline, args.still, out)
