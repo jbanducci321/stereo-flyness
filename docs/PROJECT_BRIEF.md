@@ -83,6 +83,7 @@ The canonical, up-to-date log is **`docs/decisions.md`**. Read it first. Summary
 | D21 | Stereo Madness layout: the official main-level data (OpenGD `mainLevels.json`, pinned), identical to server copy 77236587 on all 1,399 gameplay objects. Level 94729537 was rejected (a different level). `scripts/fetch_stereo_madness.py` writes it to git-ignored `data/gd/`. |
 | D22 | Level format: one JSON file per level, GD units with the ground at y = 0, gameplay objects as ready-made hitboxes (`kind` + corners), portals with x/y/mode. The engine derives ship bounds with `ship_bounds()`. Spec: `docs/level_format.md`; code: `game/level.py`, `game/objects.py`. |
 | D23 | Engine interface: `Game.tick(held)` advances one 240 Hz tick with a single boolean input (1 frame = 4 ticks). Deterministic; `game/` never imports `brain/`/`interface/`. Every run is logged per tick (`game/recorder.py`, R1). Spec: `docs/game_engine.md`. |
+| D24 | Search bot (`game/bot.py`, `docs/bot.md`): it beats Stereo Madness in ~5 s, which validates the conversion and the rough physics. The level is forgiving, so fine physics details aren't confirmed by it. The third ship portal is unreachable (the final section stays 0/300). Generated levels must be bot-beatable. |
 | D25 | Replay viewer (`viewer/`, `docs/replay_viewer.md`): a pygame window with controls and an overlay, stills, and MP4 export via ffmpeg (`--audio` for local audio). Hitbox-accurate simple visuals; polished graphics, the brain panel and music come last, for the final showcase. |
 | D19 | End deliverable: a **record-and-replay viewer**. Closed-loop runs log every frame (game state, inputs, watched spikes) from the `run_frames` callback, and a viewer replays at real 60 fps with a brain-activity panel. It must visibly separate our input encoding from the fly's spikes, say it's a replay of a simulation, and never smooth or alter recorded activity. Live mode is optional, for small subcircuits only. |
 
@@ -240,10 +241,10 @@ Each `step()` call costs ~100–250 ms of Brian2 overhead regardless of network 
 
 ## 7. The game (Step 1 in progress)
 
-**Status (2026-10-23):**
+**Status (2026-10-25):**
 - **The engine is built** (branch `jb-game-engine`, D23, `docs/game_engine.md`): cube, ship, collisions, hazards, portals and per-tick run logs.
+- **The search bot is built** (D24, `docs/bot.md`): it beats Stereo Madness.
 - **The replay viewer is built** (branch `jb-replay-viewer`, D25, `docs/replay_viewer.md`): watch, still and export any run.
-- **The search bot** (1.2, PR #6) beats Stereo Madness.
 - **Next:** the practice-level generators (1.4).
 - **Minimal headless Python clone:** plain shapes only, no RobTop art/music/assets, deterministic with seeds, plus a viewer. The viewer should render from **recorded run logs** (not only live play), so it can grow into the replay viewer (D19).
 - **Mechanics:**
