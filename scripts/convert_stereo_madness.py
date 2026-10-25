@@ -52,7 +52,8 @@ def validate(level: Level) -> None:
     kinds = Counter(b.kind for b in level.boxes)
     print(f"Boxes: {len(level.boxes)} {dict(kinds.most_common())}")
     print(f"Portals: {len(level.portals)}; length {level.length:.0f} units (~{level.length / UNITS_PER_SECOND:.1f} s)")
-    print("\nSections:")
+    print("\nSections (assuming every portal is touched; the ship portal at x 24,045 is actually")
+    print("unreachable, so the last section really keeps the 0/300 area; docs/game_physics.md §10):")
     for mode, x0, x1, bounds in level.sections():
         t0, t1 = x0 / UNITS_PER_SECOND, x1 / UNITS_PER_SECOND
         inside = [b for b in level.boxes if b.x1 > x0 and b.x0 < x1]
