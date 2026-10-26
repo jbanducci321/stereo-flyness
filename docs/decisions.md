@@ -128,6 +128,13 @@ The GitHub repo is public. The FlyWire connectivity data is CC BY 4.0 and Shiu's
 - **A correction it found:** the third ship portal is unreachable (rotated 90°, above a tunnel roof), so the final section keeps the 0/300 area. This corrects the J3 conversion report.
 - **Going forward:** every generated level must be bot-beatable (Step 1.4).
 
+**D25. Replay viewer: pygame window + ffmpeg export, hitbox-accurate visuals for now** (2026-10-24)
+- **What it does:** `viewer/` plays recorded runs in a pygame window (controls and overlay), saves stills, and exports MP4 via the ffmpeg program. pygame 2.6.1 is added as a dependency (LGPL), with Jacob's approval.
+- **Visuals:** objects are drawn as their real hitboxes. That's simple, honest and good for debugging. Polished graphics, the brain panel (R3) and music come last, for the final showcase, built on this viewer.
+- **Audio:** only ever loaded from the user's own local files; publishing needs permission or a royalty-free track.
+- **Alternatives considered:** matplotlib animation (clunky for real-time playback); a web viewer (more moving parts).
+- Spec: `docs/replay_viewer.md`.
+
 ## Open
 
 These are to be decided after Step 0:
