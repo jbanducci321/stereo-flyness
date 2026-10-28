@@ -23,7 +23,7 @@ def test_levels_are_bot_beatable_and_well_formed(difficulty):
     for seed in range(8):
         g = generate_cube(seed, difficulty)
         lv = g.level
-        assert replay(lv, solve(lv)).summary.completed  # the bot's winning inputs really finish
+        assert replay(lv, g.bot).summary.completed  # the bot's winning inputs really finish
         assert {b.kind for b in lv.boxes} <= STEREO_MADNESS_KINDS
         assert min(b.x0 for b in lv.boxes) >= START_RUNWAY - GRID  # nothing in the start runway
         assert max(b.x1 for b in lv.boxes) <= lv.length - END_RUNWAY + GRID
