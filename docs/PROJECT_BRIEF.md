@@ -85,6 +85,7 @@ The canonical, up-to-date log is **`docs/decisions.md`**. Read it first. Summary
 | D23 | Engine interface: `Game.tick(held)` advances one 240 Hz tick with a single boolean input (1 frame = 4 ticks). Deterministic; `game/` never imports `brain/`/`interface/`. Every run is logged per tick (`game/recorder.py`, R1). Spec: `docs/game_engine.md`. |
 | D24 | Search bot (`game/bot.py`, `docs/bot.md`): it beats Stereo Madness in ~5 s, which validates the conversion and the rough physics. The level is forgiving, so fine physics details aren't confirmed by it. The third ship portal is unreachable (the final section stays 0/300). Generated levels must be bot-beatable. |
 | D25 | Replay viewer (`viewer/`, `docs/replay_viewer.md`): a pygame window with controls and an overlay, stills, and MP4 export via ffmpeg (`--audio` for local audio). Hitbox-accurate simple visuals; polished graphics, the brain panel and music come last, for the final showcase. |
+| D26 | Practice levels (`docs/level_generators.md`): seeded chunk generator (v3) with physics-based easy/medium/hard tiers; every level bot-validated. Difficulty is measured per level (cube press windows: easy ≥ ~142 ms; medium/hard include sub-50 ms moments). Suites: training 50/50/50, held-out 20/20/20 (cube/ship/mixed). Only seeds are committed (`configs/level_suites.toml`); levels are built into `results/levels/`. |
 | D19 | End deliverable: a **record-and-replay viewer**. Closed-loop runs log every frame (game state, inputs, watched spikes) from the `run_frames` callback, and a viewer replays at real 60 fps with a brain-activity panel. It must visibly separate our input encoding from the fly's spikes, say it's a replay of a simulation, and never smooth or alter recorded activity. Live mode is optional, for small subcircuits only. |
 
 ### Open decisions (not yet made; don't decide these unilaterally)
@@ -239,13 +240,14 @@ Each `step()` call costs ~100–250 ms of Brian2 overhead regardless of network 
 - **240 Hz is affordable:** the cost tracks simulated time, not how often the game talks to the brain.
 - **Provisional subcircuit size target (D18): up to ~20k neurons / ~3M connections.** That puts a tuning grid at an overnight run on the laptop.
 
-## 7. The game (Step 1 in progress)
+## 7. The game (Step 1 complete)
 
-**Status (2026-10-25):**
-- **The engine is built** (branch `jb-game-engine`, D23, `docs/game_engine.md`): cube, ship, collisions, hazards, portals and per-tick run logs.
+**Status (2026-10-27):**
+- **The engine is built** (D23, `docs/game_engine.md`): cube, ship, collisions, hazards, portals and per-tick run logs.
 - **The search bot is built** (D24, `docs/bot.md`): it beats Stereo Madness.
-- **The replay viewer is built** (branch `jb-replay-viewer`, D25, `docs/replay_viewer.md`): watch, still and export any run.
-- **Next:** the practice-level generators (1.4).
+- **The replay viewer is built** (D25, `docs/replay_viewer.md`): watch, still and export any run.
+- **The practice-level generators are built** (D26, `docs/level_generators.md`): training and held-out suites with per-level difficulty statistics.
+- **Next:** the brain side. Pathway tests and subcircuit (J4/J5, after S4/S5), then the interface decisions (T4), then Step 2 (the fly's first play).
 - **Minimal headless Python clone:** plain shapes only, no RobTop art/music/assets, deterministic with seeds, plus a viewer. The viewer should render from **recorded run logs** (not only live play), so it can grow into the replay viewer (D19).
 - **Mechanics:**
   - cube: blocks, spikes, floor;

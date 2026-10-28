@@ -125,7 +125,9 @@ class Level:
 
         A ship portal reached while already in ship mode starts a new section with new bounds.
         """
-        out, mode, start, bounds = [], self.start_mode, 0.0, None
+        # A level that starts as a ship starts on the ground (y 15): the ground-level area.
+        bounds = ship_bounds(15.0) if self.start_mode == "ship" else None
+        out, mode, start = [], self.start_mode, 0.0
         for p in self.portals:
             out.append((mode, start, p.x, bounds))
             mode, start = p.mode, p.x

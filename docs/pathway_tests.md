@@ -98,7 +98,7 @@ Signs are predicted neurotransmitters (Eckstein et al. 2024), with glutamate tre
 
 This matches the known biology: VS cells are excited by downward motion and inhibited by upward motion through lobula plate intrinsic (LPi) neurons. It corrects the S2 table, which grouped all four subtypes together as "strong input to VS cells".
 
-### Two sign versions (D26)
+### Two sign versions (D27)
 **The problem.** T4 and T5 neurons release acetylcholine, so they're excitatory. But the model's sign table (`Excitatory` in `Connectivity_783.parquet`) marks some of them inhibitory. Those signs are machine-learning predictions (Eckstein et al. 2024):
 
 | | Inhibitory in the model's sign table | Not acetylcholine in the annotation table (`top_nt`) |
@@ -120,7 +120,7 @@ This matches the known biology: VS cells are excited by downward motion and inhi
 - The correction covers T4/T5 only, chosen because there's independent biological evidence for their transmitter. We don't go looking for other neurons to correct; that would be tuning the connectome by another name.
 - The corrected file is built by a script, saved in git-ignored `data/` (D13), and never replaces the original. `BrainStepper` takes it as its connectivity path, so Shiu's code stays unchanged (D14).
 - Every result is labelled `original` or `corrected` (folder name, tables, plots).
-- Which version carries into ship tuning (Step 5) and Stereo Madness is decided before any steering results come in (D26).
+- Which version carries into ship tuning (Step 5) and Stereo Madness is decided before any steering results come in (D27).
 - The escape tests (E1–E6) run on the original only.
 
 ### S1. Direction selectivity

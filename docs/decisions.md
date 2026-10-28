@@ -135,7 +135,19 @@ The GitHub repo is public. The FlyWire connectivity data is CC BY 4.0 and Shiu's
 - **Alternatives considered:** matplotlib animation (clunky for real-time playback); a web viewer (more moving parts).
 - Spec: `docs/replay_viewer.md`.
 
-**D26. Steering tests run on original and T4/T5-corrected signs** (2026-10-27)
+**D26. Practice levels: seeded chunk generator, physics-based tiers, bot-validated, seeds-only suites** (2026-10-27)
+- **How levels are built:** random chunks from a physics-based library, with gaps measured in seconds of reaction time. Easy/medium/hard tiers set gaps, chunk mix, stair width and ship opening height. Generator v3.
+- **Always beatable:** every level is beaten by the search bot; unbeatable candidates are re-rolled deterministically.
+- **No Stereo Madness influence:** the design uses SM's object kinds only, never its layout (D7).
+- **Difficulty is measured per level** (reaction gaps, cube press windows, ship openings). Measurements showed staircases and platform spikes need ~17 ms presses, so easy omits them (tightest window ~142 ms, 0% under 50 ms).
+- **Suites:**
+  - **training:** 50 cube / 50 ship / 50 mixed;
+  - **held-out:** 20 / 20 / 20, from a separate seed range, never used for tuning.
+  - Only the seeds are committed (`configs/level_suites.toml`); levels are built and cached locally.
+- **Alternatives considered:** free random placement (mostly junk or impossible levels); committing generated level files (large, and redundant with seeds).
+- Spec: `docs/level_generators.md`.
+
+**D27. Steering tests run on original and T4/T5-corrected signs** (2026-10-27)
 - **The problem:** the model's signs (`Excitatory` in `Connectivity_783.parquet`) are machine-learning neurotransmitter predictions (Eckstein et al. 2024). They mark 13.7% of T4d and 12.1% of T5d neurons inhibitory. T4/T5 are known to be cholinergic, and FlyWire's own annotation table (`top_nt`) calls ~98% of them acetylcholine. T4d/T5d are the main input to VS cells, so ~13% of that input has the wrong sign in the model.
 - **What we do:** each steering pathway test runs twice:
   - **original:** the connectome exactly as Shiu's model uses it. This stays the main result.
@@ -161,5 +173,5 @@ These are to be decided after Step 0:
 - Input encoding: looming → LC4/LPLC2 stimulation rate, and which neurons receive it.
 - Output rule: what Giant Fiber activity counts as a jump.
 - The dials and their allowed ranges.
-- Which sign version (original or T4/T5-corrected, D26) carries into ship tuning and Stereo Madness. Must be decided before any steering results come in.
+- Which sign version (original or T4/T5-corrected, D27) carries into ship tuning and Stereo Madness. Must be decided before any steering results come in.
 - Closed-loop simulation: resolved for now by D17 (Brian2 runtime with `run_frames`). Our own reimplementation of the same equations (e.g. PyTorch, validated against Brian2) stays an option if subcircuit runs are still too slow, or for the GPU phase.
