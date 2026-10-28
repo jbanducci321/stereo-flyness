@@ -68,10 +68,10 @@ Source: flywire_annotations v3.1.0, all IDs checked against `Completeness_783.cs
 | LC4 | looming detector | 104 (54 / 50) | All 104 synapse onto the Giant Fiber on their own side: 374 / 431 synapses, excitatory |
 | LPLC2 | looming detector | 210 (108 / 102) | 189 of 210 synapse onto the Giant Fiber: 458 / 622 synapses, excitatory |
 | DNp01 (Giant Fiber) | escape command | 2 (1 / 1) | Receives both looming inputs. The jump itself (via TTM, partly gap junctions) is outside the brain data |
-| T4c | motion detector (ON, upward) | 1,706 (864 / 842) | Strong input to VS cells (hundreds of T4/T5 cells per VS cell). Sign shows "mixed" because ~1–2% of T4/T5 are predicted GABA/glutamate; T4/T5 are known to be cholinergic, so likely prediction errors |
-| T4d | motion detector (ON, downward) | 1,573 (796 / 777) | As T4c |
-| T5c | motion detector (OFF, upward) | 1,541 (775 / 766) | As T4c |
-| T5d | motion detector (OFF, downward) | 1,467 (740 / 727) | As T4c |
+| T4c | motion detector (ON, upward) | 1,706 (864 / 842) | No direct input to VS cells. Reaches them only through inhibitory LPi neurons (34,629 synapses onto LPi09), so upward motion inhibits VS. 1.7% of neurons predicted inhibitory |
+| T4d | motion detector (ON, downward) | 1,573 (796 / 777) | Main direct input to VS cells: 19,174 synapses (28% of VS input). **13.7% of neurons predicted inhibitory** although T4/T5 are cholinergic, giving 14% of its VS synapses the wrong sign (D26) |
+| T5c | motion detector (OFF, upward) | 1,541 (775 / 766) | As T4c: no direct VS input, 42,124 synapses onto LPi09. 1.9% predicted inhibitory |
+| T5d | motion detector (OFF, downward) | 1,467 (740 / 727) | As T4d: 18,601 synapses onto VS cells (27% of VS input). **12.1% predicted inhibitory**, 13% of its VS synapses (D26) |
 | VS cells (VS1–VS8) | vertical-motion integrators | 16 (8 / 8) | One of each type per side. Main input to DNp20 |
 | DNp20 (DNOVS1) | steering output candidate | 2 (1 / 1) | Similar to DNOVS1 (Namiki et al. 2018, Supp. file 2). Strongest VS-driven descending neuron: 82 / 182 synapses from 6 / 8 VS cells |
 | DNp22 (DNOVS2 or 3) | steering output candidate | 2 (1 / 1) | Namiki lists it as DNOVS2 *or* DNOVS3, so uncertain. Weaker VS input: 42 / 35 synapses from 2 VS cells per side |
