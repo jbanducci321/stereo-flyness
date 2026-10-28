@@ -34,7 +34,11 @@ def cells():
 
 @pytest.fixture
 def cfg():
-    return tomllib.loads(CONFIG.read_text())
+    """The real config, reset to its round 1 state (round 2 rates not picked yet)."""
+    cfg = tomllib.loads(CONFIG.read_text())
+    cfg["escape"]["e2"]["rates_hz"] = [150]
+    cfg["steering"]["half_max_rate_hz"] = {}
+    return cfg
 
 
 def build(cfg, cells):

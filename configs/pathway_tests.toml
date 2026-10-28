@@ -19,7 +19,7 @@ gf_partners = 20         # E6: top input partners per Giant Fiber, by synapse co
 on_ms = 300
 off_ms = 300
 cycles = 3
-rates_hz = [150]         # round 2: add the lower rate picked from E1 by D32
+rates_hz = [25, 150]     # 25 Hz: lowest rate firing within 100 ms in >= 9/10 E1 trials (D32, round 1)
 
 [escape.e3]              # recruitment: random subsets of right LC4 at a fixed rate
 fractions = [0.1, 0.25, 0.5, 1.0]
@@ -46,6 +46,6 @@ rate_hz = 150
 # Round 2: the half-of-maximum "down" rate per sign version, picked from S1 by D32. Setting it
 # turns on S2 (fixed "down" drive at this rate plus an "up" sweep; 0 Hz = down only) and adds an
 # S3 run at this rate, the one D31 judges. Until then both are skipped.
-[steering.half_max_rate_hz]
-# original = 50
-# corrected = 50
+[steering.half_max_rate_hz]  # picked from round 1's S1 by D32
+original = 50                 # right VS reaches 64% of its sweep maximum
+corrected = 25                # right VS reaches 50.07% (25 Hz qualifies by D32's edge-case rule)
