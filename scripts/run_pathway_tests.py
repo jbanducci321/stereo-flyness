@@ -105,6 +105,8 @@ def main() -> None:
 
     tasks = [(c, t) for c in conds for t in range(min(c.trials, args.trials or c.trials))
              if not c.path(OUT, t).exists()]
+    # Zero-input baselines first, so the automatic check (D30) stops a broken round early
+    tasks.sort(key=lambda task: task[0].rates().any())
     sim_s = sum(c.n_frames for c, _ in tasks) * frame_steps(cfg["frame_ms"]) * DT_MS / 1000
     est_h = (sim_s * SLOWDOWN + len(tasks) * BUILD_S) / 3600
     print(f"{len(conds)} conditions; {len(tasks)} trials to run ({sim_s:.0f} s simulated), "

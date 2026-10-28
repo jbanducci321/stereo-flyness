@@ -61,6 +61,10 @@ class Condition:
         return Path(out_dir) / self.sign / self.experiment / slug / f"trial_{trial:02d}.npz"
 
 
+class BaselineError(RuntimeError):
+    """A trial with no input produced spikes, which means something is broken (D30)."""
+
+
 def frame_steps(frame_ms: float) -> int:
     """Whole time steps per frame, as `BrainStepper.run_frames` rounds it."""
     return int(round(frame_ms / DT_MS))
@@ -133,11 +137,7 @@ def build_conditions(cfg: dict, cells, gf_partners: dict[str, list[int]],
            [(n_esc, {f"sugar_{s}": r4})])
 
     e5 = esc["e5"]
-    r5 = e5["rate_hz"]
-    escape("E5a", f"{lc4}/LPLC2_silenced/{_tag(r5)}", {lc4: groups[lc4]},
-           [(n_esc, {lc4: r5})], silence=cells.ids("LPLC2"))
-    escape("E5a", f"{lplc2}/LC4_silenced/{_tag(r5)}", {lplc2: groups[lplc2]},
-           [(n_esc, {lplc2: r5})], silence=cells.ids("LC4"))
+    r5 = e5["rate_hz"]  # E5a was dropped (D35): E1's all-neuron record answers it
     escape("E5b", f"{lc4}+{lplc2}/inhibitory_partners_silenced/{_tag(r5)}", both,
            [(n_esc, {lc4: r5, lplc2: r5})], silence=cells.ids(*e5["inhibitory_partners"]))
     escape("E5c", f"{lc4}+{lplc2}/excitatory_partners_silenced/{_tag(r5)}", both,
@@ -170,12 +170,15 @@ def build_conditions(cfg: dict, cells, gf_partners: dict[str, list[int]],
         for g in (down, up):
             for r in rates:
                 steer("S1", f"{g}/{_tag(r)}", {g: sgroups[g]}, [(n_st, {g: r})])
-        if (d := st["s2"].get("down_rate_hz")) is not None:
+        r3 = st["s3"]["rate_hz"]
+        steer("S3", f"{horiz}/{_tag(r3)}", {horiz: sgroups[horiz]}, [(n_st, {horiz: r3})])
+        # Round 2 (D32): the half-of-maximum "down" rate, once picked, adds S2 and a second S3
+        if (d := st.get("half_max_rate_hz", {}).get(sign)) is not None:
             for r in [0, *rates]:
                 steer("S2", f"{down}_{_tag(d)}+{up}/{_tag(r)}", {down: sgroups[down], up: sgroups[up]},
                       [(n_st, {down: d, up: r})])
-        r3 = st["s3"]["rate_hz"]
-        steer("S3", f"{horiz}/{_tag(r3)}", {horiz: sgroups[horiz]}, [(n_st, {horiz: r3})])
+            if d != r3:
+                steer("S3", f"{horiz}/{_tag(d)}", {horiz: sgroups[horiz]}, [(n_st, {horiz: d})])
 
     names = [c.key for c in conds]
     if len(set(names)) != len(names):
@@ -204,6 +207,7 @@ def run_trial(cond: Condition, trial: int, out_dir, path_comp, path_con, base_se
 
     rates = cond.rates()
     names = list(cond.inputs)
+    baseline = not rates.any()  # no input at all: every neuron must stay silent (D30)
     counts = {g: np.zeros((cond.n_frames, len(ids)), dtype=np.uint16) for g, ids in cond.watch.items()}
     active = []  # (frame, model indices, counts) for every neuron that fired in that frame (D34)
 
@@ -224,6 +228,10 @@ def run_trial(cond: Condition, trial: int, out_dir, path_comp, path_con, base_se
     t0 = time.perf_counter()
     stepper.run_frames(cond.n_frames, frame_steps(frame_ms) * DT_MS * ms, on_frame)
     run_s = time.perf_counter() - t0
+    if baseline and active:
+        n = sum(int(c.sum()) for _, _, c in active)
+        raise BaselineError(f"{cond.key} trial {trial}: {n} spikes with no input. Shiu's model has "
+                            "no internal noise, so this is a bug. Stopping the round (D30).")
 
     info = {
         **(meta or {}), "condition": asdict(cond) | {"schedule": cond.schedule}, "key": cond.key,

@@ -9,7 +9,7 @@ import pytest
 
 from stereo_flyness.brain.celltypes import CellTypes, top_partners
 from stereo_flyness.experiments.pathway_tests import (
-    Condition, build_conditions, frame_steps, load_trial, n_frames, run_trial,
+    BaselineError, Condition, build_conditions, frame_steps, load_trial, n_frames, run_trial,
 )
 
 CONFIG = Path(__file__).resolve().parents[1] / "configs" / "pathway_tests.toml"
@@ -64,15 +64,20 @@ def test_condition_counts_and_sign_versions(cfg, cells):
     n_rates = len(cfg["rates_hz"])
     assert by_exp["E1"] == 3 * n_rates
     assert by_exp["E3"] == 3 * cfg["escape"]["e3"]["subsets"] + 1
-    assert by_exp["E4"] == 3 and by_exp["E5a"] == 2
+    assert by_exp["E4"] == 3 and by_exp["E5b"] == 1 and by_exp["E5c"] == 1
+    assert "E5a" not in by_exp  # dropped (D35)
     assert by_exp["S1"] == 2 * n_rates * 2  # down and up, both sign versions
-    assert "S2" not in by_exp  # down_rate_hz is not set yet
+    assert "S2" not in by_exp and by_exp["S3"] == 2  # round 2 rate not picked yet
     assert {c.sign for c in conds if c.experiment.startswith("E")} == {"original"}
     assert {c.sign for c in conds if c.experiment.startswith("S")} == {"original", "corrected"}
 
-    cfg["steering"]["s2"]["down_rate_hz"] = 150
-    s2 = [c for c in build(cfg, cells) if c.experiment == "S2"]
+    cfg["steering"]["half_max_rate_hz"] = {"original": 50, "corrected": 100}  # round 2 (D32)
+    round2 = build(cfg, cells)
+    s2 = [c for c in round2 if c.experiment == "S2"]
     assert len(s2) == 2 * (n_rates + 1)
+    s3 = {c.key for c in round2 if c.experiment == "S3"}
+    assert {"original/S3/horizontal_R/50Hz", "corrected/S3/horizontal_R/100Hz"} <= s3
+    assert len(s3) == 4  # 150 Hz plus the half-max rate, per sign version
 
 
 def test_schedules_rates_and_seeds(cfg, cells):
@@ -94,8 +99,8 @@ def test_schedules_rates_and_seeds(cfg, cells):
     assert all(len(c.inputs["LC4_R"]) == 5 for c in e3)
     assert len({tuple(c.inputs["LC4_R"]) for c in e3}) == len(e3)  # different subsets
 
-    lesion = conds["original/E5a/LC4_R/LPLC2_silenced/150Hz"]
-    assert lesion.silence == cells.ids("LPLC2")
+    lesion = conds["original/E5c/LC4_R+LPLC2_R/excitatory_partners_silenced/150Hz"]
+    assert lesion.silence == cells.ids("DNp70", "PVLP122b", "PVLP062", "PVLP151")
     assert "GF_partners_R" in lesion.watch and "LC4_R" in lesion.watch
 
 
@@ -143,3 +148,29 @@ def test_run_trial_saves_frames_and_resumes(connectome, tmp_path):
     mtime = path.stat().st_mtime_ns
     assert run_trial(cond, 0, out, *connectome, base_seed=0, frame_ms=1000 / 240) == path
     assert path.stat().st_mtime_ns == mtime  # finished trials are skipped
+
+
+def test_zero_input_baseline_must_be_silent(connectome, tmp_path, monkeypatch):
+    """D30: a trial with no input that produces spikes stops the round and saves nothing."""
+    from brian2 import mV
+
+    from stereo_flyness.brain.stepper import BrainStepper
+
+    quiet = Condition("S0", "S0/none", "original", inputs={"drive": [101]},
+                      schedule=[(10, {})], watch={"relay": [102]}, trials=1)
+    path = run_trial(quiet, 0, tmp_path, *connectome, base_seed=0, frame_ms=1000 / 240)
+    assert load_trial(path)["all_ids"].size == 0
+
+    # A broken model: one neuron starts above threshold, so it spikes with no input
+    build = BrainStepper.__init__
+
+    def broken(self, *args, **kwargs):
+        build(self, *args, **kwargs)
+        self.neurons.v[0] = self.params["v_th"] + 10 * mV
+
+    monkeypatch.setattr(BrainStepper, "__init__", broken)
+    bad = Condition("S0", "S0/broken", "original", inputs={"drive": [101]},
+                    schedule=[(10, {})], watch={"relay": [102]}, trials=1)
+    with pytest.raises(BaselineError, match="no input"):
+        run_trial(bad, 0, tmp_path, *connectome, base_seed=0, frame_ms=1000 / 240)
+    assert not bad.path(tmp_path, 0).exists()

@@ -3,6 +3,7 @@
 #
 # Cell types are looked up by name in the flywire_annotations v3.1.0 table and checked against
 # v783. Every rate is a model input rate (Poisson, D16), not a claimed biological firing rate.
+# How results are judged, and how the round 2 rates below are picked: D28-D35 in docs/decisions.md.
 
 frame_ms = 4.1667        # one 240 Hz physics tick (D23); the stepper rounds it to 4.2 ms (42 x 0.1 ms)
 trials = 10              # per condition, each with its own seed
@@ -18,7 +19,7 @@ gf_partners = 20         # E6: top input partners per Giant Fiber, by synapse co
 on_ms = 300
 off_ms = 300
 cycles = 3
-rates_hz = [150]         # add the lowest rate that reliably drives the Giant Fiber after E1
+rates_hz = [150]         # round 2: add the lower rate picked from E1 by D32
 
 [escape.e3]              # recruitment: random subsets of right LC4 at a fixed rate
 fractions = [0.1, 0.25, 0.5, 1.0]
@@ -30,7 +31,7 @@ subset_seed = 0
 [escape.e4]              # specificity controls
 rate_hz = 150
 
-[escape.e5]              # lesions; whole cell types are silenced, on both sides
+[escape.e5]              # lesions; whole cell types are silenced, on both sides (E5a dropped, D35)
 rate_hz = 150
 inhibitory_partners = ["CB3707", "SAD014", "CL038", "PVLP010", "LHAD1g1", "CB0010", "CB0563"]
 excitatory_partners = ["DNp70", "PVLP122b", "PVLP062", "PVLP151"]
@@ -39,8 +40,12 @@ excitatory_partners = ["DNp70", "PVLP122b", "PVLP062", "PVLP151"]
 duration_ms = 1000
 signs = ["original", "corrected"]   # D27: every steering test runs on both
 
-[steering.s2]            # opponent inhibition: fixed "down" drive plus an "up" sweep (0 Hz = down only)
-# down_rate_hz = 150     # set from S1 (a rate that clearly drives the VS cells); S2 is skipped until then
-
-[steering.s3]            # horizontal-motion control
+[steering.s3]            # horizontal-motion control, at 150 Hz in round 1
 rate_hz = 150
+
+# Round 2: the half-of-maximum "down" rate per sign version, picked from S1 by D32. Setting it
+# turns on S2 (fixed "down" drive at this rate plus an "up" sweep; 0 Hz = down only) and adds an
+# S3 run at this rate, the one D31 judges. Until then both are skipped.
+[steering.half_max_rate_hz]
+# original = 50
+# corrected = 50
