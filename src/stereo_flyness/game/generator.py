@@ -27,7 +27,7 @@ from stereo_flyness.game.bot import BotResult, solve
 from stereo_flyness.game.level import Box, Level, Portal, ship_bounds
 from stereo_flyness.game.objects import hitbox
 
-GENERATOR_VERSION = 2
+GENERATOR_VERSION = 3
 GRID = 30.0
 UNITS_PER_SECOND = P.X_PER_TICK * P.TICKS_PER_SECOND  # 311.58
 START_RUNWAY = 600.0  # flat ground before the first obstacle (~1.9 s)
@@ -46,6 +46,8 @@ class Tier:
     gap_seconds: tuple[float, float]  # flat travel between chunks, in seconds
     weights: dict[str, float]  # relative frequency of each chunk
     opening_rows: int = 0  # ship only: height of openings, in 30-unit rows
+    stair_width: int = 1  # cube only: width of each staircase step, in columns
+    platform_spikes: bool = True  # cube only: platforms may carry a spike on top
 
 
 # A chunk returns its objects as (kind, x, y) centres relative to the chunk's start, and its width.
@@ -76,17 +78,23 @@ def block(rng, tier):
 
 
 def stairs(rng, tier):
-    """2-3 rising block columns, one block higher each, 4 columns apart (the standard step)."""
-    steps = rng.choice((2, 3))
-    objs = [("block", _col(4 * k), 15 + GRID * j) for k in range(steps) for j in range(k + 1)]
-    return objs, GRID * (4 * (steps - 1) + 1)
+    """2-3 rising steps, one block higher each, with 3 empty columns between them.
+
+    Steps are `tier.stair_width` columns wide. One-column pillars (hard tier only) need a precisely
+    timed press to land on top. Their press window can drop to ~17-30 ms, shorter than the Giant
+    Fiber's response (difficulty.py), so easier tiers use wider steps.
+    """
+    steps, w = rng.choice((2, 3)), tier.stair_width
+    objs = [("block", _col(k * (w + 3) + c), 15 + GRID * j)
+            for k in range(steps) for c in range(w) for j in range(k + 1)]
+    return objs, GRID * ((steps - 1) * (w + 3) + w)
 
 
 def platform(rng, tier):
     """A raised 1-block platform, 4-8 long, sometimes with a spike on top."""
     n = rng.randint(4, 8)
     objs = [("block", _col(i), 15) for i in range(n)]
-    if n >= 6 and rng.random() < 0.5:
+    if tier.platform_spikes and n >= 6 and rng.random() < 0.5:
         objs.append(("spike", _col(rng.randint(3, n - 2)), 45))
     return objs, GRID * n
 
@@ -115,11 +123,13 @@ CUBE_CHUNKS: dict[str, Chunk] = {
 }
 
 CUBE_TIERS = {
-    "easy": Tier((0.9, 1.4), {"spike1": 5, "spike2": 2, "block": 3, "stairs": 1, "platform": 1}),
+    # Easy leaves out staircases and platform spikes: both need sub-50 ms press timing (difficulty.py).
+    "easy": Tier((0.9, 1.4), {"spike1": 5, "spike2": 2, "block": 3, "platform": 1},
+                 stair_width=3, platform_spikes=False),
     "medium": Tier((0.6, 1.0), {"spike1": 3, "spike2": 3, "spike3": 1, "block": 2, "stairs": 2,
-                                "platform": 2, "slab_bridge": 1}),
+                                "platform": 2, "slab_bridge": 1}, stair_width=2),
     "hard": Tier((0.4, 0.7), {"spike1": 2, "spike2": 3, "spike3": 3, "block": 1, "stairs": 2,
-                              "platform": 2, "slab_bridge": 2, "slab_hops": 2}),
+                              "platform": 2, "slab_bridge": 2, "slab_hops": 2}, stair_width=1),
 }
 
 # -- ship chunks (ground-level area: floor 0, ceiling 300) ----------------------------
