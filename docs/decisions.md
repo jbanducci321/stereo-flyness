@@ -135,6 +135,23 @@ The GitHub repo is public. The FlyWire connectivity data is CC BY 4.0 and Shiu's
 - **Alternatives considered:** matplotlib animation (clunky for real-time playback); a web viewer (more moving parts).
 - Spec: `docs/replay_viewer.md`.
 
+**D26. Steering tests run on original and T4/T5-corrected signs** (2026-10-27)
+- **The problem:** the model's signs (`Excitatory` in `Connectivity_783.parquet`) are machine-learning neurotransmitter predictions (Eckstein et al. 2024). They mark 13.7% of T4d and 12.1% of T5d neurons inhibitory. T4/T5 are known to be cholinergic, and FlyWire's own annotation table (`top_nt`) calls ~98% of them acetylcholine. T4d/T5d are the main input to VS cells, so ~13% of that input has the wrong sign in the model.
+- **What we do:** each steering pathway test runs twice:
+  - **original:** the connectome exactly as Shiu's model uses it. This stays the main result.
+  - **corrected:** a copy of the connectivity file with every connection from a T4 or T5 neuron (T4a–d, T5a–d) set to excitatory. Nothing else changes.
+- **Rules:**
+  - Only T4/T5 are corrected, because their transmitter has independent biological evidence. We don't look for other neurons to correct; that would be tuning the connectome.
+  - The corrected file is written by a script into git-ignored `data/` and never replaces the original. Shiu's code stays unchanged (D14).
+  - Every result is labelled `original` or `corrected`.
+  - The escape pathway is unaffected (all LC4/LPLC2 → Giant Fiber synapses are excitatory), so the escape tests run on the original only.
+- **Relation to D5:** this is a labelled sensitivity check, like a lesion, not tuning. The main results keep the frozen weights.
+- **Alternatives considered:**
+  - Original only, reporting the sign errors as a limitation: simpler, but leaves us unable to tell a failed steering pathway from a data error.
+  - Correcting signs everywhere: breaks comparability with Shiu et al. and would mean rewriting D5/D14.
+- **Still open:** which version carries into ship tuning (Step 5) and Stereo Madness. Decide before any steering results come in.
+- Details: `docs/pathway_tests.md` ("Two sign versions").
+
 ## Open
 
 These are to be decided after Step 0:
@@ -144,4 +161,5 @@ These are to be decided after Step 0:
 - Input encoding: looming → LC4/LPLC2 stimulation rate, and which neurons receive it.
 - Output rule: what Giant Fiber activity counts as a jump.
 - The dials and their allowed ranges.
+- Which sign version (original or T4/T5-corrected, D26) carries into ship tuning and Stereo Madness. Must be decided before any steering results come in.
 - Closed-loop simulation: resolved for now by D17 (Brian2 runtime with `run_frames`). Our own reimplementation of the same equations (e.g. PyTorch, validated against Brian2) stays an option if subcircuit runs are still too slow, or for the GPU phase.
