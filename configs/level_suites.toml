@@ -1,0 +1,23 @@
+# Practice-level suites (D26). Levels are rebuilt from these seeds by scripts/generate_levels.py
+# into git-ignored results/levels/; only this file is committed.
+#
+# - training: used for tuning the interface dials (Step 3) and everything before Stereo Madness.
+# - held_out: never used for tuning; only for reporting how well tuned settings generalise.
+#   Its seeds come from a separate range so the two suites can never overlap.
+#
+# Counts are per difficulty. Totals: training 50 cube / 50 ship / 50 mixed; held-out 20 of each.
+
+generator_version = 3  # must match stereo_flyness.game.generator.GENERATOR_VERSION
+seconds = 30.0         # approximate length of every level
+
+[suites.training]
+first_seed = 0
+cube  = { easy = 20, medium = 20, hard = 10 }
+ship  = { easy = 20, medium = 20, hard = 10 }
+mixed = { easy = 20, medium = 20, hard = 10 }
+
+[suites.held_out]
+first_seed = 1_000_000
+cube  = { easy = 8, medium = 8, hard = 4 }
+ship  = { easy = 8, medium = 8, hard = 4 }
+mixed = { easy = 8, medium = 8, hard = 4 }
