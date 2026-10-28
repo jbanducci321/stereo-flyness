@@ -134,6 +134,12 @@ def test_run_trial_saves_frames_and_resumes(connectome, tmp_path):
     assert tr["meta"]["seed"] == cond.seed(0, 0)
     assert list(tr["ids"]["relay"]) == [102]
 
+    # D34: every neuron that fired is recorded per frame, matching the watched groups exactly
+    assert list(tr["all_ids"]) == [101, 102]  # 103 never fires
+    assert tr["all_spikes"].shape == (40, 2)
+    assert (tr["all_spikes"][:, 0] == tr["spikes"]["drive"][:, 0]).all()
+    assert (tr["all_spikes"][:, 1] == tr["spikes"]["relay"][:, 0]).all()
+
     mtime = path.stat().st_mtime_ns
     assert run_trial(cond, 0, out, *connectome, base_seed=0, frame_ms=1000 / 240) == path
     assert path.stat().st_mtime_ns == mtime  # finished trials are skipped

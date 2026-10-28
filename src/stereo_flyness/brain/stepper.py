@@ -45,6 +45,7 @@ class BrainStepper:
         self.params = params
 
         flyids = pd.read_csv(path_comp, index_col=0).index
+        self.flyids = np.asarray(flyids, dtype=np.int64)  # model index -> FlyWire ID
         self._flyid2i = {f: i for i, f in enumerate(flyids)}
         # Check every ID before the (slow) network build.
         input_idx = {name: self._indices(ids) for name, ids in inputs.items()}
@@ -67,6 +68,8 @@ class BrainStepper:
         # long the brain runs.
         self._spk_mon = SpikeMonitor(self.neurons, record=False)
         self._last_count = np.zeros(len(flyids), dtype=int)
+        # Spike counts of *every* neuron in the latest step or frame, by model index (D34).
+        self.last_counts = np.zeros(len(flyids), dtype=int)
 
         self.net = Network(self.neurons, synapses, self._poisson, input_synapses, self._spk_mon)
 
@@ -130,7 +133,8 @@ class BrainStepper:
 
         After each frame, ``on_frame(i, counts)`` is called with the frame index and that
         frame's watched spike counts (the same dict `step` returns). It may call `set_rate`
-        to change the input for the following frame.
+        to change the input for the following frame, and read `last_counts` for every
+        neuron's count in that frame.
 
         This is the fast path for closed-loop use. Every `step` call is a separate
         ``Network.run``, which makes Brian2 regenerate its code objects (about 100-200 ms
@@ -164,4 +168,5 @@ class BrainStepper:
     def _read_counts(self):
         count = np.asarray(self._spk_mon.count[:])
         new, self._last_count = count - self._last_count, count
+        self.last_counts = new
         return {name: new[idx] for name, idx in self._watch.items()}

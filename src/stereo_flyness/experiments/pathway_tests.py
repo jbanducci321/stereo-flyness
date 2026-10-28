@@ -8,6 +8,7 @@ stopped.
 
 Saved per trial (`.npz`, see `load_trial`):
 - spike counts per frame for every watched group (the fly's activity, unaltered);
+- spike counts per frame for every neuron in the brain that fires at all, stored sparsely (D34);
 - the input rate per frame for every input group (our stimulation, kept separate; hard rule 10);
 - metadata: condition, sign version, seed, silenced IDs, git commit, frame length.
 """
@@ -204,6 +205,7 @@ def run_trial(cond: Condition, trial: int, out_dir, path_comp, path_con, base_se
     rates = cond.rates()
     names = list(cond.inputs)
     counts = {g: np.zeros((cond.n_frames, len(ids)), dtype=np.uint16) for g, ids in cond.watch.items()}
+    active = []  # (frame, model indices, counts) for every neuron that fired in that frame (D34)
 
     def set_frame_rates(i):
         for j, g in enumerate(names):
@@ -212,6 +214,9 @@ def run_trial(cond: Condition, trial: int, out_dir, path_comp, path_con, base_se
     def on_frame(i, frame_counts):
         for g, c in frame_counts.items():
             counts[g][i] = c
+        nz = np.flatnonzero(stepper.last_counts)
+        if len(nz):
+            active.append((i, nz, stepper.last_counts[nz]))
         if i + 1 < cond.n_frames:
             set_frame_rates(i + 1)
 
@@ -227,6 +232,12 @@ def run_trial(cond: Condition, trial: int, out_dir, path_comp, path_con, base_se
         "build_s": round(build_s, 2), "run_s": round(run_s, 2),
     }
     arrays = {"rates": rates, "input_names": np.array(names), "meta": np.array(json.dumps(info))}
+    frames = np.concatenate([np.full(len(nz), i) for i, nz, _ in active]) if active else np.zeros(0)
+    neurons = np.concatenate([nz for _, nz, _ in active]) if active else np.zeros(0, dtype=int)
+    spikes = np.concatenate([c for _, _, c in active]) if active else np.zeros(0)
+    active_idx, which = np.unique(neurons, return_inverse=True)
+    arrays |= {"all_ids": stepper.flyids[active_idx], "all_frame": frames.astype(np.uint16),
+               "all_neuron": which.astype(np.int32), "all_count": spikes.astype(np.uint16)}
     for g, ids in cond.watch.items():
         arrays[f"spikes__{g}"] = counts[g]
         arrays[f"ids__{g}"] = np.asarray(ids, dtype=np.int64)
@@ -241,10 +252,18 @@ def run_trial(cond: Condition, trial: int, out_dir, path_comp, path_con, base_se
 
 def load_trial(path) -> dict:
     """A saved trial: {"meta", "rates", "input_names", "spikes": {group: (frames, neurons)},
-    "ids": {group: FlyWire IDs}}."""
+    "ids": {group: FlyWire IDs}, "all_ids", "all_spikes"}.
+
+    `all_spikes` is (frames, len(all_ids)): every neuron that fired at least once in the trial,
+    rebuilt from the sparse records (D34). Neurons not in `all_ids` never fired.
+    """
     with np.load(path) as z:
         out = {"meta": json.loads(str(z["meta"])), "rates": z["rates"],
                "input_names": [str(n) for n in z["input_names"]], "spikes": {}, "ids": {}}
+        n_frames = out["rates"].shape[0]
+        out["all_ids"] = z["all_ids"]
+        out["all_spikes"] = np.zeros((n_frames, len(z["all_ids"])), dtype=np.uint16)
+        out["all_spikes"][z["all_frame"].astype(int), z["all_neuron"]] = z["all_count"]
         for k in z.files:
             if k.startswith("spikes__"):
                 out["spikes"][k[8:]] = z[k]
