@@ -12,7 +12,7 @@ import pandas as pd
 from brian2 import Hz, Network, PoissonGroup, SpikeMonitor, Synapses, defaultclock, ms, network_operation
 from brian2 import seed as set_seed
 
-from stereo_flyness.brain.shiu_model import create_model, default_params
+from stereo_flyness.brain.shiu_model import create_model, default_params, silence as shiu_silence
 
 
 class BrainStepper:
@@ -31,9 +31,14 @@ class BrainStepper:
         Model constants and equations. Defaults to Shiu's.
     seed : int, optional
         Seed for Brian2's random number generators, for reproducible runs.
+    silence : list[int], optional
+        FlyWire IDs to lesion (D5's one allowed exception), using Shiu's own ``silence()``. It
+        zeroes every *outgoing* synapse of each neuron, so a silenced neuron can still be driven
+        and still spike, but has no effect on anything downstream.
     """
 
-    def __init__(self, path_comp, path_con, inputs, watch, params=default_params, seed=None):
+    def __init__(self, path_comp, path_con, inputs, watch, params=default_params, seed=None,
+                 silence=()):
         if seed is not None:
             set_seed(seed)
         self.params = params
@@ -43,9 +48,14 @@ class BrainStepper:
         # Check every ID before the (slow) network build.
         input_idx = {name: self._indices(ids) for name, ids in inputs.items()}
         self._watch = {name: self._indices(ids) for name, ids in watch.items()}
+        silence_idx = self._indices(list(silence))
+        self.silenced = list(silence)
 
-        # Shiu's network, unchanged. Their all-spike monitor is dropped in favour of counts.
+        # Shiu's network, unchanged except for lesions requested here. Their all-spike monitor
+        # is dropped in favour of counts.
         self.neurons, synapses, _ = create_model(path_comp, path_con, params)
+        if len(silence_idx):
+            shiu_silence([int(i) for i in silence_idx], synapses)
         self._poisson, input_synapses, self._input_slices = self._build_inputs(input_idx)
 
         # record=False keeps only per-neuron spike counts, so memory stays constant however
