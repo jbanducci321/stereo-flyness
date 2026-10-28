@@ -1,0 +1,46 @@
+# Step 0 pathway tests (J4), designed in docs/pathway_tests.md (S4).
+# Run with scripts/run_pathway_tests.py. Results go to git-ignored results/pathway_tests/.
+#
+# Cell types are looked up by name in the flywire_annotations v3.1.0 table and checked against
+# v783. Every rate is a model input rate (Poisson, D16), not a claimed biological firing rate.
+
+frame_ms = 4.1667        # one 240 Hz physics tick (D23); the stepper rounds it to 4.2 ms (42 x 0.1 ms)
+trials = 10              # per condition, each with its own seed
+base_seed = 0            # seeds are derived from this plus each condition's name, so they never shift
+rates_hz = [25, 50, 100, 150, 200]  # the sweep; 0 Hz is the shared baseline condition (E4 / S0)
+stim_side = "right"      # stimulate one side, record both
+
+[escape]
+duration_ms = 1000
+gf_partners = 20         # E6: top input partners per Giant Fiber, by synapse count (original signs)
+
+[escape.e2]              # latency and offset: on/off cycles at each rate
+on_ms = 300
+off_ms = 300
+cycles = 3
+rates_hz = [150]         # add the lowest rate that reliably drives the Giant Fiber after E1
+
+[escape.e3]              # recruitment: random subsets of right LC4 at a fixed rate
+fractions = [0.1, 0.25, 0.5, 1.0]
+subsets = 5              # different random subsets per fraction (the 100% fraction has only one)
+trials_per_subset = 2    # 5 subsets x 2 trials = 10 per fraction; 100% uses `trials`
+rate_hz = 150
+subset_seed = 0
+
+[escape.e4]              # specificity controls
+rate_hz = 150
+
+[escape.e5]              # lesions; whole cell types are silenced, on both sides
+rate_hz = 150
+inhibitory_partners = ["CB3707", "SAD014", "CL038", "PVLP010", "LHAD1g1", "CB0010", "CB0563"]
+excitatory_partners = ["DNp70", "PVLP122b", "PVLP062", "PVLP151"]
+
+[steering]
+duration_ms = 1000
+signs = ["original", "corrected"]   # D27: every steering test runs on both
+
+[steering.s2]            # opponent inhibition: fixed "down" drive plus an "up" sweep (0 Hz = down only)
+# down_rate_hz = 150     # set from S1 (a rate that clearly drives the VS cells); S2 is skipped until then
+
+[steering.s3]            # horizontal-motion control
+rate_hz = 150

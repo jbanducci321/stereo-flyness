@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 from brian2 import Hz, Network, PoissonGroup, SpikeMonitor, Synapses, defaultclock, ms, network_operation
 from brian2 import seed as set_seed
+from brian2.utils.logger import catch_logs
 
 from stereo_flyness.brain.shiu_model import create_model, default_params, silence as shiu_silence
 
@@ -55,7 +56,11 @@ class BrainStepper:
         # is dropped in favour of counts.
         self.neurons, synapses, _ = create_model(path_comp, path_con, params)
         if len(silence_idx):
-            shiu_silence([int(i) for i in silence_idx], synapses)
+            # Shiu's silence() formats each index into a condition on `i`, so Brian2 warns once
+            # per neuron that its loop variable `i` shadows the synapse index. The condition uses
+            # the synapse index, as intended, so the warnings are only noise.
+            with catch_logs():
+                shiu_silence([int(i) for i in silence_idx], synapses)
         self._poisson, input_synapses, self._input_slices = self._build_inputs(input_idx)
 
         # record=False keeps only per-neuron spike counts, so memory stays constant however
