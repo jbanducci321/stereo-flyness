@@ -135,6 +135,18 @@ The GitHub repo is public. The FlyWire connectivity data is CC BY 4.0 and Shiu's
 - **Alternatives considered:** matplotlib animation (clunky for real-time playback); a web viewer (more moving parts).
 - Spec: `docs/replay_viewer.md`.
 
+**D26. Practice levels: seeded chunk generator, physics-based tiers, bot-validated, seeds-only suites** (2026-10-27)
+- **How levels are built:** random chunks from a physics-based library, with gaps measured in seconds of reaction time. Easy/medium/hard tiers set gaps, chunk mix, stair width and ship opening height. Generator v3.
+- **Always beatable:** every level is beaten by the search bot; unbeatable candidates are re-rolled deterministically.
+- **No Stereo Madness influence:** the design uses SM's object kinds only, never its layout (D7).
+- **Difficulty is measured per level** (reaction gaps, cube press windows, ship openings). Measurements showed staircases and platform spikes need ~17 ms presses, so easy omits them (tightest window ~142 ms, 0% under 50 ms).
+- **Suites:**
+  - **training:** 50 cube / 50 ship / 50 mixed;
+  - **held-out:** 20 / 20 / 20, from a separate seed range, never used for tuning.
+  - Only the seeds are committed (`configs/level_suites.toml`); levels are built and cached locally.
+- **Alternatives considered:** free random placement (mostly junk or impossible levels); committing generated level files (large, and redundant with seeds).
+- Spec: `docs/level_generators.md`.
+
 ## Open
 
 These are to be decided after Step 0:
