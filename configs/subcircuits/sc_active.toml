@@ -1,0 +1,15 @@
+# S5 candidate B (Shannyn): core + every neuron that fired in the whole-brain pathway tests (D34).
+# Draft for J5 validation, not a decided rule. Notes: docs/notes/subcircuit_rule.md.
+# Lesion runs (E5) and controls (E4) are left out: they aren't conditions the game will create.
+name = "sc_active"
+description = "Core cell types + every neuron active in E1-E3 and S1-S3 (original signs) + pathway-test neurons"
+
+[[include]]
+pathway_tests = true
+
+[[include]]
+types = ["LC4", "LPLC2", "DNp01", "T4c", "T4d", "T5c", "T5d",
+         "VS1", "VS2", "VS3", "VS4", "VS5", "VS6", "VS7", "VS8", "LPi09", "DNp20", "DNp22"]
+
+[[include]]
+active = { experiments = ["E1", "E2", "E3", "S1", "S2", "S3"], sign = "original", min_rate_hz = 0.0 }

@@ -1,0 +1,17 @@
+# S5 candidate C (Shannyn): union of A (strong direct partners) and B (active in the tests).
+# Draft for J5 validation, not a decided rule. Notes: docs/notes/subcircuit_rule.md.
+name = "sc_partners5_active"
+description = "Candidate A + candidate B"
+
+[[include]]
+pathway_tests = true
+
+[[include]]
+types = ["LC4", "LPLC2", "DNp01", "T4c", "T4d", "T5c", "T5d",
+         "VS1", "VS2", "VS3", "VS4", "VS5", "VS6", "VS7", "VS8", "LPi09", "DNp20", "DNp22"]
+
+[[include]]
+hops = { from_types = ["DNp01", "DNp20", "DNp22"], n = 1, direction = "both", min_synapses = 5 }
+
+[[include]]
+active = { experiments = ["E1", "E2", "E3", "S1", "S2", "S3"], sign = "original", min_rate_hz = 0.0 }

@@ -1,6 +1,6 @@
 # Subcircuit rule (task S5): working notes
 
-*Shannyn, 2026-10-28. Checkpoint 1: sizes of candidate rules. Not a proposal yet.*
+*Shannyn, 2026-10-28. Checkpoint 1: sizes of candidate rules. Checkpoint 2: three candidate specs for J5 validation. Not a decided rule yet.*
 
 **The question:** which neurons go into the subcircuit that replaces the whole brain for tuning runs (J5)? The size budget is D18: up to ~20k neurons / ~3M connections. Cutting the brain removes the input that boundary neurons got from outside, which changes their dynamics, so the rule is effectively a hidden dial (PROJECT_BRIEF §3.3) and must be decided and logged.
 
@@ -34,9 +34,31 @@ Numbers from `scripts/subcircuit_sizes.py` (FlyWire v783, flywire_annotations v3
 - **core+partners keeps nearly all direct input** to the GF and DNp20, but each partner's own inputs are cut, so partners that are driven from elsewhere in the brain will be quieter than in the whole brain.
 - **VS cells keep only ~66% of their input** under every rule except paths≤3/min 1. The missing part is mostly the horizontal-motion T4a/b and T5a/b (~25%), which we don't stimulate.
 
-## Open questions for checkpoint 2
+## Checkpoint 2: candidate specs for J5
 
-1. **Use the pathway-test results.** Jacob's runner records every neuron that fires in the whole-brain tests. An **activity-based rule** (keep every neuron that fires in the E1–E6/S1–S3 runs, plus the core) would keep exactly the neurons that shape the outputs. Wait for round 2, then compare it with the rules above.
-2. **Fidelity, not just input kept:** the real test is whether the subcircuit reproduces the whole-brain pathway results (J5). Pick 2–3 finalists and have them checked against E1, E2 and S1.
-3. **Horizontal-motion inputs:** include T4a/b, T5a/b (~3,000 more neurons) or not? We don't stimulate them, so they'd be silent anyway. Probably not, but decide explicitly.
-4. **Min-synapse threshold:** FlyWire analyses commonly treat connections under ~5 synapses as less reliable **[confirm a source]**.
+Written in Jacob's spec format (`scripts/extract_subcircuit.py`, branch `jb-subcircuit`) in `configs/subcircuits/`. Each includes every pathway-test input and watched neuron (`pathway_tests = true`), so the validator can rerun every test, plus the core cell types on both sides.
+
+| Spec | Adds | Neurons | Connections | Notes |
+|---|---|---|---|---|
+| **A** `sc_partners5` | Every direct input/output partner (≥ 5 synapses) of DNp01, DNp20, DNp22 | **10,316** | 174k | Extracted on the whole brain, 2026-10-28. Fits D18 easily |
+| **B** `sc_active` | Every neuron that fired in E1–E3 and S1–S3 (original signs, D34 record) | Jacob to extract | | Needs the trial files on Jacob's machine |
+| **C** `sc_partners5_active` | A + B | Jacob to extract | | Expected ~11k |
+
+**Input kept by A** (share of whole-brain input synapses):
+- Giant Fibers: 93–95%. DNp20: 95–96%. DNp22: 95%. Excitatory and inhibitory kept about equally.
+- VS cells: right 80–97%, **left only 38–95%** (VS1, VS5–VS8 left: 38–54%).
+
+**Why the left/right gap:** `pathway_tests = true` includes the S3 inputs, the horizontal-motion T4a/b and T5a/b, but only on the right (the tests stimulate the right side). So right VS cells keep their horizontal input and left ones don't. See question 3 below.
+
+**Why these three, given the pathway results** (`docs/pathway_results.md`):
+- **A** keeps the Giant Fiber's recruited partners whatever drives them: DNp70 and PVLP151 (the whole left-GF response, E5c) and the inhibitory partners (E5b: +13% when silenced). The pathway results show both matter.
+- **B** keeps exactly what the tests recruit: 845 of the fly's own neurons for escape (E6), plus the steering equivalents. It's the most targeted, but see question 2.
+- **C** is the safe union, if A and B each miss something.
+
+## Open questions
+
+1. **Validation tolerances (with Jacob):** how close must a subcircuit be to the whole brain to pass? For example: the D29/D31 verdicts unchanged, key-group rates within ~10%, E2 onset within one frame. Decide **before** looking at the validation results.
+2. **B is right-side biased.** All tests stimulated the right side, so neurons only recruited by left-side input are missing. The game will likely drive both sides, so B probably needs a mirrored run, or it can only be a check on A. A and C don't have this problem for direct partners.
+3. **Horizontal-motion inputs (T4a/b, T5a/b):** include them on **both** sides, or leave them out and run S3 only on the whole brain. The pathway results show horizontal motion drives VS/DNp20 substantially (64 vs 104 Hz), and a scrolling level is horizontal motion, so this links to the ship encoding decision (T4).
+4. **Min-synapse threshold:** FlyWire analyses commonly treat connections under ~5 synapses as less reliable **[confirm a source]**. A 5 → 10 comparison would show how sensitive the result is.
+5. **`min_rate_hz = 0`** in B keeps any neuron with even one spike across all trials. A small threshold (e.g. 1 Hz) is worth comparing.

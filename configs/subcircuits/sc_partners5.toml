@@ -1,0 +1,14 @@
+# S5 candidate A (Shannyn): core + every strong direct partner of the output neurons.
+# Draft for J5 validation, not a decided rule. Notes: docs/notes/subcircuit_rule.md.
+name = "sc_partners5"
+description = "Core cell types + direct input/output partners (>= 5 synapses) of DNp01, DNp20, DNp22 + pathway-test neurons"
+
+[[include]]   # every input and watched neuron of the pathway tests, so the validator can run them all
+pathway_tests = true
+
+[[include]]   # the core of both pathways, both sides
+types = ["LC4", "LPLC2", "DNp01", "T4c", "T4d", "T5c", "T5d",
+         "VS1", "VS2", "VS3", "VS4", "VS5", "VS6", "VS7", "VS8", "LPi09", "DNp20", "DNp22"]
+
+[[include]]   # everything that synapses directly onto (or receives from) the output neurons
+hops = { from_types = ["DNp01", "DNp20", "DNp22"], n = 1, direction = "both", min_synapses = 5 }
