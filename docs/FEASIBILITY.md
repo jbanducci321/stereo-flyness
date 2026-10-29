@@ -4,10 +4,14 @@
 
 ## Go / no-go
 
-| Pathway | Verdict | Why |
+Pathway-test verdicts (J4), judged by rules agreed before the full runs (D28–D35). Details: `docs/pathway_results.md`. Step 0's overall go/no-go (T3) also needs the subcircuit (S5/J5) to reproduce these whole-brain results.
+
+| Pathway | Pathway tests | Why |
 |---|---|---|
-| Escape (LC4/LPLC2 → Giant Fiber) → cube jump | TBD | |
-| Motion (T4/T5 → VS → descending neurons) → ship | TBD | |
+| Escape (LC4/LPLC2 → Giant Fiber) → cube jump | **GO** | Right Giant Fiber fires in 10/10 trials at every input rate (77–205 Hz), clearly above the left; first spike within ~8–13 ms; stops within ~3–13 ms of input off; LC10a and sugar controls give 0 |
+| Motion (T4/T5 → VS → descending neurons) → ship | **GO** (original signs; corrected also GO) | "Down" drives VS cells and DNp20 in 10/10 trials; "up" gives 0 and suppresses "down" via LPi09; horizontal motion drives VS less than "down" |
+
+Sign version carried forward (D28): **original**.
 
 ## Environment
 
@@ -76,6 +80,23 @@ Source: flywire_annotations v3.1.0, all IDs checked against `Completeness_783.cs
 | DNp20 (DNOVS1) | steering output candidate | 2 (1 / 1) | Similar to DNOVS1 (Namiki et al. 2018, Supp. file 2). Strongest VS-driven descending neuron: 82 / 182 synapses from 6 / 8 VS cells |
 | DNp22 (DNOVS2 or 3) | steering output candidate | 2 (1 / 1) | Namiki lists it as DNOVS2 *or* DNOVS3, so uncertain. Weaker VS input: 42 / 35 synapses from 2 VS cells per side |
 
+## Pathway tests
+
+**Result: both pathways GO.** 640 whole-brain trials, run 2026-10-28 (`scripts/run_pathway_tests.py`, `scripts/analyse_pathway_tests.py`). Full tables: `docs/pathway_results.md`. The headlines:
+
+- **Escape:**
+  - LC4 + LPLC2 drive the right Giant Fiber from 77 Hz (25 Hz input) to 205 Hz (200 Hz input).
+  - The left Giant Fiber also fires (44–102 Hz), entirely through excitatory partners (DNp70, PVLP151). Silencing them removes it.
+  - Recruitment threshold: ~5–12 of the 50 right LC4 neurons.
+- **Steering:**
+  - Downward motion drives the right VS cells (113–241 Hz) and DNp20 (73–140 Hz).
+  - Upward motion gives 0, and added to downward motion suppresses it by 88–100%.
+  - The corrected signs give ~10–15% stronger responses with the same pattern.
+- **Caveats:**
+  - latencies have 4.2 ms resolution;
+  - firing rates are far above biological ones under direct drive;
+  - the input encoding (looming, direction) is ours.
+
 ## Subcircuit
 
 - Extraction rule:
@@ -115,5 +136,9 @@ Source: flywire_annotations v3.1.0, all IDs checked against `Completeness_783.cs
 - **Caveat:** the real looming input may drive more or less activity than the sugar input used here. Re-benchmark on the real subcircuit once it's extracted (J5).
 
 ## Risks and open questions
+
+- **Horizontal motion drives the ship pathway too** (pathway tests, S3): at 50 Hz, horizontal T4/T5 input gives DNp20 64 Hz vs 104 Hz for downward motion. A ship input encoding that drives horizontal-motion neurons (e.g. for the level scrolling) would push the controller. Decide in T4.
+- **Sustained Giant Fiber firing:** the Giant Fiber fires continuously while driven and for up to ~30 ms after (E2), unlike a real escape (a few spikes). The output rule (T4) must turn this into single jumps.
+- **Whole-brain results must survive the subcircuit:** the left Giant Fiber route and the feed-forward inhibition (E5) depend on non-looming partners, so S5's rule should keep them.
 
 ## Recommended stack

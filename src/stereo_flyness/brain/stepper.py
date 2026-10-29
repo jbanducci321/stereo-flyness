@@ -11,8 +11,9 @@ import numpy as np
 import pandas as pd
 from brian2 import Hz, Network, PoissonGroup, SpikeMonitor, Synapses, defaultclock, ms, network_operation
 from brian2 import seed as set_seed
+from brian2.utils.logger import catch_logs
 
-from stereo_flyness.brain.shiu_model import create_model, default_params
+from stereo_flyness.brain.shiu_model import create_model, default_params, silence as shiu_silence
 
 
 class BrainStepper:
@@ -31,27 +32,44 @@ class BrainStepper:
         Model constants and equations. Defaults to Shiu's.
     seed : int, optional
         Seed for Brian2's random number generators, for reproducible runs.
+    silence : list[int], optional
+        FlyWire IDs to lesion (D5's one allowed exception), using Shiu's own ``silence()``. It
+        zeroes every *outgoing* synapse of each neuron, so a silenced neuron can still be driven
+        and still spike, but has no effect on anything downstream.
     """
 
-    def __init__(self, path_comp, path_con, inputs, watch, params=default_params, seed=None):
+    def __init__(self, path_comp, path_con, inputs, watch, params=default_params, seed=None,
+                 silence=()):
         if seed is not None:
             set_seed(seed)
         self.params = params
 
         flyids = pd.read_csv(path_comp, index_col=0).index
+        self.flyids = np.asarray(flyids, dtype=np.int64)  # model index -> FlyWire ID
         self._flyid2i = {f: i for i, f in enumerate(flyids)}
         # Check every ID before the (slow) network build.
         input_idx = {name: self._indices(ids) for name, ids in inputs.items()}
         self._watch = {name: self._indices(ids) for name, ids in watch.items()}
+        silence_idx = self._indices(list(silence))
+        self.silenced = list(silence)
 
-        # Shiu's network, unchanged. Their all-spike monitor is dropped in favour of counts.
+        # Shiu's network, unchanged except for lesions requested here. Their all-spike monitor
+        # is dropped in favour of counts.
         self.neurons, synapses, _ = create_model(path_comp, path_con, params)
+        if len(silence_idx):
+            # Shiu's silence() formats each index into a condition on `i`, so Brian2 warns once
+            # per neuron that its loop variable `i` shadows the synapse index. The condition uses
+            # the synapse index, as intended, so the warnings are only noise.
+            with catch_logs():
+                shiu_silence([int(i) for i in silence_idx], synapses)
         self._poisson, input_synapses, self._input_slices = self._build_inputs(input_idx)
 
         # record=False keeps only per-neuron spike counts, so memory stays constant however
         # long the brain runs.
         self._spk_mon = SpikeMonitor(self.neurons, record=False)
         self._last_count = np.zeros(len(flyids), dtype=int)
+        # Spike counts of *every* neuron in the latest step or frame, by model index (D34).
+        self.last_counts = np.zeros(len(flyids), dtype=int)
 
         self.net = Network(self.neurons, synapses, self._poisson, input_synapses, self._spk_mon)
 
@@ -115,7 +133,8 @@ class BrainStepper:
 
         After each frame, ``on_frame(i, counts)`` is called with the frame index and that
         frame's watched spike counts (the same dict `step` returns). It may call `set_rate`
-        to change the input for the following frame.
+        to change the input for the following frame, and read `last_counts` for every
+        neuron's count in that frame.
 
         This is the fast path for closed-loop use. Every `step` call is a separate
         ``Network.run``, which makes Brian2 regenerate its code objects (about 100-200 ms
@@ -149,4 +168,5 @@ class BrainStepper:
     def _read_counts(self):
         count = np.asarray(self._spk_mon.count[:])
         new, self._last_count = count - self._last_count, count
+        self.last_counts = new
         return {name: new[idx] for name, idx in self._watch.items()}
