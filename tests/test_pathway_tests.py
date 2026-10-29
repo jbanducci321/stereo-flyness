@@ -34,10 +34,13 @@ def cells():
 
 @pytest.fixture
 def cfg():
-    """The real config, reset to its round 1 state (round 2 rates not picked yet)."""
+    """The real config, reset to its round 1 state (round 2 rates not picked yet, no
+    recruitment sides or probes)."""
     cfg = tomllib.loads(CONFIG.read_text())
     cfg["escape"]["e2"]["rates_hz"] = [150]
     cfg["steering"]["half_max_rate_hz"] = {}
+    cfg.pop("recruitment", None)
+    cfg.pop("probes", None)
     return cfg
 
 
@@ -178,3 +181,39 @@ def test_zero_input_baseline_must_be_silent(connectome, tmp_path, monkeypatch):
     with pytest.raises(BaselineError, match="no input"):
         run_trial(bad, 0, tmp_path, *connectome, base_seed=0, frame_ms=1000 / 240)
     assert not bad.path(tmp_path, 0).exists()
+
+
+def test_recruitment_and_probe_conditions(cells):
+    cfg = tomllib.loads(CONFIG.read_text())
+    conds = build(cfg, cells)
+    by = {c.key: c for c in conds}
+    from stereo_flyness.experiments.pathway_tests import judged
+
+    # Recruitment: game-input experiments repeated on the left and on both sides, fewer trials
+    left = [c for c in conds if c.side == "left" and not c.experiment.startswith("P")]
+    assert {c.experiment for c in left} == set(cfg["recruitment"]["experiments"])
+    assert all(c.trials <= cfg["recruitment"]["trials"] for c in left)
+    assert by["original/E1/LC4_L+LPLC2_L/150Hz"].inputs["LC4_L"] == cells.ids("LC4", side="left")
+    both = by["original/E1/LC4_B+LPLC2_B/150Hz"].inputs["LC4_B"]
+    assert both == sorted(cells.ids("LC4", side="left") + cells.ids("LC4", side="right"))
+    assert not any(c.experiment in ("E4", "S0") and c.side != "right" for c in conds)  # main side only
+    assert all(not judged(c, cfg) for c in left)
+    assert judged(by["original/E1/LC4_R+LPLC2_R/150Hz"], cfg)
+
+    # P1: chunks partition the side's looming neurons and switch on one after another
+    p1 = by["original/P1/loom_R/expanding/150Hz"]
+    chunks = list(p1.inputs.values())
+    assert sorted(i for c in chunks for i in c) == cells.ids("LC4", "LPLC2", side="right")
+    r = p1.rates()
+    step = n_frames(75, cfg["frame_ms"])
+    assert (r[:step] > 0).sum(axis=1).max() == 1 and (r[3 * step:4 * step] > 0).all()
+    assert not judged(p1, cfg)
+
+    # P2: a rising ramp, then off; P3/P4 on both sign versions
+    ramp = by["original/P2/loom_R/ramp/200Hz"].rates()[:, 0]
+    n_ramp = n_frames(300, cfg["frame_ms"])
+    assert (np.diff(ramp[:n_ramp]) > 0).all() and ramp[n_ramp - 1] == pytest.approx(200)
+    assert ramp[n_ramp] == 0
+    for sign in ("original", "corrected"):
+        assert f"{sign}/P3/down_B+up_B/switching/100Hz" in by
+        assert f"{sign}/P4/horizontal_B_50Hz+down_B/onoff/100Hz" in by

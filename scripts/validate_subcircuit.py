@@ -24,9 +24,12 @@ import tomllib
 import numpy as np
 import pandas as pd
 
-from analyse_pathway_tests import analyse, md_table
+from analyse_pathway_tests import analyse, load_all, md_table
 from run_pathway_tests import CONFIG, OUT, ROOT, conditions, network, runnable
-from stereo_flyness.experiments.subcircuit_validation import activity_fidelity, compare_groups, neuron_rates
+from stereo_flyness.experiments.pathway_tests import judged
+from stereo_flyness.experiments.subcircuit_validation import (
+    activity_fidelity, compare_groups, first_spike_agreement, neuron_rates, within_tolerance,
+)
 
 KEY_GROUPS = ["GF_R", "GF_L", "VS_R", "VS_L", "DNp20_R", "DNp22_R", "LPi09_R"]
 
@@ -54,6 +57,7 @@ def main() -> None:
     parser.add_argument("name", help="subcircuit name (data/subcircuits/NAME)")
     parser.add_argument("--trials", type=int, help="compare only the first N trials of each condition")
     parser.add_argument("--train", default="", help="experiments the rule was built from, e.g. E1,S1 (original signs)")
+    parser.add_argument("--heldout", default="P", help="experiment prefix the D36 tolerance is judged on (default: probes)")
     args = parser.parse_args()
 
     cfg = tomllib.loads(CONFIG.read_text())
@@ -70,8 +74,16 @@ def main() -> None:
     manifest = json.loads((path_comp.parent / "manifest.json").read_text())
     sub_ids = set(pd.read_csv(path_comp, index_col=0).index)
 
-    whole = analyse(OUT, cfg, conds, title="# Whole brain")
-    sub = analyse(sub_out, cfg, conds, title=f"# Subcircuit {args.name}")
+    # Verdicts (D29-D31) come from the main side's tests; everything else is compared below
+    verdict_conds = [c for c in conds if judged(c, cfg)]
+    whole = analyse(OUT, cfg, verdict_conds, title="# Whole brain")
+    sub = analyse(sub_out, cfg, verdict_conds, title=f"# Subcircuit {args.name}")
+    extra = [c for c in conds if not judged(c, cfg)]
+    for res, out_dir in ((whole, OUT), (sub, sub_out)):
+        if extra:
+            df_x, trials_x = load_all(extra, out_dir)
+            res["df"] = pd.concat([res["df"], df_x], ignore_index=True)
+            res["trials"].update(trials_x)
 
     n_trials = sorted({c.trials for c in conds})
     out = [f"# Subcircuit validation: {args.name}", "",
@@ -121,6 +133,33 @@ def main() -> None:
     for s in ("train", "held-out"):
         summary[s] = headline(cmp[cmp["set"] == s], fid[fid["set"] == s])
 
+    # D36 tolerance on the held-out, game-like conditions
+    held = [c for c in conds if c.experiment.startswith(args.heldout)]
+    tol = {}
+    if held:
+        hk = cmp[cmp["condition"].isin({c.key for c in held})]
+        ok = [within_tolerance(w, x) for w, x in zip(hk["whole"], hk["subcircuit"])]
+        bad = hk[[not o for o in ok]]
+        m = t = 0
+        for c in held:
+            if "GF_R" not in c.watch:
+                continue
+            tw = [whole["trials"][(c.key, i)] for i in range(c.trials)]
+            ts = [sub["trials"][(c.key, i)] for i in range(c.trials)]
+            for g in ("GF_R", "GF_L"):
+                a, b = first_spike_agreement(tw, ts, g)
+                m, t = m + a, t + b
+        kept = fid[fid["condition"].isin({c.key for c in held}) & (fid["whole_active"] > 0)]["kept_active"].median()
+        tol = {
+            "same_verdicts": verdicts_same,
+            "key_rates": bool(all(ok)),
+            "key_rate_failures": [f"{r.condition} {r.group}: {r.whole:.1f} → {r.subcircuit:.1f} Hz" for r in bad.itertuples()],
+            "first_spikes": (m / t >= 0.95) if t else None, "first_spikes_matched": f"{m}/{t}",
+            "active_kept": bool(kept >= 0.90), "active_kept_median": float(kept),
+        }
+        tol["pass"] = bool(tol["same_verdicts"] and tol["key_rates"] and tol["first_spikes"] and tol["active_kept"])
+        summary["tolerance"] = tol
+
     def line(s):
         h = summary[s]
         if not h["conditions"]:
@@ -134,6 +173,13 @@ def main() -> None:
             line("train"), line("held-out"),
             f"- **Speed:** median {summary['speed_up_median']:.1f}× faster than the whole brain; "
             f"{summary['x_real_time_median']:.1f}× slower than real time (4 workers running at once).", "",
+            *([f"## D36 tolerance on held-out probes ({args.heldout}*): **{'PASS' if tol['pass'] else 'FAIL'}**", "",
+               f"1. Same go/no-go verdicts: {tol['same_verdicts']}",
+               f"2. Key rates within 10% (1 Hz under 10 Hz): {tol['key_rates']}"
+               + (f" (failures: {'; '.join(tol['key_rate_failures'][:8])})" if tol["key_rate_failures"] else ""),
+               f"3. Giant Fiber first spikes within one frame in ≥ 95% of events: {tol['first_spikes']} ({tol['first_spikes_matched']})",
+               f"4. Median active neurons kept ≥ 90%: {tol['active_kept']} ({100 * tol['active_kept_median']:.0f}%)",
+               "5. Closed-loop actions: judged from Step 2 on", ""] if tol else []),
             md_table(fid.rename(columns={"kept_active": "kept active", "cut_active": "active but cut",
                                          "new_active": "newly active", "whole_active": "active (whole)"}), 3), ""]
 
@@ -147,6 +193,9 @@ def main() -> None:
     print("\n".join(out[:8]))
     print(line("train"), line("held-out"), sep="\n")
     print(f"Verdicts identical: {verdicts_same}; speed-up {summary['speed_up_median']:.1f}×")
+    if tol:
+        print(f"D36 tolerance on {args.heldout}*: {'PASS' if tol['pass'] else 'FAIL'} (rates {tol['key_rates']}, "
+              f"first spikes {tol['first_spikes_matched']}, kept {100 * tol['active_kept_median']:.0f}%)")
     print(f"\nWrote {report.relative_to(ROOT)}, summary.json and the subcircuit's full pathway report (report.md)")
 
 

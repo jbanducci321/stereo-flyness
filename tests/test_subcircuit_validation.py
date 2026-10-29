@@ -51,3 +51,29 @@ def test_compare_groups():
     assert cmp.loc["a", "diff"] == pytest.approx(-10.0)
     assert cmp.loc["a", "rel_error"] == pytest.approx(-10 / 105)
     assert cmp.loc["b", "rel_error"] == 0.0
+
+
+def test_within_tolerance():
+    from stereo_flyness.experiments.subcircuit_validation import within_tolerance
+    assert within_tolerance(100, 109) and not within_tolerance(100, 111)
+    assert within_tolerance(5, 5.9) and not within_tolerance(5, 6.5)  # 1 Hz floor under 10 Hz
+    assert within_tolerance(0, 0) and not within_tolerance(0, 2)
+
+
+def test_first_spike_agreement_per_onset():
+    from stereo_flyness.experiments.subcircuit_validation import first_spike_agreement, first_spikes, onsets
+
+    rates = np.array([[0], [100], [100], [0], [0], [100], [100], [0]], dtype=float)
+    assert onsets(rates) == [1, 5]
+
+    def trial(gf):
+        return {"rates": rates, "spikes": {"GF_R": np.array(gf, dtype=np.uint16).reshape(-1, 1)}}
+
+    whole = trial([0, 0, 1, 0, 0, 0, 0, 0])  # spikes 1 frame after onset 1; nothing after onset 5
+    assert first_spikes(whole, "GF_R") == [1, None]
+    close = trial([0, 0, 0, 1, 0, 0, 0, 0])  # 1 frame later: matches
+    late = trial([0, 0, 0, 0, 1, 0, 0, 0])  # 2 frames later: doesn't
+    extra = trial([0, 0, 1, 0, 0, 0, 1, 0])  # also spikes after onset 5: an unmatched event
+    assert first_spike_agreement([whole], [close], "GF_R") == (1, 1)
+    assert first_spike_agreement([whole], [late], "GF_R") == (0, 1)
+    assert first_spike_agreement([whole], [extra], "GF_R") == (1, 2)

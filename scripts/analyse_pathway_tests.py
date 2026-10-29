@@ -22,7 +22,7 @@ from stereo_flyness.experiments.pathway_analysis import (
     by_rate, escape_rules, horizontal_rule, latency_rule, onoff_cycles, pick_e2_rate, pick_half_max,
     reliable, steering_rules, trial_row,
 )
-from stereo_flyness.experiments.pathway_tests import load_trial
+from stereo_flyness.experiments.pathway_tests import judged, load_trial
 
 REPORT = OUT / "analysis" / "report.md"
 
@@ -276,7 +276,7 @@ def analyse(out_dir, cfg, conds, title="# Pathway tests: analysis") -> dict:
 
 def main() -> None:
     cfg = tomllib.loads(CONFIG.read_text())
-    res = analyse(OUT, cfg, conditions(cfg))
+    res = analyse(OUT, cfg, [c for c in conditions(cfg) if judged(c, cfg)])  # D29-D31: main side only
     REPORT.parent.mkdir(parents=True, exist_ok=True)
     REPORT.write_text("\n".join(res["lines"]), encoding="utf-8")
     res["df"].to_csv(REPORT.parent / "trials.csv", index=False)

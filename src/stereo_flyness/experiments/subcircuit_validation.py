@@ -69,3 +69,45 @@ def compare_groups(whole: pd.DataFrame, sub: pd.DataFrame, groups) -> pd.DataFra
             rows.append({"condition": key, "group": g, "whole": wm, "subcircuit": sm, "diff": sm - wm,
                          "rel_error": (sm - wm) / wm if wm else (0.0 if sm == 0 else math.inf)})
     return pd.DataFrame(rows)
+
+
+def within_tolerance(whole: float, sub: float, rel: float = 0.10, floor_hz: float = 1.0,
+                     small_hz: float = 10.0) -> bool:
+    """D36 rule 2: within 10% of the whole brain's rate, or within 1 Hz for groups under 10 Hz."""
+    if whole < small_hz:
+        return abs(sub - whole) <= floor_hz
+    return abs(sub - whole) <= rel * whole
+
+
+def onsets(rates: np.ndarray) -> list[int]:
+    """Frames where input switches on: no input group active in the previous frame, some now."""
+    on = rates.any(axis=1)
+    return [i for i in range(len(on)) if on[i] and (i == 0 or not on[i - 1])]
+
+
+def first_spikes(trial: dict, group: str) -> list[int | None]:
+    """For each input onset in a trial, frames from onset to the group's first spike before the
+    next onset (None if it doesn't spike)."""
+    starts = onsets(trial["rates"])
+    counts = trial["spikes"][group].sum(axis=1)
+    out = []
+    for k, s in enumerate(starts):
+        end = starts[k + 1] if k + 1 < len(starts) else len(counts)
+        hit = np.flatnonzero(counts[s:end])
+        out.append(int(hit[0]) if len(hit) else None)
+    return out
+
+
+def first_spike_agreement(whole_trials: list[dict], sub_trials: list[dict], group: str,
+                          max_frames: int = 1) -> tuple[int, int]:
+    """D36 rule 3, paired trial by trial (same seeds): (events matching, events). An event
+    matches if both networks spike within `max_frames` of each other; onsets where neither
+    network spikes aren't events."""
+    match = total = 0
+    for w, s in zip(whole_trials, sub_trials):
+        for a, b in zip(first_spikes(w, group), first_spikes(s, group)):
+            if a is None and b is None:
+                continue
+            total += 1
+            match += a is not None and b is not None and abs(a - b) <= max_frames
+    return match, total
