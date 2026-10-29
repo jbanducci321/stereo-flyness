@@ -74,6 +74,7 @@ The GitHub repo is public. The FlyWire connectivity data is CC BY 4.0 and Shiu's
 **D18. Subcircuit size target: up to ~20k neurons / ~3M connections** (2026-10-22, provisional)
 - Based on benchmarks with neighbourhood stand-ins: one 90 s level in a few minutes on one core, and a tuning grid overnight.
 - The extraction rule itself is still open (Shannyn's S5). This only bounds its size. To be revisited with the real subcircuit (J5).
+- **Updated by D36 (2026-10-28):** the limit is now ~25k neurons / ~3M connections.
 
 **D19. End deliverable: a record-and-replay viewer of the fly playing Stereo Madness** (2026-10-22)
 - **Goal:** watch the fly brain play Stereo Madness at real speed, with its brain activity shown beside the game. Looming neurons (LC4/LPLC2) light up as obstacles approach, the Giant Fiber flashes when it fires, and the cube jumps. Steering neurons drive hold/release in ship sections.
@@ -271,11 +272,57 @@ Two numbers that only round 1 provides; these rules pick them, not us:
 - E1's all-neuron record (D34) answers the same question directly, by showing whether LC4-only input makes any LPLC2 neuron fire.
 - E5b and E5c (silencing the Giant Fiber's inhibitory and excitatory partners) are kept.
 
+**D36. Subcircuit rule (S5): recruited neurons plus their strong inputs, built in two stages** (2026-10-28)
+Proposed by Shannyn (S5), from the J5 candidate comparison (`docs/subcircuit_candidates.md`). Agreed by both on 2026-10-28.
+- **The rule ("a2-style"):**
+  1. **Recruited neurons:** every neuron that fires in whole-brain runs of the inputs the game uses.
+  2. **Plus their strong inputs:** every neuron with a connection of **≥ 30 synapses** onto a recruited neuron.
+  3. **Plus every neuron the pathway tests stimulate or watch**, so the subcircuit can be validated.
+  - Everything is kept with every connection between kept neurons. Weights are unchanged (D5).
+- **"Inputs the game uses":**
+  - the pathway tests that stimulate game inputs: LC4/LPLC2 (E1–E3, E5) and T4/T5 (S1–S3);
+  - on **both sides** (right, left and both together);
+  - on **both sign versions** (D27);
+  - and, once T4 has decided the encoding, whole-brain runs of that encoding.
+  - E4's controls (LC10a, sugar) are not game inputs and are excluded.
+- **Two stages** (this resolves the ordering J5 → T3 → T4):
+  - **Interim subcircuit (J5, for T3):** built from all current pathway tests plus new left-side and both-sides whole-brain runs. It is validated against the tolerance below and is the feasibility evidence for T3.
+  - **Final subcircuit (after T4):** rebuilt with the same recipe once the encoding is known, adding whole-brain runs of that encoding. It is validated again before tuning (Step 3).
+- **Tolerance:**
+  - It is judged on **held-out, game-like runs**, never on Stereo Madness (D7).
+  - It is agreed now, before the final validation, as with D29–D31.
+  - The subcircuit is faithful enough if:
+    1. the D29 and D31 go/no-go verdicts are the same as the whole brain's;
+    2. key-group rates (Giant Fibers, VS, DNp20/22, LPi09) are within **10%** of the whole brain's, or within **1 Hz** for groups under 10 Hz;
+    3. Giant Fiber first spikes fall within **one frame** (4.2 ms) of the whole brain's in **≥ 95%** of events;
+    4. the median share of whole-brain-active neurons that stay active is **≥ 90%**;
+    5. **later, in closed loop (Step 2 onward):** the same jump/hold actions within **±1 frame** for **≥ 95%** of actions.
+- **If it doesn't fit or doesn't pass:**
+  - **Over the size limit:** raise the synapse cut-off above 30 until it fits, as long as the tolerance still holds. If no cut-off fits, raise the limit (and log it) or rethink the rule.
+  - **Fails the tolerance at ≥ 30 synapses:** lower the cut-off to **≥ 20** (keeps more inputs, so the subcircuit gets bigger), then re-check size and tolerance.
+- **Size limit:** **~25k neurons / ~3M connections** (updates D18).
+- **Controls (Step 4):**
+  - The controls run on the **whole brain**.
+  - If tuning uses the subcircuit, the shuffled-connectome control goes through the same pipeline: shuffle the whole brain, run the same pathway tests on it, apply this rule, build its own subcircuit.
+- **Why this rule:**
+  - In the candidate comparison, only the a2-style rule kept ≥ 90% of active neurons on the one genuinely new input (horizontal motion, S3: 92–93%, key-group errors ≤ 8%).
+  - Wiring-only rules (1–3 steps upstream of the outputs) kept ~70–85%, with key-rate errors up to 40–150%.
+  - Activity-only over-fired VS cells on S3 (15 → 39 Hz), because it missed recruited inhibition.
+  - The 2-step hybrid (`h1`) kept 84–87% on S3, below the 90% bar.
+- **Known limits:**
+  - The candidate comparison stimulated the right side only.
+  - Its "held-out" conditions mostly reused the training inputs, so S3 was the only genuinely new input. Hence the both-sides runs and game-like validation above.
+  - The wiring sweep changed steps and synapse cut-off together, so it doesn't isolate either.
+- **Alternatives considered:**
+  - wiring-only rules (smaller and faster, not faithful enough);
+  - activity-only (fails on unseen input);
+  - the 2-step hybrid (just below the bar on S3).
+
 ## Open
 
 These are to be decided after Step 0:
 
-- Subcircuit rule: which neurons are in (core types plus N hops, with a minimum synapse count).
+- Subcircuit rule: decided in D36 (recipe). The interim neuron list is built in J5; the final one after T4.
 - Brain time per game step (e.g. ~16.7 ms; GD 2.2 physics may run at 240 Hz).
 - Input encoding: looming → LC4/LPLC2 stimulation rate, and which neurons receive it.
 - Output rule: what Giant Fiber activity counts as a jump.

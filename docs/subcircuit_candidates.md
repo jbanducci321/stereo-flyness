@@ -1,6 +1,8 @@
 # Subcircuit candidates (J5, input for S5)
 
-*Jacob, J5 checkpoint 3, 2026-10-28. These are options measured for Shannyn's subcircuit rule (S5). **None of them is the rule.** S5 is Shannyn's decision, agreed together and logged in `docs/decisions.md`.*
+*Jacob, J5 checkpoint 3, 2026-10-28. These are options measured for Shannyn's subcircuit rule (S5). None of them is the rule itself.*
+
+> **Outcome:** S5 is decided in **D36**: an a2-style rule (recruited neurons plus their ≥ 30-synapse inputs), built from game inputs on both sides and both sign versions, with a tolerance agreed in advance. An interim version is built in J5 for T3; the final version follows T4.
 
 ## Why a subcircuit, and what this measures
 
@@ -11,7 +13,8 @@
   - the go/no-go verdicts (D29–D31);
   - the key neurons' rates (Giant Fibers, VS, DNp20/22, LPi09);
   - **every neuron's activity** (D34): the share of whole-brain-active neurons that stay active, and the per-neuron rate correlation.
-- **A fair test:** activity-based rules were built only from **E1 and S1 (original signs)**. Everything else (E2–E5, S2, S3, corrected signs) is **held out**, so it tests how a rule copes with input it wasn't built from, as it will in the game.
+- **A fair(er) test:** activity-based rules were built only from **E1 and S1 (original signs)**. Everything else (E2–E5, S2, S3, corrected signs) is **held out**.
+  - **Limit (Shannyn's review):** most held-out conditions (E2, E3, E5, S2) stimulate the same neurons as the training ones, in different combinations or timings. **Horizontal motion (S3) is the only genuinely new input**, and everything here stimulated the right side only. So this compares candidates fairly, but the final validation needs game-like input (D36).
 
 Tools: `scripts/extract_subcircuit.py` (specs in `configs/subcircuits/candidates/`), `scripts/run_pathway_tests.py --subcircuit`, `scripts/validate_subcircuit.py`, `scripts/compare_subcircuits.py`. Per-candidate reports are in git-ignored `results/subcircuits/<name>/`.
 
@@ -74,13 +77,13 @@ Every candidate also keeps the pathway-test neurons (inputs and watched groups: 
 
 ## What the numbers say
 
-1. **Wiring-only rules (w1–w3) are the smallest and fastest, but lose real activity.**
+1. **Wiring-only rules (w1–w3) are the smallest and fastest, but lose real activity.** (Caveat: w1–w3 change both the number of steps and the synapse cut-off, so the step comparison is confounded.)
    - Even 3 steps upstream keeps only ~70–85% of the active neurons.
    - Key rates can be far off. For example, in `w1` the left Giant Fiber at 25 Hz input drops from 42 to 2 Hz, because its input route (DNp70, PVLP151; see `docs/pathway_results.md`) is partly cut.
    - Going from 2 to 3 steps adds ~4k neurons and 0.6M connections without clearly fixing this.
 2. **Activity-only (a1) is exact for inputs like the ones it was built from, and fails on new kinds of input.**
    - It reproduces E1-like input perfectly (E2, E3, E5, S2: ~100%).
-   - It misses most of what horizontal motion (S3) activates, so VS rates there are off by 100–163%.
+   - It misses most of what horizontal motion (S3) activates, and the VS cells **over-fire** (e.g. 15 → 39 Hz at 25 Hz, corrected; 65 → 83 Hz at 50 Hz, original). It is missing recruited inhibition, and not via LPi09, which is silent during horizontal motion.
    - In the game, the brain will only see the input types our encoding uses. An activity rule must therefore be built from activity that covers **every input the interface (T4) will use**.
 3. **Adding wiring to activity fixes the gaps.**
    - `h1` (activity + 2-step wiring) and `a2` (activity + the active neurons' strong inputs) keep 84–100% of active neurons on everything held out, with key errors ≤ 8%.
