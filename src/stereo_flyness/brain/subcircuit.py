@@ -93,11 +93,20 @@ def _sha256(path) -> str:
     return h.hexdigest()
 
 
-def write_subcircuit(path_comp, path_con, ids, folder, spec: dict | None = None) -> dict:
+def _cut(con, ids, index):
+    sub = con[con["Presynaptic_ID"].isin(ids) & con["Postsynaptic_ID"].isin(ids)].copy()
+    sub["Presynaptic_Index"] = index.loc[sub["Presynaptic_ID"]].to_numpy()
+    sub["Postsynaptic_Index"] = index.loc[sub["Postsynaptic_ID"]].to_numpy()
+    return sub.reset_index(drop=True)
+
+
+def write_subcircuit(path_comp, path_con, ids, folder, spec: dict | None = None,
+                     path_con_corrected=None) -> dict:
     """Write the neurons `ids` (and every connection between them) in Shiu's file format.
 
     Neurons keep the whole brain's order, so indices are reproducible. Writes `comp.csv`,
-    `con.parquet` and `manifest.json` (spec, sizes, source checksums) into `folder`.
+    `con.parquet` and `manifest.json` (spec, sizes, source checksums) into `folder`, plus
+    `con_corrected.parquet` cut the same way from the T4/T5-corrected copy (D27) if given.
     Returns the manifest.
     """
     comp = pd.read_csv(path_comp, index_col=0)
@@ -108,19 +117,20 @@ def write_subcircuit(path_comp, path_con, ids, folder, spec: dict | None = None)
 
     sub_comp = comp[comp.index.isin(ids)]
     index = pd.Series(np.arange(len(sub_comp)), index=sub_comp.index)
-    sub = con[con["Presynaptic_ID"].isin(ids) & con["Postsynaptic_ID"].isin(ids)].copy()
-    sub["Presynaptic_Index"] = index.loc[sub["Presynaptic_ID"]].to_numpy()
-    sub["Postsynaptic_Index"] = index.loc[sub["Postsynaptic_ID"]].to_numpy()
-    sub = sub.reset_index(drop=True)
+    sub = _cut(con, ids, index)
 
     folder = Path(folder)
     folder.mkdir(parents=True, exist_ok=True)
     sub_comp.to_csv(folder / "comp.csv")
     sub.to_parquet(folder / "con.parquet")
+    sources = [path_comp, path_con]
+    if path_con_corrected is not None:
+        _cut(pd.read_parquet(path_con_corrected), ids, index).to_parquet(folder / "con_corrected.parquet")
+        sources.append(path_con_corrected)
     manifest = {
         "neurons": len(sub_comp), "connections": len(sub), "synapses": int(sub["Connectivity"].sum()),
         "whole_brain": {"neurons": len(comp), "connections": len(con), "synapses": int(con["Connectivity"].sum())},
-        "source": {Path(path_comp).name: _sha256(path_comp), Path(path_con).name: _sha256(path_con)},
+        "source": {Path(p).name: _sha256(p) for p in sources},
         "spec": spec or {},
     }
     (folder / "manifest.json").write_text(json.dumps(manifest, indent=2))

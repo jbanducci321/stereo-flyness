@@ -26,6 +26,7 @@ from find_target_neurons import fetch_annotations
 from reproduce_sugar import PATH_COMP, PATH_CON
 from run_pathway_tests import CONFIG as PATHWAY_CONFIG, OUT as PATHWAY_OUT, conditions
 from stereo_flyness.brain.celltypes import CellTypes
+from stereo_flyness.brain.signs import CORRECTED_NAME
 from stereo_flyness.brain.subcircuit import active_neurons, hops, retained_input, write_subcircuit
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -76,7 +77,9 @@ def main() -> None:
     pathway_conds = conditions(tomllib.loads(PATHWAY_CONFIG.read_text()))
 
     ids, parts = select(spec, cells, con, pathway_conds)
-    manifest = write_subcircuit(PATH_COMP, PATH_CON, ids, OUT / name, spec)
+    corrected = ROOT / "data" / CORRECTED_NAME  # the steering tests also run on it (D27)
+    manifest = write_subcircuit(PATH_COMP, PATH_CON, ids, OUT / name, spec,
+                                path_con_corrected=corrected if corrected.exists() else None)
 
     sys.stdout.reconfigure(encoding="utf-8")
     print(f"Subcircuit '{name}': {manifest['neurons']:,} neurons, {manifest['connections']:,} connections, "

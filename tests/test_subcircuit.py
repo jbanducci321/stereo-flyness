@@ -97,3 +97,16 @@ def test_active_neurons_from_saved_trials(files, tmp_path):
     assert active_neurons([path]) == {1, 2, 3, 4, 6}  # 5 and 7 get no input
     assert active_neurons([path], min_rate_hz=1e6) == set()
     assert active_neurons([]) == set()
+
+
+def test_corrected_copy_is_cut_the_same_way(files, tmp_path, con):
+    corrected = con.copy()
+    corrected.loc[corrected["Presynaptic_ID"] == 5, ["Excitatory", "Excitatory x Connectivity"]] = [1, 2]
+    corrected.to_parquet(tmp_path / "con_corr.parquet")
+    m = write_subcircuit(*files, [2, 3, 5], tmp_path / "sub", path_con_corrected=tmp_path / "con_corr.parquet")
+    orig = pd.read_parquet(tmp_path / "sub" / "con.parquet")
+    corr = pd.read_parquet(tmp_path / "sub" / "con_corrected.parquet")
+    cols = ["Presynaptic_ID", "Postsynaptic_ID", "Presynaptic_Index", "Postsynaptic_Index", "Connectivity"]
+    pd.testing.assert_frame_equal(orig[cols], corr[cols])
+    assert corr.loc[corr["Presynaptic_ID"] == 5, "Excitatory"].tolist() == [1]
+    assert "con_corr.parquet" in m["source"]
