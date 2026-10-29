@@ -5,6 +5,7 @@ A spec (configs/subcircuits/<name>.toml) is a union of `[[include]]` blocks, eac
     types = ["LC4", "LPLC2"]                     # every neuron of these cell types
     side = "right"                               #   (optional, with `types`)
     hops = { from_types = ["DNp01"], n = 2, direction = "in", min_synapses = 5 }
+    hops = { from_active = { experiments = ["E1"] }, n = 1, direction = "in", min_synapses = 20 }
     active = { experiments = ["E1"], sign = "original", min_rate_hz = 1.0 }   # D34 record
     pathway_tests = true                         # every input and watched neuron of the tests
 
@@ -35,6 +36,16 @@ OUT = ROOT / "data" / "subcircuits"
 KEY_TYPES = ["DNp01", "DNp20", "DNp22", *[f"VS{i}" for i in range(1, 9)]]
 
 
+def active(a, pathway_conds):
+    """Neurons active in the whole-brain pathway-test trials named by an `active` table."""
+    paths = [c.path(PATHWAY_OUT, t) for c in pathway_conds
+             if c.experiment in a["experiments"] and c.sign == a.get("sign", "original")
+             for t in range(c.trials) if c.path(PATHWAY_OUT, t).exists()]
+    if not paths:
+        sys.exit(f"No saved pathway-test trials for {a}. Run scripts/run_pathway_tests.py first.")
+    return active_neurons(paths, a.get("min_rate_hz", 0.0)), len(paths)
+
+
 def select(spec, cells, con, pathway_conds):
     chosen, parts = set(), []
     for block in spec["include"]:
@@ -43,18 +54,15 @@ def select(spec, cells, con, pathway_conds):
             label = f"types {block['types']}" + (f" ({block['side']})" if block.get("side") else "")
         elif "hops" in block:
             h = block["hops"]
-            seeds = cells.ids(*h["from_types"], side=h.get("side"))
+            if "from_active" in h:  # grow from the neurons active in some trials
+                seeds = active(h["from_active"], pathway_conds)[0]
+            else:
+                seeds = cells.ids(*h["from_types"], side=h.get("side"))
             ids = hops(con, seeds, h["n"], h.get("direction", "both"), h.get("min_synapses", 1))
             label = f"hops {h}"
         elif "active" in block:
-            a = block["active"]
-            paths = [c.path(PATHWAY_OUT, t) for c in pathway_conds
-                     if c.experiment in a["experiments"] and c.sign == a.get("sign", "original")
-                     for t in range(c.trials) if c.path(PATHWAY_OUT, t).exists()]
-            if not paths:
-                sys.exit(f"No saved pathway-test trials for {a}. Run scripts/run_pathway_tests.py first.")
-            ids = active_neurons(paths, a.get("min_rate_hz", 0.0))
-            label = f"active {a} ({len(paths)} trials)"
+            ids, n_paths = active(block["active"], pathway_conds)
+            label = f"active {block['active']} ({n_paths} trials)"
         elif block.get("pathway_tests"):
             ids = {i for c in pathway_conds for g in (c.inputs, c.watch) for v in g.values() for i in v}
             label = "pathway-test inputs and watched neurons"

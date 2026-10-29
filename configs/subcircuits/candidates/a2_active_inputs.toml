@@ -1,0 +1,14 @@
+# J5 checkpoint 3 candidate for S5. NOT the subcircuit rule (Shannyn decides, S5); see docs/subcircuit_candidates.md.
+# Every candidate keeps the pathway-test neurons (inputs and watched groups) so it can be validated.
+# "Outputs" = Giant Fibers (DNp01), DNp20, DNp22 and VS1-8, both sides. "Train" activity = E1 + S1, original signs.
+name = "a2_active_inputs"
+description = "Activity: active in training, plus their strong inputs (>= 30 synapses)"
+
+[[include]]
+pathway_tests = true
+
+[[include]]
+active = { experiments = ["E1", "S1"], sign = "original" }
+
+[[include]]
+hops = { from_active = { experiments = ["E1", "S1"], sign = "original" }, n = 1, direction = "in", min_synapses = 30 }

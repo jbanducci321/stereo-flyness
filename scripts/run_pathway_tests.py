@@ -19,6 +19,7 @@ compared trial by trial.
 """
 
 import argparse
+import dataclasses
 import subprocess
 import sys
 import time
@@ -61,12 +62,17 @@ def network(subcircuit=None):
 
 
 def runnable(conds, path_comp, con_paths):
-    """Conditions whose sign version exists and whose neurons are all in the network, and the rest."""
+    """Conditions whose sign version exists and whose input and watched neurons are all in the
+    network, and the rest. A silenced neuron that isn't in the network is already gone, which is
+    the same as silencing it (no outgoing synapses), so it's dropped from the silence list."""
     ids = set(pd.read_csv(path_comp, index_col=0).index)
     ok, skipped = [], []
     for c in conds:
-        needed = {i for g in (c.inputs, c.watch) for v in g.values() for i in v} | set(c.silence)
-        (ok if c.sign in con_paths and needed <= ids else skipped).append(c)
+        needed = {i for g in (c.inputs, c.watch) for v in g.values() for i in v}
+        if c.sign in con_paths and needed <= ids:
+            ok.append(dataclasses.replace(c, silence=[i for i in c.silence if i in ids]))
+        else:
+            skipped.append(c)
     return ok, skipped
 
 
