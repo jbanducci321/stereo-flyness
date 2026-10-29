@@ -121,16 +121,22 @@ def main() -> None:
     out += [md_table(early.reset_index().rename(columns={"rate": "rate Hz", "sum": "trials spiking within 100 ms", "count": "trials"}), 0), ""]
 
     e2_keys = [c.key for c in conds if c.experiment == "E2"]
-    out += ["### E2 latency and offset (round 1: 150 Hz only)", ""]
+    out += ["### E2 latency and offset; D29 rule 3", "",
+            "Rule 3 is applied at every E2 rate (D32's lower rate and 150 Hz) and must pass at each. "
+            "With 4.2 ms frames, onset latencies are quantised to multiples of 4.2 ms, so an SD of 0 means "
+            "every first spike fell in the same frame, not that latency is exactly constant.", ""]
+    rule3 = []
     for k in e2_keys:
         cyc = pd.concat([onoff_cycles(trials[(k, t)]).assign(trial=t) for t in range(by_key[k].trials)
                          if (k, t) in trials], ignore_index=True)
         lat = latency_rule(cyc)
+        rule3.append(lat["pass"])
         out += [f"- `{k}`: onset {lat['mean_ms']:.1f} ± {lat['sd_ms']:.1f} ms over {lat['cycles']} cycles "
                 f"({lat['missed_cycles']} without a spike); offset {ms(cyc['offset_ms'])} ms "
                 f"(max {cyc['offset_ms'].max():.1f}); spikes per 300 ms 'on' {ms(cyc['spikes_on'])}",
                 f"  - D29 rule 3 at this rate: mean < 100 ms and 4 × SD = {4 * lat['sd_ms']:.1f} < 238 ms → {verdict(lat['pass'])}"]
-    out += ["", "- **D29 rule 3 is judged after round 2**, which adds E2 at the lower rate above.", ""]
+    esc["rule3"] = bool(rule3) and all(rule3)
+    out += ["", f"- **Rule 3**, at every E2 rate → {verdict(esc['rule3'])}", ""]
 
     # E3
     e3 = df[df["experiment"] == "E3"].copy()
@@ -199,7 +205,7 @@ def main() -> None:
 
     # --- Steering ---
     out += ["## Steering: T4/T5 → VS cells → DNp20 / DNp22", ""]
-    picks = {}
+    picks, steer_go = {}, {}
     for sign in cfg["steering"]["signs"]:
         s1 = df[(df["experiment"] == "S1") & (df["sign"] == sign)]
         st = steering_rules(s1, "down_R", "up_R")
@@ -220,9 +226,43 @@ def main() -> None:
                 f"- **Rule 2**, at such a rate, up gives VS and DNp20 < 10% of down → {verdict(st['rule2'])}", "",
                 md_table(st["table"], 3), "",
                 f"- **D32 half-of-maximum 'down' rate: {half} Hz** (right VS reaches {100 * frac:.0f}% of its sweep maximum)",
-                f"- S3 at 150 Hz (reported; **rule 3 is judged at {half} Hz in round 2**): right VS down {hr['down']:.1f} "
+                f"- S3 at 150 Hz (reported only): right VS down {hr['down']:.1f} "
                 f"vs horizontal {hr['horizontal']:.1f} Hz; difference {hr['diff']:.1f}, bar {hr['bar']:.1f} → "
-                f"{'lower' if hr['pass'] else 'not clearly lower'}", ""]
+                f"{'lower' if hr['pass'] else 'not clearly lower'}"]
+        hh = df[(df["experiment"] == "S3") & (df["sign"] == sign) & (df["rate"] == half)]
+        if len(hh):
+            h3 = horizontal_rule(down[down["rate"] == half], hh)
+            out += [f"- **Rule 3**, at the half-of-maximum rate ({half} Hz): right VS down {ms(down[down['rate'] == half]['rate:VS_R'])} "
+                    f"vs horizontal {ms(hh['rate:VS_R'])} Hz; difference {h3['diff']:.1f}, bar (2 pooled SDs) {h3['bar']:.1f} "
+                    f"→ {verdict(h3['pass'])}. Horizontal DNp20: {ms(hh['rate:DNp20_R'])} Hz "
+                    f"(down: {ms(down[down['rate'] == half]['rate:DNp20_R'])})"]
+            rule3_ok = h3["pass"]
+        else:
+            out += [f"- **Rule 3** is judged at {half} Hz in round 2 (not run yet)"]
+            rule3_ok = None
+        s2 = df[(df["experiment"] == "S2") & (df["sign"] == sign)]
+        if len(s2):
+            rows = []
+            for r, d in s2.groupby("rate"):
+                rows.append({"up rate Hz (down fixed)": int(r), "VS right": ms(d["rate:VS_R"]),
+                             "DNp20 right": ms(d["rate:DNp20_R"]), "DNp22 right": ms(d["rate:DNp22_R"]),
+                             "LPi09 right": ms(d["rate:LPi09_R"])})
+            base = s2[s2["rate"] == 0]["rate:VS_R"].mean()
+            top = s2[s2["rate"] == s2["rate"].max()]["rate:VS_R"].mean()
+            out += ["", f"S2 opponent inhibition (reported, not part of the go/no-go): 'down' fixed at {half} Hz, "
+                    f"'up' swept. Right VS goes from {base:.1f} Hz (down only) to {top:.1f} Hz at the highest 'up' rate "
+                    f"({100 * (top - base) / base:+.0f}%).", "", md_table(pd.DataFrame(rows))]
+        go = st["rule1"] and st["rule2"] and rule3_ok
+        steer_go[sign] = go
+        out += ["", f"- **Steering go/no-go ({sign})**: " + ("**GO**" if go else ("waiting for round 2" if rule3_ok is None else "**NO-GO**")), ""]
+
+    esc_go = esc["rule0"] and esc["rule1"] and esc["rule2"] and esc["rule3"]
+    carry = "original" if steer_go.get("original") else ("corrected (D28 fallback)" if steer_go.get("corrected") else "none")
+    out += ["## Verdicts", "",
+            f"- **Escape pathway (LC4/LPLC2 → Giant Fiber → cube jump): {'GO' if esc_go else 'NO-GO'}** "
+            f"(rules 0–3: {', '.join(verdict(esc[f'rule{i}']).strip('*') for i in range(4))})",
+            *(f"- **Steering pathway, {s} signs: {'GO' if g else 'NO-GO'}**" for s, g in steer_go.items()),
+            f"- **Sign version carried forward (D28): {carry}**", ""]
 
     out += ["## Round 2 settings picked by D32", "",
             f"- `[escape.e2] rates_hz = [{e2_rate}, 150]`" if e2_rate != 150 else "- E2: 150 Hz already covers it",
