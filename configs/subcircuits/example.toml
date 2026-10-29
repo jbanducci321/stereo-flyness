@@ -1,0 +1,13 @@
+# Example spec for testing the J5 extraction tools. NOT a proposed subcircuit rule: the rule is
+# Shannyn's (S5). See scripts/extract_subcircuit.py for the block types.
+name = "example"
+description = "Pathway-test neurons, plus 1 step of strong input to the output neurons, plus everything active in E1/S1"
+
+[[include]]
+pathway_tests = true
+
+[[include]]
+hops = { from_types = ["DNp01", "DNp20", "DNp22", "VS1", "VS2", "VS3", "VS4", "VS5", "VS6", "VS7", "VS8"], n = 1, direction = "in", min_synapses = 5 }
+
+[[include]]
+active = { experiments = ["E1", "S1"], sign = "original", min_rate_hz = 0.0 }
