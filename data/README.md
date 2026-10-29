@@ -12,7 +12,7 @@ uv run python scripts/download_data.py
 |---|---|---|---|---|
 | `Connectivity_783.parquet` | [Shiu et al. model repo](https://github.com/philshiu/Drosophila_brain_model), commit `91bdd1e` | FlyWire v783 | Repo: MIT. Underlying FlyWire data: CC BY 4.0 ([Zenodo](https://zenodo.org/records/10676866)) | `download_data.py` |
 | `Completeness_783.csv` | Same as above | FlyWire v783 | Same as above | `download_data.py` |
-| Cell-type labels | [Codex](https://codex.flywire.ai/) (requires sign-in) or [flywire_annotations](https://github.com/flyconnectome/flywire_annotations) | v783 | To be checked: see the Codex download page's citation requirements | Not yet downloaded |
+| `flywire_annotations_v3.1.0_neurons.tsv` (cell-type labels) | [flyconnectome/flywire_annotations](https://github.com/flyconnectome/flywire_annotations) release `v3.1.0`, `Supplemental_file1_neuron_annotations.tsv` (SHA-256 pinned) | FlyWire v783 root IDs | **No license file** in the repo (checked at v3.1.0). Its README requires citing Berg et al. 2025, Schlegel et al. 2024, Matsliah et al. 2024 and Dorkenwald et al. 2024. Downloaded, never redistributed | `uv run python scripts/find_target_neurons.py` |
 | Stereo Madness level data (`gd/`) | Official main-level data via [Open-GD/OpenGD](https://github.com/Open-GD/OpenGD) `mainLevels.json`, commit `2a0e307`, cross-checked with server copy 77236587 | GD 2.1 layout (portal timings match a 2.2 playthrough) | Level design © RobTop Games. **Never commit.** | `uv run python scripts/fetch_stereo_madness.py` |
 
 ## What's in the connectome files
@@ -33,5 +33,7 @@ When using this data, cite:
 
 - Dorkenwald, S. et al. (2024). Neuronal wiring diagram of an adult brain. *Nature* 634, 124–138.
 - Schlegel, P. et al. (2024). Whole-brain annotation and multi-connectome cell typing of *Drosophila*. *Nature* 634, 139–152.
+- Matsliah, A. et al. (2024). Neuronal parts list and wiring diagram for a visual system. *Nature*. https://doi.org/10.1038/s41586-024-07981-1
+- Berg, S. et al. (2025). Sexual dimorphism in the complete connectome of the *Drosophila* male central nervous system. *bioRxiv*. https://doi.org/10.1101/2025.10.09.680999 (cell-type labels v3.x)
 - Shiu, P. K. et al. (2024). A *Drosophila* computational brain model reveals sensorimotor processing. *Nature* 634, 210–219.
 - Eckstein, N. et al. (2024). Neurotransmitter classification from electron microscopy images at synaptic sites in *Drosophila melanogaster*. *Cell* 187, 2574–2594. (These are the source of the excitatory/inhibitory signs.)

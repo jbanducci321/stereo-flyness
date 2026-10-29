@@ -143,3 +143,35 @@ def test_run_frames_matches_step_loop(connectome):
 def test_unknown_ids_raise(connectome):
     with pytest.raises(KeyError, match="999"):
         BrainStepper(*connectome, inputs={"drive": [999]}, watch=WATCH)
+
+
+def test_silencing_relay_cuts_downstream_only(connectome):
+    """Silencing zeroes a neuron's outgoing synapses (Shiu's silence()): the relay still fires,
+    but the neuron it inhibits no longer feels it."""
+    silenced = BrainStepper(*connectome, inputs={"drive": [INPUT]}, watch=WATCH, seed=1,
+                            silence=[RELAY])
+    silenced.set_rate("drive", 200 * Hz)
+    counts = silenced.step(100 * ms)
+    assert counts["input"].sum() > 0 and counts["relay"].sum() > 0
+
+    i_inhibited = silenced._indices([INHIBITED])[0]
+    assert float(silenced.neurons.v[i_inhibited]) == pytest.approx(float(default_params["v_0"]))
+
+    intact = make_stepper(connectome)
+    intact.set_rate("drive", 200 * Hz)
+    intact.step(100 * ms)
+    assert float(intact.neurons.v[i_inhibited]) < float(default_params["v_0"])
+
+
+def test_silencing_input_stops_relay(connectome):
+    stepper = BrainStepper(*connectome, inputs={"drive": [INPUT]}, watch=WATCH, seed=1,
+                           silence=[INPUT])
+    stepper.set_rate("drive", 200 * Hz)
+    counts = stepper.step(200 * ms)
+    assert counts["input"].sum() > 10  # external drive still reaches a silenced neuron
+    assert counts["relay"].sum() == 0
+
+
+def test_unknown_silence_ids_raise(connectome):
+    with pytest.raises(KeyError, match="999"):
+        BrainStepper(*connectome, inputs={"drive": [INPUT]}, watch=WATCH, silence=[999])

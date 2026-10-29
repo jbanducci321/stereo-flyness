@@ -161,8 +161,115 @@ The GitHub repo is public. The FlyWire connectivity data is CC BY 4.0 and Shiu's
 - **Alternatives considered:**
   - Original only, reporting the sign errors as a limitation: simpler, but leaves us unable to tell a failed steering pathway from a data error.
   - Correcting signs everywhere: breaks comparability with Shiu et al. and would mean rewriting D5/D14.
-- **Still open:** which version carries into ship tuning (Step 5) and Stereo Madness. Decide before any steering results come in.
+- **Which version carries forward:** decided in D28.
 - Details: `docs/pathway_tests.md` ("Two sign versions").
+
+**Pathway-test rules (D28–D35), set before round 1** (2026-10-28)
+- **Agreement:** Jacob proposed D28–D34; Shannyn reviewed and amended them; both agreed on 2026-10-28.
+- **What they are:**
+  - D28–D33 are rules for *judging* the pathway tests (J4, checkpoint 3). They change nothing about what gets simulated.
+  - D34 changes what gets *recorded*, the one thing that can't be fixed after a run without re-running it.
+  - D35 removes one experiment.
+- **When they were written:** before the full results exist, but **after the 9-trial pilot** (2026-10-28; one trial each at 150 Hz of E1 LC4/LPLC2/both, E5a, and S1 down/up on both sign versions). Those numbers were known:
+
+| Pilot trial (150 Hz, n = 1) | Right Giant Fiber | Left Giant Fiber | Right VS | Right DNp20 |
+|---|---|---|---|---|
+| E1 LC4 | 121 Hz | 31 Hz | | |
+| E1 LPLC2 | 158 Hz | 100 Hz | | |
+| E1 LC4 + LPLC2 | 190 Hz | 96 Hz | | |
+| S1 down, original / corrected | | | 223 / 239 Hz | 137 / 138 Hz |
+| S1 up, original / corrected | | | 0 / 0 Hz | 0 / 0 Hz |
+
+**D28. Sign version carried forward: original by default, corrected only by a written fallback rule** (2026-10-28)
+- **The original connectome is the main version** for all later stages (ship pathway, Step 5; mixed levels and Stereo Madness, Step 6). The T4/T5-corrected version (D27) is always reported alongside it as a sensitivity check.
+- **Fallback:** if, and only if, the original fails the steering go/no-go (D31) and the corrected version passes it:
+  - we report that as a finding ("a known sign-labelling error breaks the circuit");
+  - later stages continue with the corrected version, labelled as such everywhere.
+- **Written after the pilot:** the 9-trial pilot showed both sign versions behaving similarly (n = 1).
+- **Why:** it keeps the strongest claim ("the unaltered connectome") by default. It doesn't let a data error everyone agrees is wrong sink the ship pathway. And any switch comes from a rule written before the results, not from a preference.
+- **Alternatives considered:**
+  - Always original: could abandon the ship pathway over a labelling error.
+  - Always corrected: weakens the headline claim even when the correction makes no difference.
+- **Resolves** the open D27 question.
+
+**D29. Escape pathway go/no-go** (2026-10-28)
+- **Definitions:**
+  - "Fires" means the right Giant Fiber spikes at least once in a trial. "Reliably" means in at least 9 of 10 trials (D33).
+  - "Pooled SD" is the trial-to-trial SD pooled across the two groups compared (an effect-size bar, not a standard error).
+  - **Judged on E1 with LC4 + LPLC2 together** (the input the game will use). LC4 alone and LPLC2 alone are reported as findings.
+- The escape pathway is a **GO** if all four rules hold:
+  0. **It responds at all:** the right Giant Fiber fires reliably at one or more sweep rates. (Without this, rule 2 would pass automatically if it never fired.)
+  1. **It rises with input:** the right Giant Fiber's mean rate at 200 Hz exceeds its mean rate at 25 Hz by more than 2 pooled SDs. Small dips between neighbouring rates are allowed.
+  2. **The stimulated side dominates:** at every sweep rate where the right Giant Fiber fires reliably, its mean rate exceeds the left Giant Fiber's by more than 2 pooled SDs.
+     - The right/left ratio and the left Giant Fiber's rate are reported as findings.
+     - **This rule changed after the pilot.** The first draft required the right side to be ≥ 2× the left, replacing the S4 plan's "left stays near zero". The pilot's single trials gave ratios of ~3.9× (LC4), ~1.6× (LPLC2) and ~1.98× (both). Lowering the ratio to fit those numbers would have been fitting the rule to the data. Instead the rule tests what "dominates" means directly (a clear difference), and the ratio is always reported.
+     - The left Giant Fiber is reached through indirect routes (no LC4/LPLC2 synapse crosses sides). D34's recording is meant to trace them.
+  3. **It's fast and consistent enough for the game:** in E2, the mean onset latency (input on → first right Giant Fiber spike) is **under 100 ms**, **and** 4 × its SD is under 238 ms.
+     - The SD condition means one fixed input lead time can land the jump inside the ~238 ms window to clear a single spike (`docs/game_physics.md` §3) nearly every time.
+     - A mean under 50 ms is reported as ideal.
+- **Offset** (how long firing continues after input stops) is measured and reported, but **is not part of the go/no-go**. It's handled by the output rule, decided after round 1 (e.g. a refractory window after each jump).
+
+**D30. Specificity controls (E4)** (2026-10-28)
+- **No input (E4 baseline, and S0 for steering):** every neuron must fire **exactly 0 spikes**. Shiu's model has no internal noise, so anything else is a bug.
+  - The runner checks this automatically for every trial with no input, and stops the round if it fails. Baselines run first.
+- **LC10a and sugar controls:**
+  - A control counts as **quiet** if the right Giant Fiber's mean rate is **under 10%** of its E1 rate with LC4 + LPLC2 at 150 Hz.
+  - A control above that is reported as a **model finding**, not a failure of the escape go/no-go. The S4 plan already notes that LC10a reaches the Giant Fiber through two-step routes (314 synapses).
+  - For each control, the fraction of trials with at least one Giant Fiber spike is also reported.
+
+**D31. Steering pathway go/no-go** (2026-10-28)
+Judged on the right side (the stimulated side), for each sign version separately.
+- **Definitions:**
+  - "VS cells fire reliably" means at least one right VS cell fires in 9 of 10 trials.
+  - VS rates are group means.
+  - "DNp20 fires reliably" means it fires in 9 of 10 trials.
+- The steering pathway is a **GO** if all three rules hold:
+  1. **Downward motion drives the output:** at one or more sweep rates, "down" input (T4d + T5d) makes the right VS cells and the right DNp20 fire reliably.
+  2. **It's direction-selective:** at that same rate, "up" input (T4c + T5c) gives **both** the right VS cells and the right DNp20 less than 10% of the mean rate that "down" gives.
+     - This is a sanity check: "up" reaches VS cells only through inhibitory LPi neurons, so near-zero is expected.
+  3. **It isn't just any motion:** horizontal input (T4a/b + T5a/b, S3) gives the right VS cells a mean rate lower than "down" by more than 2 pooled SDs, at the same input rate.
+     - **The rate that counts is D32's half-of-maximum rate**, run in round 2, because VS cells are near saturation at 150 Hz, where horizontal and downward input could look alike for the wrong reason.
+     - The 150 Hz comparison (round 1) is reported alongside it.
+- **S2** (does added upward motion lower VS activity?) is reported as a biological check. **It is not part of the go/no-go**: the game only needs "down drives the output, up doesn't".
+- **Output neuron:** rules 1–2 use DNp20 (DNOVS1), which gets the strongest VS input. DNp22 is reported alongside it. The ship control rule itself is decided later.
+
+**D32. How round 2's rates are picked** (2026-10-28)
+Two numbers that only round 1 provides; these rules pick them, not us:
+- **E2's lower rate:** the lowest sweep rate at which the right Giant Fiber (E1, LC4 + LPLC2) fires **within the first 100 ms in at least 9 of 10 trials**. If no rate qualifies, use 200 Hz and report that the pathway never became fully reliable.
+- **Half-of-maximum "down" rate** (used for S2's fixed "down" drive and for the S3 comparison, D31): the lowest sweep rate at which the right VS cells' mean rate (S1, "down") reaches **at least half** of their highest mean rate across the sweep.
+  - Picked per sign version.
+  - If 25 Hz (the lowest sweep rate) already qualifies, use 25 Hz and say so.
+  - **Why not 150 Hz:** the pilot showed VS cells near their maximum at 150 Hz (~220–240 Hz), where added inhibition is hard to see.
+
+**D33. Ground rules for the pathway-test data** (2026-10-28)
+- **No peeking mid-run:** nobody analyses a round until it has fully finished. The automatic zero-input check (D30) is the only exception.
+- **The pilot doesn't count:** the pilot trials were a systems check. All reported results come from the full runs, which start from an empty results folder.
+- **Code is frozen during a round:** no changes to simulation or runner code between the start and end of a round. If something must change, the affected trials are re-run. Every trial file records the git commit that produced it.
+- **Statistics:**
+  - results are reported as mean ± SD across a condition's trials;
+  - "reliably" means in at least 9 of 10 trials;
+  - E3 uses 5 random LC4 subsets × 2 trials per fraction (10 per fraction), because which neurons get picked matters more than repeating trials on one subset.
+- **Changing a rule:** a rule in D28–D35 may change after results only if it can't be applied as written (e.g. no rate qualifies). The change and its reason go in this log, and results are reported under both the old and new rule.
+
+**D34. Record every neuron that fires, frame by frame** (2026-10-28)
+- **The change:** each pathway-test trial also saves the per-frame spike counts of **every neuron that fires at least once**, anywhere in the brain. This is on top of the named watch groups.
+  - Saved sparsely: only non-zero frame counts.
+  - The simulation already counts all neurons, so this keeps numbers that were previously thrown away.
+- **Our input stays labelled:** the record includes the stimulated neurons, whose spikes are driven by our input. Each trial file lists the stimulated groups and their IDs, and analyses and the viewer must label or exclude them as our input (hard rule 10).
+- **Why:**
+  - Unsaved activity can only be recovered by re-running hours of trials.
+  - It lets us trace how signals spread (e.g. how the left Giant Fiber is reached, D29).
+  - It gives S5 (subcircuit rule) the complete set of neurons each input recruits.
+  - It feeds the replay viewer's brain panel (D19).
+- **Cost:** most neurons never fire (the sugar test activated ~400 of 138,639). The whole run is expected to stay well under ~1 GB in git-ignored `results/`.
+- **Alternatives considered:**
+  - Watch groups only: smallest, but open questions would need re-runs.
+  - Per-trial totals for every neuron: shows *which* neurons fired, but not *when*, so signal paths can't be traced.
+
+**D35. E5a dropped** (2026-10-28)
+- E5a (stimulate LC4 with LPLC2 silenced, and the reverse) can only show whether one looming type recruits the other. In this model, unstimulated neurons are silent unless driven, so silencing them changes little: in the pilot, LC4 → right Giant Fiber was 121 Hz with and without LPLC2 silenced.
+- E1's all-neuron record (D34) answers the same question directly, by showing whether LC4-only input makes any LPLC2 neuron fire.
+- E5b and E5c (silencing the Giant Fiber's inhibitory and excitatory partners) are kept.
 
 ## Open
 
@@ -173,5 +280,4 @@ These are to be decided after Step 0:
 - Input encoding: looming → LC4/LPLC2 stimulation rate, and which neurons receive it.
 - Output rule: what Giant Fiber activity counts as a jump.
 - The dials and their allowed ranges.
-- Which sign version (original or T4/T5-corrected, D27) carries into ship tuning and Stereo Madness. Must be decided before any steering results come in.
 - Closed-loop simulation: resolved for now by D17 (Brian2 runtime with `run_frames`). Our own reimplementation of the same equations (e.g. PyTorch, validated against Brian2) stays an option if subcircuit runs are still too slow, or for the GPU phase.
