@@ -36,14 +36,24 @@ OUT = ROOT / "data" / "subcircuits"
 KEY_TYPES = ["DNp01", "DNp20", "DNp22", *[f"VS{i}" for i in range(1, 9)]]
 
 
+_ACTIVE_CACHE = {}
+
+
 def active(a, pathway_conds):
-    """Neurons active in the whole-brain pathway-test trials named by an `active` table."""
-    paths = [c.path(PATHWAY_OUT, t) for c in pathway_conds
-             if c.experiment in a["experiments"] and c.sign == a.get("sign", "original")
-             for t in range(c.trials) if c.path(PATHWAY_OUT, t).exists()]
-    if not paths:
-        sys.exit(f"No saved pathway-test trials for {a}. Run scripts/run_pathway_tests.py first.")
-    return active_neurons(paths, a.get("min_rate_hz", 0.0)), len(paths)
+    """Neurons active in the whole-brain pathway-test trials named by an `active` table:
+    `experiments`, `sign` or `signs` (default original), optional `min_rate_hz`, and optional
+    `exclude_trials` ([[condition key, trial], ...]). Every side's runs are included."""
+    key = repr(sorted(a.items()))
+    if key not in _ACTIVE_CACHE:
+        signs = a.get("signs", [a.get("sign", "original")])
+        skip = {(k, t) for k, t in a.get("exclude_trials", [])}
+        paths = [c.path(PATHWAY_OUT, t) for c in pathway_conds
+                 if c.experiment in a["experiments"] and c.sign in signs
+                 for t in range(c.trials) if c.path(PATHWAY_OUT, t).exists() and (c.key, t) not in skip]
+        if not paths:
+            sys.exit(f"No saved pathway-test trials for {a}. Run scripts/run_pathway_tests.py first.")
+        _ACTIVE_CACHE[key] = active_neurons(paths, a.get("min_rate_hz", 0.0)), len(paths)
+    return _ACTIVE_CACHE[key]
 
 
 def select(spec, cells, con, pathway_conds):

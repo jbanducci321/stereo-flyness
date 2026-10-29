@@ -106,3 +106,34 @@ Every candidate also keeps the pathway-test neurons (inputs and watched groups: 
 - **Which activity to build from?** These candidates were built from E1 + S1 only, to test generalisation. A final activity-based rule could use all the pathway tests, plus whatever input the interface will actually use (T4). If the ship encoding uses horizontal-motion neurons, their activity has to be in it.
 - **How faithful is faithful enough?** For example: "same verdicts, key-group rates within 10%, ≥ 90% of active neurons kept on held-out tests". This needs a tolerance decided before the final validation, like D29–D31.
 - **Size vs speed:** is ~14k neurons at ~7.6× (like `h1`) good enough, or is ~21k at ~5.6× (like `a2`) worth the extra fidelity?
+
+## Interim size (J5 checkpoint 4, 2026-10-29): D36 as written doesn't fit the limit
+
+D36's recipe was applied to all 1,210 whole-brain game-input trials: E1–E3, E5b/c and S1–S3, on the right side, left side and both sides, with both sign versions. Probes were excluded.
+
+**Recruited neurons alone exceed the ~25k limit**, so raising the synapse cut-off (D36's size fallback) can't make the recipe fit:
+
+| Recruited from | Recruited | + inputs ≥ 30 syn | ≥ 50 | ≥ 75 | ≥ 100 |
+|---|---|---|---|---|---|
+| All trials (D36 as written) | 27,960 | 42.4k / 4.50M | 33.8k / 3.29M | 30.9k / 2.78M | 29.7k / 2.57M |
+| Without the 3 runaway-cascade trials | 20,609 | 33.5k / 3.39M | 26.3k / 2.37M | 23.6k / 1.92M | 22.5k / 1.73M |
+
+- **Where the extra neurons come from:** about 7,400 of the recruited neurons fire only in the 3 cascade trials (out of 1,350), where activity spreads late into ~8,000–11,000 neurons.
+- **The two cascade-free columns aren't D36:** excluding trials is a rule change that needs agreement.
+- **D36 says what to do when nothing fits:** "raise the limit (and log it) or rethink the rule".
+
+**Speed on game-length input** (`scripts/benchmark_subcircuit.py`):
+- The stand-in level is 15 s "cube" (an expanding looming burst on both sides every 1.25 s) plus 15 s "ship" (horizontal motion with up/down switching every 150 ms).
+- These are **measurement builds**, not validated subcircuits: `configs/subcircuits/d36/`.
+
+| Network | Size | 1 run alone | 4 runs at once (each) | One 30 s level (4 at once) | 200-run tuning grid (4 at once) |
+|---|---|---|---|---|---|
+| Whole brain | 139k / 15.1M | 24.3× real time | (not measured) | ~12 min alone | ~20 h+ |
+| D36 as written, ≥ 30 syn (`d36_literal_30`) | 42.4k / 4.50M | 10.0× | 20.5× | ~10 min | **~8.5 h** |
+| Cascades excluded, ≥ 75 syn (`d36_nocascade_75`) | 23.6k / 1.92M | 6.9× | 13.8× | ~7 min | **~5.8 h** |
+
+- **Game-like input is much busier than the pathway tests.** With both sides driven and thousands of T4/T5 neurons stimulated, the speed-up over the whole brain is ~2.4–3.5×, not the ~8× of the right-side tests in checkpoint 3.
+- **Both builds allow an overnight tuning grid.** The difference between them is ~1.5× in speed.
+- **Fidelity cost of `d36_nocascade_75`:** its 75-synapse cut-off keeps only ~74% of the Giant Fibers' input synapses (62–67% of their inhibitory input), against 87–89% for `d36_literal_30`. It may fail the D36 tolerance; that isn't checked yet.
+
+**Decision needed before the interim build:** see the options in the summary for Shannyn. Neither build has been validated, and the probes haven't been run on any subcircuit.

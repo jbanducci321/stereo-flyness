@@ -1,0 +1,14 @@
+# MEASUREMENT BUILD ONLY, not the interim subcircuit. D36's recipe without the 3 runaway-cascade
+# trials (each adds thousands of neurons that fire in no other trial), and with the smallest
+# synapse cut-off that fits ~25k / ~3M (75). Excluding trials is NOT in D36: it needs agreement.
+name = "d36_nocascade_75"
+description = "D36 without the 3 cascade trials: recruited by game inputs + their >= 75-synapse inputs"
+
+[[include]]
+pathway_tests = true
+
+[[include]]
+active = { experiments = ["E1", "E2", "E3", "E5b", "E5c", "S1", "S2", "S3"], signs = ["original", "corrected"], exclude_trials = [["corrected/S1/up_R/100Hz", 5], ["corrected/S2/down_R_25Hz+up_R/150Hz", 2], ["original/S1/up_L/200Hz", 3]] }
+
+[[include]]
+hops = { from_active = { experiments = ["E1", "E2", "E3", "E5b", "E5c", "S1", "S2", "S3"], signs = ["original", "corrected"], exclude_trials = [["corrected/S1/up_R/100Hz", 5], ["corrected/S2/down_R_25Hz+up_R/150Hz", 2], ["original/S1/up_L/200Hz", 3]] }, n = 1, direction = "in", min_synapses = 75 }
