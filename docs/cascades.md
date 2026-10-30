@@ -59,3 +59,39 @@ D37's proposed test (more than 3× the condition's median active count) flags on
   - Does a loom or steering input during the stuck state still drive the Giant Fibers and VS cells normally?
   - Can the mini-brain (which excludes most of these neurons) enter the state at all?
   - Does the state appear in the whole brain on game-length input?
+
+## Follow-up (a): can a stuck brain still jump? (2026-10-30)
+
+Script: `scripts/stuck_loom.py`. Reports are in git-ignored `results/cascades/stuck_loom/`.
+
+**Method:**
+- Rerunning a cascade trial by its seed doesn't work once loom inputs are added, because the extra input groups change the Poisson draws. In a first attempt none of the 3 cascades recurred, and that attempt was discarded.
+- So the stuck state is **switched on deliberately**:
+  - drive the stuck-state neurons (`configs/stuck_state_783.csv`, without the looming neurons or the Giant Fibers) briefly;
+  - leave 500 ms with no input, so the state has to keep itself going;
+  - then a loom: all right LC4 + LPLC2 at 150 Hz for 300 ms.
+- **Control:** the same groups, seeds and schedule, with the switch-on input at 0 Hz.
+- Whole brain, original signs.
+
+**Result: the brain still "jumps" while stuck, but more weakly and later, and the left Giant Fiber goes silent.**
+
+| | Stuck (5 trials, 50 Hz × 200 ms switch-on) | Control (5 trials) |
+|---|---|---|
+| Stuck-state neurons firing with no input | 98–99% | 0% |
+| Right Giant Fiber during the loom | **112 ± 3 Hz** | 186 ± 2 Hz |
+| Right Giant Fiber first spike | **25–29 ms** (6–7 frames) | 4.2 ms (1 frame) |
+| Left Giant Fiber during the loom | **0 Hz** | 109 ± 4 Hz |
+| Giant Fiber spikes before the loom | 0 | 0 |
+
+**Caveat: this isn't the natural stuck state.**
+- Every switch-on tried lands in the **same larger state**: 50 Hz × 200 ms, 20 Hz × 100 ms, 10 Hz × 100 ms and even 5 Hz × 50 ms (2 trials each). It has ~12,500 neurons firing (~5,800 per frame), including 98% of the natural state's neurons.
+- The natural state, reached through a cascade, has ~8,300 neurons (~2,000 per frame).
+- So the model has **at least two** self-sustaining states, and only the larger one has been tested with a loom.
+- In the larger one, the jump response is 40% weaker and ~25 ms later. The natural state's effect is untested.
+- Testing it needs a way to rerun a cascade with extra inputs while keeping its Poisson draws, for example a separate random stream per input group in `BrainStepper`.
+
+**What it means for Step 2:**
+- A stuck fly can probably still jump: the right Giant Fiber fired in every loom.
+- But its jumps may come several frames late, enough to matter for close obstacles.
+- With the "either Giant Fiber" jump rule proposed in Shannyn's T4 draft (not yet decided), the silent left Giant Fiber wouldn't block a jump.
+- Stuck runs should be compared with non-stuck runs on jump timing, not only on survival.
