@@ -298,6 +298,25 @@ Proposed by Shannyn (S5), from the J5 candidate comparison (`docs/subcircuit_can
     3. Giant Fiber first spikes fall within **one frame** (4.2 ms) of the whole brain's in **≥ 95%** of events;
     4. the median share of whole-brain-active neurons that stay active is **≥ 90%**;
     5. **later, in closed loop (Step 2 onward):** the same jump/hold actions within **±1 frame** for **≥ 95%** of actions.
+- **Tolerance clarified (agreed by both, 2026-10-30, before any subcircuit ran the probes):**
+  - **Held-out probes** (`[probes]` in `configs/pathway_tests.toml`), never used to build a subcircuit:
+    - **P1** expanding loom in random chunks;
+    - **P2** looming ramp;
+    - **P3** up/down switching;
+    - **P4** downward motion on and off over scrolling;
+    - **P5** a spatial loom growing from a small patch (8 steps of 40 ms at 150 Hz, neighbourhoods by shared input partners);
+    - **P6** P1's loom plus constant front-to-back T4a + T5a at 50 Hz, watching the Giant Fibers and the steering groups;
+    - **P7** all LC4 + LPLC2 at 150 Hz, 100 ms on / 50 ms off × 4.
+    - Each runs on the right side, the left side and both sides, with 5 trials. P3, P4 and P6 run on both sign versions.
+    - The probes are now **locked**: no changes before J5 4c.
+  - **Rule 2** also covers the left key groups: DNp20_L, DNp22_L and LPi09_L.
+  - **Rule 4:**
+    - The share is of **all** whole-brain-active neurons (stimulated ones excluded), not only those inside the subcircuit. Neurons the build cut out count as lost.
+    - It is judged **per probe type**: the median must be ≥ 90% in each type, and the lowest is reported.
+  - **Cascades (D37):** trial pairs where either network's trial is a runaway cascade are left out of rules 2–4 and reported separately. Rule 1 uses every trial.
+  - **Stuck state:** the validation also reports whether any subcircuit trial enters the stuck state (≥ 50% of the stuck-state neurons it contains fire).
+  - Rules 1–3 are otherwise unchanged.
+  - **Code:** `scripts/validate_subcircuit.py`, `src/stereo_flyness/experiments/subcircuit_validation.py`.
 - **If it doesn't fit or doesn't pass:**
   - **Over the size limit:** raise the synapse cut-off above 30 until it fits, as long as the tolerance still holds. If no cut-off fits, raise the limit (and log it) or rethink the rule.
   - **Fails the tolerance at ≥ 30 synapses:** lower the cut-off to **≥ 20** (keeps more inputs, so the subcircuit gets bigger), then re-check size and tolerance.
