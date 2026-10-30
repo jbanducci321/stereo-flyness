@@ -137,3 +137,10 @@ D36's recipe was applied to all 1,210 whole-brain game-input trials: E1–E3, E5
 - **Fidelity cost of `d36_nocascade_75`:** its 75-synapse cut-off keeps only ~74% of the Giant Fibers' input synapses (62–67% of their inhibitory input), against 87–89% for `d36_literal_30`. It may fail the D36 tolerance; that isn't checked yet.
 
 **Decision needed before the interim build:** see the options in the summary for Shannyn. Neither build has been validated, and the probes haven't been run on any subcircuit.
+
+**Update (2026-10-29):** Shannyn proposed a third option, logged as **D37 (proposed)** in `docs/decisions.md`:
+- Leave out cascade trials using a fixed test: more than 3× the median active count of the condition's other trials.
+- Keep D36's ≥ 30-synapse cut-off: 33.5k / 3.39M, the cascade-free ≥ 30 column above.
+- Replace the neuron limit with a tuning-time limit: a 200-run grid on 30 s levels in ≤ 10 h, 4 at once.
+
+It is pending a speed benchmark of that build and confirmation of the practice-level length.

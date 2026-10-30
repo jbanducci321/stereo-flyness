@@ -318,11 +318,44 @@ Proposed by Shannyn (S5), from the J5 candidate comparison (`docs/subcircuit_can
   - activity-only (fails on unseen input);
   - the 2-step hybrid (just below the bar on S3).
 
+**D37. Cascade trials are left out of subcircuit builds; size limit set by tuning time** (2026-10-29, **proposed**)
+Proposed by Shannyn after J5 checkpoint 4b showed D36 as written doesn't fit the ~25k limit (`docs/subcircuit_candidates.md`, "Interim size"). Not agreed yet: waiting on Jacob's speed benchmark of the build below and on the level-length check. Changes D36 only where stated.
+- **Cascade trials:**
+  - A whole-brain trial counts as a **runaway cascade** if its number of active neurons is **more than 3× the median** of the same condition's other trials.
+  - Cascade trials are **left out of the recruited set** (D36 step 1) and **out of validation rules 2–4**.
+  - They are reported separately, as a whole-brain property.
+  - The same test applies to every later build, including the final one after T4.
+- **Everything else in D36 is unchanged**, including the **≥ 30-synapse** cut-off.
+- **Size limit (replaces ~25k neurons / ~3M connections):**
+  - A **200-run tuning grid on 30 s practice levels** must finish in **≤ 10 h with 4 runs at once**.
+  - The neuron limit was only ever a stand-in for speed. Game-like input made subcircuits only ~2.4–3.5× faster than the whole brain, not the ~8× the right-side tests suggested.
+- **Interim build:** ~33.5k neurons / ~3.39M connections (cascade-free, ≥ 30 synapses). It is benchmarked for speed before any validation.
+- **Why:**
+  - About 7,400 of the 27,960 recruited neurons fired only in 3 cascade trials out of 1,350. The subcircuit isn't expected to reproduce those anyway.
+  - In the final build, longer whole-brain runs of the game encoding would contain more cascades, so the literal rule would grow with every build.
+  - Raising the cut-off to fit 25k (≥ 75 synapses) would drop the Giant Fibers' inhibitory input to 62–67% (from ~88%). Keeping that input is the reason D36 was chosen.
+  - It was decided before any subcircuit was validated or run on probes, so the change was driven by size, not by fidelity.
+- **Expected but not yet measured:**
+  - It should keep the same ~87–89% of the Giant Fibers' input as `d36_literal_30`.
+  - Its speed should fall between the two measured builds (6.9× and 10.0× real time alone).
+- **To confirm before agreeing:**
+  1. Benchmark the cascade-free ≥ 30 build on the same game-like input (speed only, not fidelity).
+  2. Check that the 3× test flags exactly the 3 known cascade trials.
+  3. Confirm that tuning uses 30 s practice levels. The length isn't decided yet (Step 1). With 90 s levels every grid triples, and even the smallest build becomes a ~17 h grid.
+  4. Note which machine the 10 h is measured on (the benchmarks so far ran on Jacob's laptop).
+- **Alternatives considered:**
+  - **D36 as written with a ~45k / 4.5M limit:** no rule change, and its 200-run grid (~8.5 h) also passes the time limit. But a quarter of the circuit comes from cascades, and it grows with future runs.
+  - **Cascades excluded at ≥ 75 synapses:** fits 25k, but cuts the recruited inhibition.
+- **Follow-up:**
+  - Investigate the cascades from the recorded data: where they start, and whether they stop.
+  - If they turn out to be a regular part of the brain's response to game input, revisit this decision.
+
 ## Open
 
 These are to be decided after Step 0:
 
-- Subcircuit rule: decided in D36 (recipe). The interim neuron list is built in J5; the final one after T4.
+- Subcircuit rule: decided in D36 (recipe). D37 (proposed) would leave out cascade trials and replace the size limit with a tuning-time limit. The interim neuron list is built in J5; the final one after T4.
+- Practice-level length (Step 1): D37's time limit assumes 30 s levels.
 - Brain time per game step (e.g. ~16.7 ms; GD 2.2 physics may run at 240 Hz).
 - Input encoding: looming → LC4/LPLC2 stimulation rate, and which neurons receive it.
 - Output rule: what Giant Fiber activity counts as a jump.
