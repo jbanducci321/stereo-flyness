@@ -383,9 +383,61 @@ Agreed by both, with D37. It covers closed-loop runs on the subcircuit and the w
 - They are **flagged in the run log and the replay** (D19).
 - Results are **also reported with stuck runs excluded**, plus the **stuck rate**.
 - **No re-running with new seeds until a run works.**
-- **To do in Step 2:**
-  - the run recorder (R1) gets a live stuck-state flag: ≥ 50% of the stuck-state neurons firing over a rolling ~100 ms window, saved in the log and shown in the replay;
-  - it also gets a general flag for any sustained jump in active neurons, in case a different state appears.
+- **Flags, built into the run recorder (R1) in Step 2, saved in the log and shown in the replay:**
+  - **Main flag, the stuck-state share:** ≥ 50% of the stuck-state neurons firing over a rolling ~100 ms window.
+    - The stuck-state list is fixed: the whole-brain list (`configs/stuck_state_783.csv`, 8,189 neurons) restricted to the network that's running.
+    - For the interim subcircuit that's **1,904 neurons**.
+    - On a subcircuit this is the flag that works. D37's cascade test needs 5,000 extra active neurons, more than the subcircuit's stuck-state neurons.
+  - **Backup flag:** active neurons over a 100 ms window above **3× the run's own median**. It's reported alongside, in case a different runaway state appears.
+- **The 50% line separates cleanly on both networks** (checked 2026-10-30 on all 1,410 trials):
+
+  | Network | Stuck trials | Highest share among the other trials |
+  |---|---|---|
+  | Whole brain | 97–98% (3 trials) | 8.1% |
+  | Interim subcircuit | 78–81% (4 trials) | 35% |
+
+  - The gap is narrower on the subcircuit, but there is still no trial between 35% and 78%.
+- **The subcircuit gets stuck about as often as the whole brain** (4 vs 3 in ~1,400 trials), **but not always in the same trials:** E4 LC10a trial 3 got stuck only on the subcircuit. It reproduces the rate, not which runs get stuck.
+- **Separate random streams per input group** (to test the natural stuck state with extra input): only if Step 2 shows stuck runs matter.
+- Updated 2026-10-30 with Shannyn's review of J5 4c.
+
+**D39. Step 0 go/no-go (T3): GO, cube first** (2026-10-30)
+Agreed by both, from a joint draft (Jacob) reviewed and extended by Shannyn. Full write-up: `docs/FEASIBILITY.md` ("Go / no-go", "Risks", "Scientific limits we accept"). Step 0 is closed.
+- **Verdict:**
+  - **Cube (escape pathway): GO.**
+  - **Ship (steering pathway): GO, with more risk.** It's built after cube, as planned (Step 5). Ship is the more fragile claim: in the real fly, DNp20/DNOVS mainly move the head.
+- **What GO means:** the model can carry the signals the game needs. It is **not yet evidence that the fly can play.** That's Step 2's question.
+- **Evidence:**
+  - Shiu et al. reproduced on v783;
+  - frame-by-frame stepping matches the unstepped model;
+  - escape and steering pathway tests GO (D29, D31);
+  - the interim subcircuit passes the D36 tolerance on all held-out probes (D36, D37);
+  - a 200-run tuning grid takes ~7.2 h (D37);
+  - the game is built (Step 1).
+  - Every check was judged by rules agreed before its results were seen.
+- **Speed is conditional:** the ~7.2 h grid assumes 30 s practice levels (decided with D37) and stand-in input. The final subcircuit is re-benchmarked after T4.
+- **Accepted risks, carried into Step 2:**
+  - the stuck state (D38);
+  - sustained Giant Fiber firing (handled by the T4 output rule);
+  - horizontal motion driving the ship pathway;
+  - unbiological firing rates;
+  - a subcircuit validated on stand-in probes;
+  - the cube possibly jumping too early.
+- **What would send us back:**
+  - the final subcircuit (after T4) fails the D36 tolerance even with D36's fallbacks;
+  - the final subcircuit with the real encoding exceeds D37's 10 h limit, and D36/D37's fallbacks can't fix it;
+  - the untuned closed loop never produces a timed jump, whatever the dials;
+  - stuck runs turn out to be common in game-length runs **and** to block jumping.
+- **Scientific limits we accept** (the README must say so):
+  - brain only: there is no ventral nerve cord, so the Giant Fiber → TTM jump step is outside the data;
+  - no gap junctions;
+  - ML-predicted neurotransmitter signs (D27, D28);
+  - our direct input builds in looming and direction selectivity;
+  - the stuck state is treated as a model property.
+- **Planned cost:** the Step 4 shuffled-connectome control needs the full D36 pipeline on a shuffled brain (pathway tests, recruitment, build, validation).
+- **Step 0 tasks:**
+  - all done, except S3 (background reading), which is **ongoing, not blocking**. Next up are Giant Fiber escape (von Reyn 2014), then LC4/LPLC2 rates and the angular threshold (von Reyn Fig. 5b), for T4's θ_full question.
+- **Next:** T4 (interface decisions), from Shannyn's cube draft (`docs/notes/t4_proposals.md`) and Jacob's answers (`docs/notes/t4_engineering_answers.md`).
 - **Step 7 (whole brain on GPU):** at ~0.2% per simulated second, roughly 1 in 6 whole-brain 90 s runs would get stuck. The subcircuit-vs-whole-brain comparison reports the stuck rate.
   - That rate comes from 1 s tests in which the state only took off after ~0.6 s, so it's a rough guide for long runs.
 

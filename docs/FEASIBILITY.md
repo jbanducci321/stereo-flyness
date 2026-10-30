@@ -1,10 +1,19 @@
 # Feasibility report (Step 0)
 
-**Status:** in progress.
+**Status:** complete (2026-10-30). Step 0 closed by T3 (D39).
 
 ## Go / no-go
 
-Pathway-test verdicts (J4), judged by rules agreed before the full runs (D28–D35). Details: `docs/pathway_results.md`. The interim subcircuit (J5) reproduces them within the tolerance agreed in advance (D36/D37; see "Subcircuit" below). Step 0's overall go/no-go is decided together in T3.
+**Step 0 verdict (T3, D39): GO, cube first.**
+- **Cube (escape pathway): GO.**
+- **Ship (steering pathway): GO, with more risk.** It's built after cube (Step 5). In the real fly DNp20/DNOVS mainly move the head, so ship is the more fragile claim.
+- **GO means the model can carry the signals the game needs.** It is not yet evidence that the fly can play (Step 2).
+- **Speed is conditional:**
+  - The ~7.2 h tuning grid assumes 30 s practice levels (decided with D37) and stand-in input.
+  - The final subcircuit is re-benchmarked after T4.
+- **Every check below was judged by rules agreed before its results were seen.** The other checks are in "Reproducing Shiu et al." and "Frame-by-frame stepping" (both pass), and the game is built (Step 1).
+
+Pathway-test verdicts (J4), judged by D28–D35. Details: `docs/pathway_results.md`. The interim subcircuit (J5) reproduces them within the tolerance agreed in advance (D36/D37; see "Subcircuit" below).
 
 | Pathway | Pathway tests | Why |
 |---|---|---|
@@ -181,6 +190,8 @@ Source: flywire_annotations v3.1.0, all IDs checked against `Completeness_783.cs
 
 ## Risks and open questions
 
+Accepted at T3 (D39) and carried into Step 2. None blocks GO.
+
 - **Horizontal motion drives the ship pathway too** (pathway tests, S3): at 50 Hz, horizontal T4/T5 input gives DNp20 64 Hz vs 104 Hz for downward motion. A ship input encoding that drives horizontal-motion neurons (e.g. for the level scrolling) would push the controller. Decide in T4.
 - **Sustained Giant Fiber firing:** the Giant Fiber fires continuously while driven and for up to ~30 ms after (E2), unlike a real escape (a few spikes). The output rule (T4) must turn this into single jumps.
 - **Whole-brain results must survive the subcircuit:** the left Giant Fiber route and the feed-forward inhibition (E5) depend on non-looming partners, so S5's rule should keep them.
@@ -193,5 +204,34 @@ Source: flywire_annotations v3.1.0, all IDs checked against `Completeness_783.cs
   - It leaves the Giant Fibers and VS silent when there's no input.
   - **Tested in a larger stuck state we could switch on** (~12,500 neurons): a loom still drives the right Giant Fiber, but at 112 vs 186 Hz, first spike 25–29 ms vs 4.2 ms, and the left Giant Fiber goes silent. The natural state's effect is untested (`docs/cascades.md`, follow-up (a)).
   - Treated as a property of the model. Stuck runs are kept, flagged and counted (D38). Step 2 compares jump timing in stuck vs normal runs.
+  - **What ~25 ms late would cost:**
+    - It's small against the ~238 ms single-spike press window, but more than half of a triple spike's ~46 ms window.
+    - Easy levels (press windows ≥ ~142 ms) should be fine. Medium and hard levels are where a stuck run would lose jumps.
+    - The tested state was the larger, triggered one (~12,500 neurons).
+  - **Detection on the subcircuit (D38):**
+    - The flag is the stuck-state share (≥ 50% of its 1,904 stuck-state neurons). It separates stuck trials (78–81%) from the rest (≤ 35%).
+    - A backup flag catches any other runaway.
+    - The subcircuit gets stuck about as often as the whole brain, but not always in the same runs.
+- **Unbiological firing rates:** direct Poisson drive gives rates far above real ones. Report it plainly. The dials are interface choices, not claims about the fly.
+- **The subcircuit is validated on stand-in probes:** the real input encoding is fixed in T4. Then the final subcircuit is rebuilt, revalidated and re-benchmarked (D36).
+- **The cube may jump too early:** Shannyn's T4 draft predicts a ~17° threshold, ~320 ms before contact. That's what the untuned Step 2 baseline is for. At most 2–3 dials (D5).
+
+### What would send us back (D39)
+- The final subcircuit (after T4) fails the D36 tolerance even with D36's fallbacks (cut-off ≥ 20, a higher size limit).
+- The final subcircuit with the real encoding exceeds D37's 10 h tuning limit, and D36/D37's fallbacks can't fix it.
+- The untuned closed loop never produces a timed jump: for example, the Giant Fiber fires to every object or to none, whatever the dials.
+- Stuck runs turn out to be common in game-length runs **and** to block jumping.
+
+### Planned cost
+- The Step 4 shuffled-connectome control needs the full D36 pipeline on a shuffled brain: pathway tests, recruitment, build and validation.
+
+## Scientific limits we accept (D39)
+
+These go in the README:
+- **Brain only:** there is no ventral nerve cord, so the Giant Fiber → TTM jump step is outside the data. "Jump" is our readout of the Giant Fiber.
+- **No gap junctions:** the connectome and Shiu's model are chemical synapses only.
+- **ML-predicted neurotransmitter signs** (D27, D28): the original signs are carried forward. The T4/T5-corrected version is a check, not the default.
+- **Our input builds in the eye's processing:** we drive LC4/LPLC2 and T4/T5 directly, so looming and direction selectivity are given, not computed by the fly's earlier visual system.
+- **The stuck state is treated as a model property** (`docs/cascades.md`). The hypothesis that a recurrent mushroom-body loop locks in without adaptation, noise or graded APL inhibition is untested.
 
 ## Recommended stack
