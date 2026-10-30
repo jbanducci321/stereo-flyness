@@ -32,7 +32,9 @@ def activity_fidelity(whole: pd.Series, sub: pd.Series, sub_ids, exclude=()) -> 
     """Compare per-neuron rates. `exclude` (e.g. stimulated neurons, our input) is left out.
 
     - r: Pearson correlation of rates over neurons in the subcircuit that fire in either network;
-    - kept_active: share of whole-brain-active neurons inside the subcircuit that still fire;
+    - kept_active: share of **all** whole-brain-active neurons that still fire in the subcircuit
+      (D36 rule 4). Neurons the build cut out count as lost: they are what held-out tests catch;
+    - kept_inside: the same share among only the whole-brain-active neurons inside the subcircuit;
     - cut_active: whole-brain-active neurons that aren't in the subcircuit at all;
     - new_active: neurons that fire in the subcircuit but not in the whole brain.
     """
@@ -44,9 +46,11 @@ def activity_fidelity(whole: pd.Series, sub: pd.Series, sub_ids, exclude=()) -> 
     w = whole.reindex(both, fill_value=0.0)
     s = sub.reindex(both, fill_value=0.0)
     r = float(np.corrcoef(w, s)[0, 1]) if len(both) > 1 and w.std() > 0 and s.std() > 0 else math.nan
+    still = int((sub.reindex(inside, fill_value=0) > 0).sum())
     return {
         "whole_active": len(whole), "inside": len(inside),
-        "kept_active": float((sub.reindex(inside, fill_value=0) > 0).mean()) if inside else math.nan,
+        "kept_active": still / len(whole) if len(whole) else math.nan,
+        "kept_inside": still / len(inside) if inside else math.nan,
         "cut_active": len(whole) - len(inside),
         "new_active": int(sum(i not in whole.index for i in sub.index)),
         "r": r,
@@ -69,6 +73,28 @@ def compare_groups(whole: pd.DataFrame, sub: pd.DataFrame, groups) -> pd.DataFra
             rows.append({"condition": key, "group": g, "whole": wm, "subcircuit": sm, "diff": sm - wm,
                          "rel_error": (sm - wm) / wm if wm else (0.0 if sm == 0 else math.inf)})
     return pd.DataFrame(rows)
+
+
+def kept_by_type(fid: pd.DataFrame, experiment_of: dict, threshold: float = 0.90) -> dict:
+    """D36 rule 4 per probe type: {experiment: (median kept_active, lowest, passes)}. Each type
+    passes if its median share of whole-brain-active neurons kept is >= `threshold`."""
+    fa = fid[fid["whole_active"] > 0]
+    out = {}
+    for exp, rows in fa.groupby(fa["condition"].map(experiment_of)):
+        med = float(rows["kept_active"].median())
+        out[exp] = (med, float(rows["kept_active"].min()), med >= threshold)
+    return out
+
+
+def paired_cascades(whole_counts: dict, sub_counts: dict, ratio: float, min_extra: float) -> set:
+    """Trials of one condition left out of rules 2-4 (D37): those where the whole brain's or the
+    subcircuit's trial is a cascade (each judged against its own network's other trials)."""
+    from stereo_flyness.experiments.cascades import cascade_flags
+
+    flagged = set()
+    for counts in (whole_counts, sub_counts):
+        flagged |= {t for t, f in cascade_flags(counts, ratio, min_extra).items() if f}
+    return flagged
 
 
 def within_tolerance(whole: float, sub: float, rel: float = 0.10, floor_hz: float = 1.0,

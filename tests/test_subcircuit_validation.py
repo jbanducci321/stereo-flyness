@@ -27,7 +27,8 @@ def test_activity_fidelity():
     sub = pd.Series({1: 11.0, 2: 19.0, 4: 5.0})  # 3 went silent, 4 is newly active
     f = activity_fidelity(whole, sub, sub_ids=[1, 2, 3, 4], exclude=[])
     assert f["whole_active"] == 4 and f["inside"] == 3 and f["cut_active"] == 1
-    assert f["kept_active"] == pytest.approx(2 / 3)
+    assert f["kept_active"] == pytest.approx(2 / 4)  # D36 rule 4: the cut-out neuron 9 counts as lost
+    assert f["kept_inside"] == pytest.approx(2 / 3)
     assert f["new_active"] == 1
     assert -1 <= f["r"] <= 1
 
@@ -77,3 +78,24 @@ def test_first_spike_agreement_per_onset():
     assert first_spike_agreement([whole], [close], "GF_R") == (1, 1)
     assert first_spike_agreement([whole], [late], "GF_R") == (0, 1)
     assert first_spike_agreement([whole], [extra], "GF_R") == (1, 2)
+
+
+def test_kept_by_type():
+    from stereo_flyness.experiments.subcircuit_validation import kept_by_type
+
+    fid = pd.DataFrame({"condition": ["a", "b", "c", "d", "e"], "whole_active": [10, 10, 10, 10, 0],
+                        "kept_active": [0.95, 0.91, 0.80, 0.99, math.nan]})
+    exp = {"a": "P1", "b": "P1", "c": "P2", "d": "P2", "e": "P3"}
+    out = kept_by_type(fid, exp)
+    assert out["P1"] == (pytest.approx(0.93), pytest.approx(0.91), True)
+    assert out["P2"][0] == pytest.approx(0.895) and out["P2"][1] == pytest.approx(0.80) and not out["P2"][2]
+    assert "P3" not in out  # nothing active in the whole brain: no test
+
+
+def test_paired_cascades():
+    from stereo_flyness.experiments.subcircuit_validation import paired_cascades
+
+    whole = {0: 3000, 1: 3100, 2: 11000, 3: 2900}
+    sub = {0: 2500, 1: 9000, 2: 2600, 3: 2400}  # the subcircuit runs away in trial 1 instead
+    assert paired_cascades(whole, sub, ratio=2, min_extra=5000) == {1, 2}
+    assert paired_cascades({0: 5, 1: 5}, {0: 5, 1: 5}, ratio=2, min_extra=5000) == set()

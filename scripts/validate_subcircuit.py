@@ -12,7 +12,17 @@ Writes results/subcircuits/<name>/validation.md and summary.json (git-ignored): 
 side by side, whole-activity fidelity per condition, the go/no-go verdicts on both networks, and
 speed. Only conditions run on both networks are compared. With --train, the conditions a rule
 was built from (those experiments, original signs) are reported separately from the held-out
-ones, which are the fair test. Tolerances are not decided here (S5/J5).
+ones, which are the fair test.
+
+The D36 tolerance (as clarified with D37) is judged on the held-out probes:
+1. same go/no-go verdicts (all trials);
+2. key-group rates within 10%, or 1 Hz under 10 Hz;
+3. Giant Fiber first spikes within one frame in >= 95% of events;
+4. in **each** probe type, the median share of all whole-brain-active neurons (stimulated ones
+   excluded) still active in the subcircuit is >= 90%; the lowest is reported.
+Rules 2-4 leave out trial pairs where either network's trial is a runaway cascade (D37's test);
+those are reported separately. Every subcircuit trial also gets a stuck-state share (D37's
+diagnostic), over the stuck-state neurons the subcircuit contains.
 """
 
 import argparse
@@ -26,12 +36,14 @@ import pandas as pd
 
 from analyse_pathway_tests import analyse, load_all, md_table
 from run_pathway_tests import CONFIG, OUT, ROOT, conditions, network, runnable
+from stereo_flyness.experiments.cascades import load_stuck_state, stuck_share
 from stereo_flyness.experiments.pathway_tests import judged
 from stereo_flyness.experiments.subcircuit_validation import (
-    activity_fidelity, compare_groups, first_spike_agreement, neuron_rates, within_tolerance,
+    activity_fidelity, compare_groups, first_spike_agreement, kept_by_type, neuron_rates, paired_cascades,
+    within_tolerance,
 )
 
-KEY_GROUPS = ["GF_R", "GF_L", "VS_R", "VS_L", "DNp20_R", "DNp22_R", "LPi09_R"]
+KEY_GROUPS = ["GF_R", "GF_L", "VS_R", "VS_L", "DNp20_R", "DNp20_L", "DNp22_R", "DNp22_L", "LPi09_R", "LPi09_L"]
 
 
 def headline(cmp: pd.DataFrame, fid: pd.DataFrame) -> dict:
@@ -85,6 +97,28 @@ def main() -> None:
             res["df"] = pd.concat([res["df"], df_x], ignore_index=True)
             res["trials"].update(trials_x)
 
+    # D37: trial pairs where either network's trial is a runaway cascade leave rules 2-4
+    cc = cfg["cascade"]
+    skip, cascade_rows = set(), []
+    for c in conds:
+        counts = [{t: len(res["trials"][(c.key, t)]["all_ids"]) for t in range(c.trials)} for res in (whole, sub)]
+        for t in sorted(paired_cascades(*counts, cc["ratio"], cc["min_extra"])):
+            skip.add((c.key, t))
+            cascade_rows.append({"condition": c.key, "trial": t, "active (whole)": counts[0][t],
+                                 "active (subcircuit)": counts[1][t]})
+    used = lambda key, n: [t for t in range(n) if (key, t) not in skip]  # noqa: E731
+    keep = lambda df: df[[(k, t) not in skip for k, t in zip(df["key"], df["trial"])]]  # noqa: E731
+
+    # Does the subcircuit enter the stuck state? (D37 diagnostic)
+    stuck_all = load_stuck_state(ROOT / cc["stuck_state"])
+    stuck_ids = np.array([i for i in stuck_all if i in sub_ids], dtype=np.int64)
+    shares = pd.DataFrame([{"condition": c.key, "trial": t,
+                            "whole": stuck_share(whole["trials"][(c.key, t)]["all_ids"], stuck_all),
+                            "subcircuit": stuck_share(sub["trials"][(c.key, t)]["all_ids"], stuck_ids)}
+                           for c in conds for t in range(c.trials)])
+    stuck_sub = shares[shares["subcircuit"] >= cc["stuck_share"]]
+    stuck_whole = shares[shares["whole"] >= cc["stuck_share"]]
+
     n_trials = sorted({c.trials for c in conds})
     out = [f"# Subcircuit validation: {args.name}", "",
            f"- **Size:** {manifest['neurons']:,} neurons ({100 * manifest['neurons'] / manifest['whole_brain']['neurons']:.1f}% of the brain), "
@@ -94,7 +128,7 @@ def main() -> None:
            f"{len(skipped)} conditions can't run on this subcircuit (neurons or sign version missing).",
            f"- **Training conditions** (the rule may have been built from them): {', '.join(sorted(train_exps)) or 'none'}, original signs. "
            "Everything else is held out.",
-           "- How close is close enough isn't decided here (S5/J5); this report only measures.", ""]
+           "- **Tolerance:** D36 rules 1-4 (with D37's cascade rule) are judged on the held-out probes below.", ""]
 
     # Verdicts
     keys = sorted(set(whole["verdicts"]) | set(sub["verdicts"]))
@@ -104,7 +138,7 @@ def main() -> None:
     out += ["## Go/no-go verdicts and D32 picks", "", md_table(pd.DataFrame(rows)), ""]
 
     # Key groups
-    cmp = compare_groups(whole["df"], sub["df"], KEY_GROUPS)
+    cmp = compare_groups(keep(whole["df"]), keep(sub["df"]), KEY_GROUPS)
     cmp["set"] = ["train" if in_train[k] else "held-out" for k in cmp["condition"]]
     worst = cmp.assign(abs_rel=cmp["rel_error"].abs()).sort_values("abs_rel", ascending=False)
     out += ["## Key groups (mean Hz per neuron)", "", "Largest relative differences:", "",
@@ -114,8 +148,10 @@ def main() -> None:
     # Whole activity and speed
     rows = []
     for c in conds:
-        tw = [whole["trials"][(c.key, t)] for t in range(c.trials)]
-        ts = [sub["trials"][(c.key, t)] for t in range(c.trials)]
+        tw = [whole["trials"][(c.key, t)] for t in used(c.key, c.trials)]
+        ts = [sub["trials"][(c.key, t)] for t in used(c.key, c.trials)]
+        if not tw:
+            continue
         stim = {i for ids in c.inputs.values() for i in ids}
         f = activity_fidelity(neuron_rates(tw), neuron_rates(ts), sub_ids, exclude=stim)
         secs = np.mean([t["meta"]["n_frames"] * t["meta"]["frame_ms"] / 1000 for t in ts])
@@ -129,7 +165,12 @@ def main() -> None:
                "verdict_mismatches": [k for k in keys if whole["verdicts"].get(k) != sub["verdicts"].get(k)],
                "speed_up_median": float(fid["speed-up"].median()),
                "x_real_time_median": float(fid["x real time"].median()),
-               "trials_per_condition": n_trials}
+               "trials_per_condition": n_trials,
+               "cascades_left_out": cascade_rows,
+               "stuck_state": {"neurons_in_subcircuit": int(len(stuck_ids)), "of": int(len(stuck_all)),
+                               "subcircuit_trials_stuck": [[k, int(t)] for k, t in zip(stuck_sub["condition"], stuck_sub["trial"])],
+                               "whole_brain_trials_stuck": [[k, int(t)] for k, t in zip(stuck_whole["condition"], stuck_whole["trial"])],
+                               "subcircuit_share_max": float(shares["subcircuit"].max())}}
     for s in ("train", "held-out"):
         summary[s] = headline(cmp[cmp["set"] == s], fid[fid["set"] == s])
 
@@ -144,18 +185,21 @@ def main() -> None:
         for c in held:
             if "GF_R" not in c.watch:
                 continue
-            tw = [whole["trials"][(c.key, i)] for i in range(c.trials)]
-            ts = [sub["trials"][(c.key, i)] for i in range(c.trials)]
+            tw = [whole["trials"][(c.key, i)] for i in used(c.key, c.trials)]
+            ts = [sub["trials"][(c.key, i)] for i in used(c.key, c.trials)]
             for g in ("GF_R", "GF_L"):
                 a, b = first_spike_agreement(tw, ts, g)
                 m, t = m + a, t + b
-        kept = fid[fid["condition"].isin({c.key for c in held}) & (fid["whole_active"] > 0)]["kept_active"].median()
+        by_type = kept_by_type(fid[fid["condition"].isin({c.key for c in held})], {c.key: c.experiment for c in conds})
         tol = {
             "same_verdicts": verdicts_same,
             "key_rates": bool(all(ok)),
             "key_rate_failures": [f"{r.condition} {r.group}: {r.whole:.1f} → {r.subcircuit:.1f} Hz" for r in bad.itertuples()],
             "first_spikes": (m / t >= 0.95) if t else None, "first_spikes_matched": f"{m}/{t}",
-            "active_kept": bool(kept >= 0.90), "active_kept_median": float(kept),
+            "active_kept": bool(by_type) and all(ok for _, _, ok in by_type.values()),
+            "active_kept_by_type": {e: {"median": m, "lowest": lo, "pass": ok} for e, (m, lo, ok) in by_type.items()},
+            "cascade_pairs_left_out": len(skip),
+            "subcircuit_stuck_trials": len(stuck_sub),
         }
         tol["pass"] = bool(tol["same_verdicts"] and tol["key_rates"] and tol["first_spikes"] and tol["active_kept"])
         summary["tolerance"] = tol
@@ -178,9 +222,22 @@ def main() -> None:
                f"2. Key rates within 10% (1 Hz under 10 Hz): {tol['key_rates']}"
                + (f" (failures: {'; '.join(tol['key_rate_failures'][:8])})" if tol["key_rate_failures"] else ""),
                f"3. Giant Fiber first spikes within one frame in ≥ 95% of events: {tol['first_spikes']} ({tol['first_spikes_matched']})",
-               f"4. Median active neurons kept ≥ 90%: {tol['active_kept']} ({100 * tol['active_kept_median']:.0f}%)",
+               f"4. In each probe type, median share of all whole-brain-active neurons kept ≥ 90%: {tol['active_kept']} ("
+               + ", ".join(f"{e} {100 * v['median']:.0f}% (lowest {100 * v['lowest']:.0f}%)"
+                           for e, v in tol["active_kept_by_type"].items()) + ")",
                "5. Closed-loop actions: judged from Step 2 on", ""] if tol else []),
-            md_table(fid.rename(columns={"kept_active": "kept active", "cut_active": "active but cut",
+            "## Runaway cascades and the stuck state (D37)", "",
+            f"- **Trial pairs left out of rules 2-4** (either network's trial is a cascade: more than {cc['ratio']:g}x "
+            f"and more than {cc['min_extra']:,} above its condition's median): {len(cascade_rows)}",
+            *([md_table(pd.DataFrame(cascade_rows)), ""] if cascade_rows else []),
+            f"- **Stuck state:** the subcircuit contains {len(stuck_ids):,} of the {len(stuck_all):,} stuck-state neurons. "
+            f"Subcircuit trials with >= {cc['stuck_share']:.0%} of them firing: {len(stuck_sub)}"
+            + (" (" + "; ".join(f"{r.condition} t{r.trial}" for r in stuck_sub.itertuples()) + ")" if len(stuck_sub) else "")
+            + f"; highest share {100 * shares['subcircuit'].max():.1f}%. Whole-brain trials in the stuck state: {len(stuck_whole)}.",
+            "",
+            "## Per condition", "",
+            md_table(fid.rename(columns={"kept_active": "kept active", "kept_inside": "kept (inside only)",
+                                         "cut_active": "active but cut",
                                          "new_active": "newly active", "whole_active": "active (whole)"}), 3), ""]
 
     report = sub_out.parent / "validation.md"
@@ -195,7 +252,9 @@ def main() -> None:
     print(f"Verdicts identical: {verdicts_same}; speed-up {summary['speed_up_median']:.1f}×")
     if tol:
         print(f"D36 tolerance on {args.heldout}*: {'PASS' if tol['pass'] else 'FAIL'} (rates {tol['key_rates']}, "
-              f"first spikes {tol['first_spikes_matched']}, kept {100 * tol['active_kept_median']:.0f}%)")
+              f"first spikes {tol['first_spikes_matched']}, kept per type "
+              + ", ".join(f"{e} {100 * v['median']:.0f}%" for e, v in tol["active_kept_by_type"].items())
+              + f"; cascade pairs left out {len(skip)}, subcircuit stuck trials {len(stuck_sub)})")
     print(f"\nWrote {report.relative_to(ROOT)}, summary.json and the subcircuit's full pathway report (report.md)")
 
 
