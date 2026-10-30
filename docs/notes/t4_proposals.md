@@ -1,6 +1,6 @@
 # Interface decisions (T4): neuroscience proposals for the cube
 
-*Shannyn, 2026-10-30. Draft for discussion with Jacob. Nothing here is decided until it's logged in `docs/decisions.md`.*
+*Shannyn, 2026-10-30. Draft for discussion with Jacob. Nothing here is decided until it's logged in `docs/decisions.md`. Updated the same day with Jacob's answers (`docs/notes/t4_engineering_answers.md`, branch `jb-t4-answers`).*
 
 T4 covers four open decisions (`docs/decisions.md`, "Open"): brain time per game step, the input encoding, the output rule, and the dials with their ranges. This note proposes all four for **cube mode** (Step 2), from the pathway results (`docs/pathway_results.md`) and von Reyn et al. 2014. Ship mode (Step 5) gets constraints only, at the end.
 
@@ -18,9 +18,9 @@ Every choice here is **our code, not the fly** (PROJECT_BRIEF §2). The aim is t
   3. its Giant Fiber spikes set `held` for game tick *i* + 1.
 
   This adds one tick (4.2 ms) of delay, the same for every press.
-- **Rounding:** the stepper rounds a 4.1667 ms tick to 42 steps of 0.1 ms (4.2 ms), so brain time runs 0.8% slower than game time (0.24 s over a 30 s level).
-  - Option: alternate 42, 42, 41 steps, which averages exactly 4.1667 ms.
-  - **Question for Jacob:** is that easy in `run_frames`? If not, accept the 0.8% and state it.
+- **Exact timing:** a tick is 1000/240 = 4.1667 ms, which isn't a whole number of 0.1 ms simulation steps.
+  - Jacob's stepper change calls back on the exact 1000/240 ms interval. Brian2 then fires the callback after 42, 42, 41 steps in turn by itself (tested), so brain time matches game time exactly.
+  - This replaces the stepper's earlier rounding to 4.2 ms, which would have run the brain 0.8% slow.
 - **Dials:** none.
 
 ## 2. Input encoding (looming → LC4 / LPLC2)
@@ -33,7 +33,10 @@ Every choice here is **our code, not the fly** (PROJECT_BRIEF §2). The aim is t
 - **Which objects loom:** every gameplay object (solid or hazard) ahead of the eye whose vertical extent overlaps the cube's (30 units), i.e. objects on a collision course.
   - The fly can't tell hazards from solids, so neither can the encoding. A block the cube must jump onto looms just like a spike.
   - Objects that don't overlap the cube vertically (a ceiling overhead) don't loom, because they aren't on a collision course. **This is a geometric choice that happens to help the cube run under ceilings. It must be stated as ours** (PROJECT_BRIEF caveat 4).
+  - **"Collision course" uses the cube's current height.** So an obstacle below the cube stops looming mid-jump. That is mostly what we want (a spike being cleared stops driving the Giant Fiber), but it's also our choice, and it gets stated.
 - **The object's size** is its visual grid cell (30 units), not its hitbox. A spike looks like a 30-unit object even though its hitbox is 6 × 12.
+  - Hitboxes are centred on their objects, so the visual cell is the hitbox centre ± 15.
+- **No engine change needed:** the interface reads the level's objects (`game.level.boxes`, sorted) and the cube's position (`game.player`).
 - **Angular size:** θ = 2·atan(15 / *d*), where *d* is the gap from the eye to the object's near face.
 - **Several objects:** use the nearest one (the largest θ).
 
@@ -56,7 +59,7 @@ The object's size-to-speed ratio is r/v = 15 / 311.58 = **48 ms**. That's inside
 ### 2b. Which neurons are driven
 
 - **Patch size:** on each side, a fraction **f = min(1, θ / θ_full)** of the LC4 neurons and the same fraction of the LPLC2 neurons are driven.
-  - Default **θ_full = 180°**, i.e. an object filling the frontal half of the visual field drives the whole population. This is a simple geometric assumption, not a measured receptive-field layout.
+  - **θ_full is calibrated to the fly** (see §4): set once so the model's Giant Fiber first fires at the real Giant Fiber's angular threshold. 180° (an object filling the frontal half of the visual field drives the whole population) is only the uncalibrated starting point, a simple geometric assumption, not a measured receptive-field layout.
   - **Both sides** are driven equally, because obstacles approach head-on.
 - **Patch shape:** neurons are added in a fixed order that grows a contiguous patch. We don't have visual-field positions for LC4/LPLC2 in our data, so neighbours are approximated by **shared input partners**: start from a seed neuron, then add neurons in order of input overlap, separately for LC4 and LPLC2. This is the same construction as probe P5.
   - **The seed is fixed by rule** (chosen once with a fixed random seed and logged), never tuned. Location matters (Dombrovski et al. 2023 found LPLC2 → Giant Fiber synapse strength varies with visual-field position), so a tuned seed would be a hidden dial.
@@ -69,9 +72,9 @@ The object's size-to-speed ratio is r/v = 15 / 311.58 = **48 ms**. That's inside
 ### 2c. What to expect from the untuned version (Step 2 baseline)
 
 A rough prediction from E3 (LC4 alone at 150 Hz: 5 neurons fired the Giant Fiber in half the trials; 12 neurons in all, with a 23 ms first spike):
-- With θ_full = 180°, about 10% of LC4 (5 per side) is reached at θ ≈ 17°, a gap of ~100 units, **~320 ms before contact**. Adding LPLC2 and both sides probably lowers the threshold further.
-- **So the untuned baseline will probably jump too early**, before the ~23° window opens, and land on the spike.
-- This is a prediction to record before Step 2, not a reason to change the defaults. The baseline is meant to be untuned.
+- **Uncalibrated (θ_full = 180°):** about 10% of LC4 (5 per side) is reached at θ ≈ 17°, a gap of ~100 units, **~320 ms before contact**. Adding LPLC2 and both sides probably lowers the threshold further. So the fly would probably jump too early, before the ~23° window opens, and land on the spike.
+- **Calibrated (§4):** the Giant Fiber's first spike is set to the real fly's angular threshold. Whether the baseline then jumps inside the window depends on that number: above ~23° and well below ~90° would clear single spikes. **Read it off von Reyn et al. 2014 Fig. 5b and record the prediction before Step 2.**
+- Either way this is a prediction to record before Step 2, not a reason to change anything afterwards. The baseline is meant to be untuned.
 
 ## 3. Output rule (Giant Fiber → jump)
 
@@ -88,7 +91,10 @@ A rough prediction from E3 (LC4 alone at 150 Hz: 5 neurons fired the Giant Fiber
   - The firing that continues after a loom ends (up to ~13 ms at 25 Hz input, ~30 ms at 150 Hz; E2) is over long before a 429 ms jump lands.
   - A jump on landing only happens if the Giant Fiber is firing *then*, i.e. if the next obstacle is already looming. That's the fly's response, not a rule artefact.
 - **What it gives up:** the model's Giant Fiber fires at 100–200 Hz while driven, against one or two spikes per loom in a real fly. The rule takes the first spike and makes the rest irrelevant. The README must still say the model's rates are unrealistic.
-- **Stuck runs (D37):** a run that enters the stuck mushroom-body state is flagged. If its Giant Fibers stay silent (`docs/cascades.md`), the cube just stops jumping, and the run is counted as it is.
+- **Stuck runs (D38):** a run that enters the stuck mushroom-body state is flagged and counted as it is.
+  - In the stuck state tested so far (the larger one that could be switched on directly), the right Giant Fiber still fires on a loom, ~40% weaker and ~25 ms later, and the left goes silent (`docs/cascades.md`). With the "either Giant Fiber" rule a stuck cube can still jump, just late.
+  - ~25 ms matters little against the 238 ms single-spike window, but is over half of a triple spike's 46 ms.
+  - The natural stuck state's effect is untested.
 - **Alternatives considered:**
   - N spikes within a window: adds a dial, and real flies jump on one spike.
   - Press while firing, plus a refractory window: needed only if presses lasted longer than one tick.
@@ -97,16 +103,30 @@ A rough prediction from E3 (LC4 alone at 150 Hz: 5 neurons fired the Giant Fiber
 
 D5 allows at most 2–3 dials. Proposal for the cube:
 
-| Dial | Default (Step 2 baseline) | Range for tuning (Step 3) | Why this range |
+**Proposal: one cube dial.** θ_full is calibrated to the fly instead of tuned.
+
+| Dial | Step 2 baseline | Range for tuning (Step 3) | Why this range |
 |---|---|---|---|
 | **R**, the stimulation rate of driven neurons | 150 Hz (Shiu's default) | 25–200 Hz | The range tested in E1 and E3; everything in it drives the Giant Fiber reliably |
-| **θ_full**, the angular size at which the whole population is driven | 180° | 90–720° | Sets the angular size at which the Giant Fiber first fires. 720° puts 10% of LC4 at ~70°, inside the press window |
 
-Not dials: brain time (fixed, real time), the output rule (one spike), which objects loom (geometry), object size (grid cell), patch order and seed (fixed by rule).
+**θ_full is calibrated, not tuned:**
+- **Target:** the mean angular-size threshold of **short-mode (Giant Fiber-driven) takeoffs at r/v = 40 ms** in von Reyn et al. 2014 Fig. 5b.
+  - Short mode, because our Giant Fiber spike stands in for the short-mode escape specifically. Their long-mode and Giant Fiber-silenced escapes have lower thresholds and use other pathways.
+  - r/v = 40 ms, because it's the condition closest to the game's 48 ms. Their thresholds don't change significantly with r/v anyway.
+  - The mean, because the threshold is a distribution across flies and trials, and we need one value. The spread is reported alongside.
+  - **The number is still to be read off the figure.**
+- **How:** find the θ_full at which the model's Giant Fiber (right or left) first spikes, on average, when a game-like loom (r/v = 48 ms) reaches the target angle. Use R = 150 Hz and the subcircuit (D36).
+  - "Game-like loom" means θ growing as in §2a, not a level. Game performance plays no part.
+- **When:** once, **before the Step 2 baseline**, and logged. It isn't revisited in Step 3: if R is tuned later, θ_full stays fixed.
+- **Why:**
+  - It ties the input encoding to a measured property of the fly rather than to how well the game goes.
+  - Calibrating costs the same compute as tuning it.
+  - It leaves a spare dial.
+  - Note the caveat: their threshold is the retinal size at a fixed neural delay before takeoff, which we treat as the size at which the Giant Fiber pathway triggers. Close, but not identical.
 
-**The third dial is kept for ship mode.**
+Not dials: brain time (fixed, real time), the output rule (one spike), which objects loom (geometry), object size (grid cell), patch order and seed (fixed by rule), θ_full (calibrated).
 
-**A biology-based alternative to tuning θ_full:** fix it so the model's Giant Fiber first fires at the real Giant Fiber's angular threshold. von Reyn et al. 2014 plot that threshold in their Fig. 5b (to read off). It would then be calibrated to the fly, not tuned to the game, and leave only R as a cube dial. **Worth deciding before Step 3.**
+**The other two allowed dials are kept for ship mode, or as a spare.**
 
 ## 5. Ship mode (Step 5): constraints only
 
@@ -114,16 +134,16 @@ Not dials: brain time (fixed, real time), the output rule (one spike), which obj
 - **If scrolling is encoded at all,** it should be front-to-back motion on both eyes (T4a/T5a only), as for a fly moving forward. Not T4a/b together, which isn't a real motion.
 - The ship's output rule (DNp20 → hold/release) and encoding are a Step 5 decision.
 
-## Questions for Jacob
+## Questions for Jacob (answered 2026-10-30)
 
-1. Can `run_frames` alternate 42/42/41 steps per frame, or do we accept the 0.8% drift?
-2. Can the engine give the interface the objects ahead with their vertical extent? Or should the interface read them from the level file and use `game.player`?
-3. Are θ_full and R the right two dials, or would you rather calibrate θ_full to the real angular threshold and keep a dial in reserve?
-4. Should the Step 2 baseline also record runs with the opposite looming choice (every object ahead looms, not just ones on a collision course), so we can show how much that geometric choice helps?
+1. **Exact timing:** yes. A callback on the exact 1000/240 ms interval steps 42/42/41 by itself; a small stepper change, with no 0.8% drift (§1).
+2. **Objects ahead:** no engine change. The interface reads `game.level.boxes` and `game.player` (§2a).
+3. **Dials:** calibrate θ_full, which leaves R as the one cube dial and a spare (§4). It's fixed before the Step 2 baseline at R = 150 Hz. The threshold is a distribution, so the value used is decided now (the mean, §4).
+4. **"Everything looms" comparison:** yes. The untuned baseline also runs with every object ahead looming, on the 20 held-out cube levels (~45 min extra). It's logged as a comparison, not a dial.
 
 ## Sources
 
-- `docs/pathway_results.md` (E1–E3, E2 offsets, S3); `docs/game_physics.md` §2–3; `docs/game_engine.md`; D23, D27, D36, D37.
+- `docs/pathway_results.md` (E1–E3, E2 offsets, S3); `docs/game_physics.md` §2–3; `docs/game_engine.md`; `docs/cascades.md`; `docs/notes/t4_engineering_answers.md`; D23, D27, D36, D37, D38.
 - von Reyn CR et al. (2014). A spike-timing mechanism for action selection. *Nat Neurosci* 17:962–970.
 - von Reyn CR et al. (2017). Feature integration drives probabilistic behavior in the *Drosophila* escape response. *Neuron* 94:1190–1204. (Not yet read; cited for LC4's role; check citation details.)
 - Ache JM et al. (2019). Neural basis for looming size and velocity encoding in the *Drosophila* giant fiber escape pathway. *Curr Biol* 29:1073–1081. (Not yet read; cited for LPLC2's role; check citation details.)
