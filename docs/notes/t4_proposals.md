@@ -82,7 +82,11 @@ A single object's size-to-speed ratio is r/v = 15 / 311.58 = **48 ms**. That's i
 A rough prediction from E3 (LC4 alone at 150 Hz: 5 neurons fired the Giant Fiber in half the trials; 12 neurons in all, with a 23 ms first spike):
 - **Uncalibrated (θ_full = 180°):** about 10% of LC4 (5 per side) is reached at θ ≈ 17°, a gap of ~100 units, **~320 ms before contact**. Adding LPLC2 and both sides probably lowers the threshold further. So the fly would probably jump too early, before the ~23° window opens, and land on the spike.
   - **P5 supports this.** Probe P5 uses this encoding's patch construction. Its Giant Fiber fired at the very first step (19 neurons per side), 12–29 ms after onset, on every side and in every trial. At θ_full = 180°, 19 of ~152 neurons per side is θ ≈ 22.5°, right at the edge of the window. P5 never went below 19 neurons, so the real threshold could be lower.
-- **Calibrated (§4):** the Giant Fiber's first spike is set to the real fly's angular threshold. Whether the baseline then jumps inside the window depends on that number: above ~23° and well below ~90° would clear single spikes. **Read it off von Reyn et al. 2014 Fig. 5b and record the prediction before Step 2.**
+- **Calibrated (§4, θ ≈ 39°):** the Giant Fiber's first spike is set to the real fly's angular threshold.
+  - At 39° a single 30-unit obstacle is ~42 units away, **~136 ms before contact**. That's in the **middle of the single-spike press window** (gap 1–73 units), even allowing ~10–25 ms of model delay.
+  - The whole ±1 s.d. range (26°–53°) is a gap of ~30–65 units, also inside the window.
+  - **Prediction, recorded before Step 2:** the calibrated baseline clears single spikes, while the uncalibrated 180° version jumps at or before the window opens.
+  - Double and triple spikes (142 and 46 ms windows) are not predicted here.
 - Either way this is a prediction to record before Step 2, not a reason to change anything afterwards. The baseline is meant to be untuned.
 
 ## 3. Output rule (Giant Fiber → jump)
@@ -123,7 +127,9 @@ D5 allows at most 2–3 dials. Proposal for the cube:
   - Short mode, because our Giant Fiber spike stands in for the short-mode escape specifically. Their long-mode and Giant Fiber-silenced escapes have lower thresholds and use other pathways.
   - r/v = 40 ms, because it's the condition closest to the game's 48 ms. Their thresholds don't change significantly with r/v anyway.
   - The mean, because the threshold is a distribution across flies and trials and we need one value, and because Fig. 5b plots stimulus size as mean ± s.d., so a median isn't available from the figure. The s.d. is reported as the spread.
-  - **The number is still to be read off the figure.**
+  - **Value: θ ≈ 39° (s.d. ≈ 14°).** Read independently by Shannyn and by Claude off von Reyn et al. 2014 Fig. 5b (the cyan short-mode point at r/v = 40 ms, error bar ~25–53°), to about ±1°. The cyan points at r/v = 8 and 14 ms (~36° and ~39°) and the fitted line (~39–40° at 40 ms) agree.
+  - The exact fitted distributions are in their Supplementary Fig. 6, which we haven't seen.
+  - For comparison, long-mode and Giant Fiber-silenced escapes trigger lower, at ~30–32°.
 - **How:** find the θ_full at which the model's Giant Fiber (right or left) first spikes, on average, when a game-like loom (r/v = 48 ms) reaches the target angle. Use R = 150 Hz and the subcircuit (D36).
   - "Game-like loom" means θ growing as in §2a, not a level. Game performance plays no part.
 - **When:** once, **before the Step 2 baseline**, and logged. It isn't revisited in Step 3: if R is tuned later, θ_full stays fixed.
