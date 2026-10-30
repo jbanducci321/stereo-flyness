@@ -87,12 +87,38 @@ def judged(cond: Condition, cfg: dict) -> bool:
     return cond.side == cfg["stim_side"] and not cond.experiment.startswith("P")
 
 
+LOOM_TYPES = ("LC4", "LPLC2")
+
+
+def loom_patches(con, cells, seed: int) -> dict[str, dict[str, list[int]]]:
+    """Per side and looming type, every neuron in the order a "nearby" patch grows (P5).
+
+    There are no visual-field positions, so "nearby" means sharing input partners
+    (`input_similarity`). LC4 and LPLC2 share almost none, so each type grows its own patch:
+    LC4 from a random neuron, LPLC2 from the LPLC2 neuron whose inputs are most like that one's.
+    """
+    from stereo_flyness.brain.celltypes import grow_order, input_similarity
+
+    out = {}
+    for side in ("right", "left"):
+        lc4, lplc2 = (cells.ids(t, side=side) for t in LOOM_TYPES)
+        sim = input_similarity(con, lc4 + lplc2)
+        rng = np.random.default_rng([seed, zlib.crc32(side.encode())])
+        a = int(rng.integers(len(lc4)))
+        b = int(np.argmax(sim[a, len(lc4):]))
+        n = len(lc4)
+        out[side] = {"LC4": [lc4[i] for i in grow_order(sim[:n, :n], a)],
+                     "LPLC2": [lplc2[i] for i in grow_order(sim[n:, n:], b)]}
+    return out
+
+
 def build_conditions(cfg: dict, cells, gf_partners: dict[str, list[int]],
-                     sugar_ids: list[int]) -> list[Condition]:
+                     sugar_ids: list[int], patches: dict | None = None) -> list[Condition]:
     """Every condition in the config.
 
     `cells` is a `CellTypes`; `gf_partners` maps "R"/"L" to the Giant Fiber's top input
-    partners (E6); `sugar_ids` are the 21 right sugar GRNs (E4 control).
+    partners (E6); `sugar_ids` are the 21 right sugar GRNs (E4 control); `patches` is
+    `loom_patches(...)`, needed only for probe P5.
 
     The main pathway tests stimulate `stim_side` (the right side; judged by D29-D31). The
     `[recruitment]` table repeats the game-input experiments on other sides ("left", or "both"
@@ -205,7 +231,7 @@ def build_conditions(cfg: dict, cells, gf_partners: dict[str, list[int]],
     rec = cfg.get("recruitment", {})
     for side in rec.get("sides", []):
         add_side(side, rec["trials"], set(rec["experiments"]), primary=False)
-    conds += probe_conditions(cfg, ids, esc_watch, st_watch)
+    conds += probe_conditions(cfg, ids, esc_watch, st_watch, patches)
 
     names = [c.key for c in conds]
     if len(set(names)) != len(names):
@@ -218,7 +244,20 @@ def _ramp(n, top):
     return [top * (i + 1) / n for i in range(n)]
 
 
-def probe_conditions(cfg, ids, esc_watch, st_watch) -> list[Condition]:
+def patch_steps(n: int, first: float, total: int, steps: int) -> list[int]:
+    """How many of a type's `n` neurons are on at each step of a growing patch: the side's patch
+    grows geometrically from `first` of its `total` looming neurons to all of them, shared out
+    between types by size; every step adds at least one neuron."""
+    counts = []
+    for k in range(steps):
+        frac = (first / total) ** (1 - k / (steps - 1))
+        c = max(1, int(round(frac * n)), counts[-1] + 1 if counts else 0)
+        counts.append(min(n, c))
+    counts[-1] = n
+    return counts
+
+
+def probe_conditions(cfg, ids, esc_watch, st_watch, patches=None) -> list[Condition]:
     """Game-like probe tests (`[probes]` in the config): held out from every subcircuit build (D36).
 
     - P1 "expanding looming": a side's LC4 + LPLC2 split into random chunks that switch on one
@@ -226,6 +265,11 @@ def probe_conditions(cfg, ids, esc_watch, st_watch) -> list[Condition]:
     - P2 "looming ramp": all of a side's LC4 + LPLC2, with the rate ramping up, then off; repeated.
     - P3 "up/down switching": downward and upward motion alternating.
     - P4 "steering over scrolling": constant horizontal motion with downward motion on and off.
+    - P5 "spatial looming": a patch of LC4 + LPLC2 that grows outward from a few neurons
+      (`loom_patches`), geometrically; with both sides, each side's patch grows at once.
+    - P6 "looming over scrolling": P1's looming plus constant front-to-back motion (T4a + T5a),
+      on both sign versions, watching escape and steering groups. No other test combines them.
+    - P7 "close obstacles": all of a side's LC4 + LPLC2, short bursts close together.
     """
     pr = cfg.get("probes")
     if not pr:
@@ -244,16 +288,39 @@ def probe_conditions(cfg, ids, esc_watch, st_watch) -> list[Condition]:
         p1 = pr["p1"]
         rng = np.random.default_rng([p1["seed"], zlib.crc32(side.encode())])
         chunks = np.array_split(rng.permutation(looming), p1["chunks"])
-        inputs = {f"loom_{s}_{k}": sorted(int(i) for i in c) for k, c in enumerate(chunks)}
+        p1_inputs = {f"loom_{s}_{k}": sorted(int(i) for i in c) for k, c in enumerate(chunks)}
         step = nf(p1["step_ms"])
-        cycle = [(step, {g: p1["rate_hz"] for g in list(inputs)[:k + 1]}) for k in range(p1["chunks"])]
-        cycle += [(nf(p1["off_ms"]), {})]
-        escape("P1", f"loom_{s}/expanding/{_tag(p1['rate_hz'])}", inputs, cycle * p1["repeats"])
+        p1_cycle = [(step, {g: p1["rate_hz"] for g in list(p1_inputs)[:k + 1]}) for k in range(p1["chunks"])]
+        p1_cycle = (p1_cycle + [(nf(p1["off_ms"]), {})]) * p1["repeats"]
+        escape("P1", f"loom_{s}/expanding/{_tag(p1['rate_hz'])}", p1_inputs, p1_cycle)
 
         p2 = pr["p2"]
         g = f"loom_{s}"
         cycle = [(1, {g: r}) for r in _ramp(nf(p2["ramp_ms"]), p2["top_hz"])] + [(nf(p2["off_ms"]), {})]
         escape("P2", f"{g}/ramp/{_tag(p2['top_hz'])}", {g: looming}, cycle * p2["repeats"])
+
+        if p5 := pr.get("p5"):
+            if patches is None:
+                raise ValueError("Probe P5 needs loom_patches (pass patches= to build_conditions)")
+            sides = ["right", "left"] if side == "both" else [side]
+            new = [[] for _ in range(p5["steps"])]  # neurons switched on at each step
+            for sd in sides:
+                total = sum(len(patches[sd][t]) for t in LOOM_TYPES)
+                for t in LOOM_TYPES:
+                    order = patches[sd][t]
+                    counts = patch_steps(len(order), p5["first_neurons"], total, p5["steps"])
+                    for k, (lo, hi) in enumerate(zip([0, *counts], counts)):
+                        new[k] += order[lo:hi]
+            p5_inputs = {f"patch_{s}_{k}": sorted(int(i) for i in c) for k, c in enumerate(new)}
+            step = nf(p5["step_ms"])
+            cycle = [(step, {g: p5["rate_hz"] for g in list(p5_inputs)[:k + 1]}) for k in range(p5["steps"])]
+            cycle += [(nf(p5["off_ms"]), {})]
+            escape("P5", f"patch_{s}/growing/{_tag(p5['rate_hz'])}", p5_inputs, cycle * p5["repeats"])
+
+        if p7 := pr.get("p7"):
+            g = f"loom_{s}"
+            cycle = [(nf(p7["on_ms"]), {g: p7["rate_hz"]}), (nf(p7["off_ms"]), {})]
+            escape("P7", f"{g}/bursts/{_tag(p7['rate_hz'])}", {g: looming}, cycle * p7["cycles"])
 
         down, up, horiz = f"down_{s}", f"up_{s}", f"horizontal_{s}"
         motion = {down: ids("T4d", "T5d", side=side), up: ids("T4c", "T5c", side=side),
@@ -274,6 +341,14 @@ def probe_conditions(cfg, ids, esc_watch, st_watch) -> list[Condition]:
             cycle = [(on, {horiz: p4["horizontal_hz"], down: p4["down_hz"]}), (off, {horiz: p4["horizontal_hz"]})]
             steer("P4", f"{horiz}_{_tag(p4['horizontal_hz'])}+{down}/onoff/{_tag(p4['down_hz'])}",
                   {horiz: motion[horiz], down: motion[down]}, cycle * p4["cycles"])
+
+            if p6 := pr.get("p6"):
+                ftb = f"front_to_back_{s}"
+                inputs = {**p1_inputs, ftb: ids(*p6["types"], side=side)}
+                schedule = [(n, {**r, ftb: p6["horizontal_hz"]}) for n, r in p1_cycle]
+                conds.append(Condition("P6", f"P6/loom_{s}+{ftb}_{_tag(p6['horizontal_hz'])}/expanding/"
+                                       f"{_tag(p1['rate_hz'])}", sign, inputs, schedule,
+                                       {**esc_watch, **st_watch, **inputs}, [], pr["trials"], side))
     return conds
 
 

@@ -7,9 +7,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from stereo_flyness.brain.celltypes import CellTypes, top_partners
+from stereo_flyness.brain.celltypes import CellTypes, grow_order, input_similarity, top_partners
 from stereo_flyness.experiments.pathway_tests import (
-    BaselineError, Condition, build_conditions, frame_steps, load_trial, n_frames, run_trial,
+    BaselineError, Condition, build_conditions, frame_steps, load_trial, n_frames, patch_steps, run_trial,
 )
 
 CONFIG = Path(__file__).resolve().parents[1] / "configs" / "pathway_tests.toml"
@@ -45,7 +45,8 @@ def cfg():
 
 
 def build(cfg, cells):
-    return build_conditions(cfg, cells, {"R": [1, 2], "L": [3, 4]}, sugar_ids=[1000, 1001])
+    patches = {sd: {t: cells.ids(t, side=sd) for t in ("LC4", "LPLC2")} for sd in ("right", "left")}
+    return build_conditions(cfg, cells, {"R": [1, 2], "L": [3, 4]}, sugar_ids=[1000, 1001], patches=patches)
 
 
 def test_cell_lookup_checks_types_sides_and_model_ids(cells):
@@ -63,6 +64,26 @@ def test_top_partners_ranks_by_synapses():
     con = pd.DataFrame({"Presynaptic_ID": [5, 6, 6, 7, 8], "Postsynaptic_ID": [1, 1, 1, 1, 2],
                         "Connectivity": [10, 4, 4, 9, 99]})
     assert top_partners(con, 1, 2) == [5, 7]
+
+
+def test_patches_grow_through_shared_inputs():
+    # 1 and 2 share input 10; 3 and 4 share input 20; 2 and 3 share a little of input 30
+    con = pd.DataFrame({"Presynaptic_ID": [10, 10, 20, 20, 30, 30],
+                        "Postsynaptic_ID": [1, 2, 3, 4, 2, 3], "Connectivity": [9, 9, 9, 9, 1, 1]})
+    sim = input_similarity(con, [1, 2, 3, 4, 5])  # 5 has no inputs
+    assert sim[0, 1] > sim[1, 2] > 0 and sim[0, 3] == 0 and not sim[4].any()
+    assert grow_order(sim, 0) == [0, 1, 2, 3, 4]
+    assert grow_order(sim, 3) == [3, 2, 1, 0, 4]
+
+
+def test_patch_steps():
+    assert patch_steps(50, 19, 152, 8)[0] == 6 and patch_steps(102, 19, 152, 8)[0] == 13  # 19 in all
+    for n in (1, 2, 50, 102):
+        c = patch_steps(n, 19, 152, 8)
+        assert len(c) == 8 and c[-1] == n and c[0] >= 1
+        assert all(b >= a for a, b in zip(c, c[1:]))
+    c = patch_steps(102, 19, 152, 8)
+    assert all(b > a for a, b in zip(c, c[1:]))  # every step adds neurons
 
 
 def test_condition_counts_and_sign_versions(cfg, cells):
@@ -217,3 +238,34 @@ def test_recruitment_and_probe_conditions(cells):
     for sign in ("original", "corrected"):
         assert f"{sign}/P3/down_B+up_B/switching/100Hz" in by
         assert f"{sign}/P4/horizontal_B_50Hz+down_B/onoff/100Hz" in by
+
+    # P5: a patch growing step by step to all of a side's looming neurons (each side, for both)
+    p5 = by["original/P5/patch_R/growing/150Hz"]
+    steps = list(p5.inputs.values())
+    assert len(steps) == cfg["probes"]["p5"]["steps"] and all(steps)
+    assert sorted(i for c in steps for i in c) == cells.ids("LC4", "LPLC2", side="right")
+    assert len(steps[0]) == 19 and steps[0][:18] == cells.ids("LC4", side="right")[:18]  # patch order
+    r = p5.rates()
+    step = n_frames(cfg["probes"]["p5"]["step_ms"], cfg["frame_ms"])
+    assert (r[:step] > 0).sum(axis=1).max() == 1 and (r[7 * step:8 * step] > 0).all()
+    both = by["original/P5/patch_B/growing/150Hz"].inputs
+    assert sorted(i for c in both.values() for i in c) == sorted(cells.ids("LC4", "LPLC2"))
+    assert len(next(iter(both.values()))) == 38  # each side's first step
+    with pytest.raises(ValueError, match="P5 needs"):
+        build_conditions(cfg, cells, {"R": [1, 2], "L": [3, 4]}, sugar_ids=[1000])
+
+    # P6: P1's looming plus constant front-to-back motion, both sign versions, escape + steering watched
+    for sign in ("original", "corrected"):
+        p6 = by[f"{sign}/P6/loom_R+front_to_back_R_50Hz/expanding/150Hz"]
+        assert p6.inputs["front_to_back_R"] == cells.ids("T4a", "T5a", side="right")
+        assert {k: v for k, v in p6.inputs.items() if k.startswith("loom")} == p1.inputs
+        assert {"GF_R", "GF_L", "VS_R", "LPi09_L"} <= set(p6.watch)
+        r = p6.rates()
+        assert (r[:, list(p6.inputs).index("front_to_back_R")] == 50).all()
+        assert (r[:, :4] == p1.rates()).all()
+
+    # P7: all of a side's looming neurons in short bursts
+    r = by["original/P7/loom_L/bursts/150Hz"].rates()[:, 0]
+    on, off = n_frames(100, cfg["frame_ms"]), n_frames(50, cfg["frame_ms"])
+    assert len(r) == 4 * (on + off) and (r[:on] == 150).all() and (r[on:on + off] == 0).all()
+    assert len([c for c in conds if c.experiment in ("P5", "P6", "P7")]) == 3 + 6 + 3

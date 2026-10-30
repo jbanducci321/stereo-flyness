@@ -90,3 +90,22 @@ down_hz = 100
 on_ms = 200
 off_ms = 200
 cycles = 3
+
+[probes.p5]              # spatial looming: an LC4 + LPLC2 patch grown outward by shared input partners
+first_neurons = 19       # per side at the first step, near E3's threshold; grows geometrically to all
+steps = 8
+step_ms = 40
+rate_hz = 150
+off_ms = 200
+repeats = 2
+seed = 1                 # picks the starting LC4 neuron on each side
+
+[probes.p6]              # looming over scrolling: P1's looming plus constant front-to-back motion
+types = ["T4a", "T5a"]
+horizontal_hz = 50
+
+[probes.p7]              # close obstacles: all of a side's LC4 + LPLC2 in short bursts
+rate_hz = 150
+on_ms = 100
+off_ms = 50
+cycles = 4

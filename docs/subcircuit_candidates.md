@@ -166,3 +166,28 @@ It is pending a speed benchmark of that build and confirmation of the practice-l
   - The highest ratio among the other 1,347 trials is 1.6× (a small E3 subset, 42 vs 26 neurons).
   - So a threshold anywhere between ~1.7× and ~2.6× would separate the cascades cleanly. Choosing the threshold is Shannyn's call.
   - This build excludes all 3 trials by hand.
+
+## Held-out probes P5–P7 (2026-10-30, whole brain only)
+
+These were added after Shannyn's probe review, alongside P1–P4. They are defined in `configs/pathway_tests.toml` under `[probes]`, and **never used to build a subcircuit** (D36). Each runs 5 trials on the right side, the left side and both sides. P6 also runs on both sign versions. That makes 60 trials, and no trial produced activity with no input.
+
+**The probes:**
+- **P5, spatial looming:** an LC4 + LPLC2 patch that grows from 19 neurons per side to all of them, in 8 steps of 40 ms at 150 Hz.
+  - There are no visual-field positions, so "nearby" means sharing input partners (cosine similarity of input synapse counts).
+  - LC4 and LPLC2 share almost no inputs: their median similarity to each other is 0.03, against 0.2–0.4 within each type. So each type grows its own patch. LPLC2's patch starts from the LPLC2 neuron most similar to LC4's starting neuron.
+- **P6, looming over scrolling:** P1's looming plus constant front-to-back motion (T4a + T5a at 50 Hz). It watches both the escape and steering groups.
+- **P7, close obstacles:** all of a side's LC4 + LPLC2 at 150 Hz, 100 ms on / 50 ms off, 4 times.
+
+**Whole-brain results** (Hz, mean ± SD over 5 trials, original signs; corrected is the same within ~2 Hz except where noted):
+
+| Probe | Right GF | Left GF | Steering groups |
+|---|---|---|---|
+| P5 right / left / both | 70.9 / 54.1 / 78.7 | 45.8 / 69.0 / 75.5 | (not watched) |
+| P7 right / left / both | 131.6 / 82.0 / 138.2 | 71.8 / 122.0 / 124.0 | (not watched) |
+| P6 right | 91.7 (P1 alone: 93.7) | 51.2 (P1: 52.0) | VS_R 82, DNp20_R 95, DNp22 and LPi09 silent |
+| P6 left | 57.3 (P1: 59.3) | 81.2 (P1: 80.8) | VS_L 42 (corrected 61) |
+| P6 both | 97.8 (P1: 98.6) | 85.1 (P1: 88.1) | VS_R 82, VS_L 42 (corrected 61), DNp20_R 96 |
+
+- **Front-to-back motion barely changes the escape response:** the Giant Fiber rates in P6 are within ~3 Hz of P1's.
+- **VS cells fire at ~82 Hz in P6.** That's more than S3's 65 Hz at 50 Hz, which drove all four horizontal types (T4a/b, T5a/b). Front-to-back alone drives VS harder than both directions together.
+- **No cascades:** the 3× test, applied to all 1,410 whole-brain trials, still flags only the 2 known S1 trials.

@@ -34,7 +34,9 @@ from find_target_neurons import fetch_annotations
 from reproduce_sugar import PATH_COMP, PATH_CON, SUGAR_GRNS_783
 from stereo_flyness.brain.celltypes import CellTypes, top_partners
 from stereo_flyness.brain.signs import CORRECTED_NAME
-from stereo_flyness.experiments.pathway_tests import DT_MS, build_conditions, frame_steps, load_trial, run_trial
+from stereo_flyness.experiments.pathway_tests import (
+    DT_MS, build_conditions, frame_steps, load_trial, loom_patches, run_trial,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG = ROOT / "configs" / "pathway_tests.toml"
@@ -88,7 +90,9 @@ def conditions(cfg):
     con = pd.read_parquet(PATH_CON, columns=["Presynaptic_ID", "Postsynaptic_ID", "Connectivity"])
     n = cfg["escape"]["gf_partners"]
     partners = {s[0].upper(): top_partners(con, cells.ids("DNp01", side=s)[0], n) for s in ("right", "left")}
-    return build_conditions(cfg, cells, partners, SUGAR_GRNS_783)
+    p5 = cfg.get("probes", {}).get("p5")
+    patches = loom_patches(con, cells, p5["seed"]) if p5 else None
+    return build_conditions(cfg, cells, partners, SUGAR_GRNS_783, patches)
 
 
 def select(conds, only, match):

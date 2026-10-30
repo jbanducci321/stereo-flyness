@@ -354,6 +354,10 @@ Proposed by Shannyn after J5 checkpoint 4b showed D36 as written doesn't fit the
   - **Cascades excluded at ≥ 75 synapses:** fits 25k, but cuts the recruited inhibition.
 - **Follow-up:**
   - Investigate the cascades from the recorded data: where they start, and whether they stop.
+    - Done 2026-10-30, see `docs/cascades.md`.
+    - All 3 are the same self-sustaining state of ~8,300 neurons, centred on the mushroom body.
+    - It doesn't stop even with all input off, and it leaves the Giant Fibers and VS silent.
+    - A test for that state (≥ 50% of its neurons firing) separates the cascade trials (97–98%) from every other trial (≤ 8%). It could replace the ratio test.
   - If they turn out to be a regular part of the brain's response to game input, revisit this decision.
 
 ## Open
