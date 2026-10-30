@@ -90,7 +90,8 @@ The canonical, up-to-date log is **`docs/decisions.md`**. Read it first. Summary
 | D28–D35 | Pathway-test rules, agreed before round 1 (after the pilot): the original signs carry forward (corrected only by a written fallback); escape and steering go/no-go rules; E4 controls (no input must give exactly 0 spikes); rules for picking round 2 rates; data ground rules; every neuron that fires is recorded frame by frame; E5a dropped. See `docs/decisions.md`. |
 | D36 | Subcircuit rule (S5): every neuron recruited by the game's inputs in whole-brain runs (both sides, both sign versions) plus their ≥ 30-synapse inputs. Interim subcircuit built in J5 for T3; final rebuild after T4. Tolerance agreed in advance (same verdicts, key rates within 10% or 1 Hz, Giant Fiber first spikes within one frame in ≥ 95% of events, ≥ 90% of all whole-brain-active neurons kept in each probe type), judged on held-out probes P1–P7 (locked 2026-10-30). Size limit ~25k / ~3M (updates D18; replaced by D37). Step 4 controls on the whole brain. See `docs/decisions.md`. |
 | D37 | Runaway-cascade trials (more than 2× and more than 5,000 above the median active count of their condition's other trials) are left out of subcircuit builds and validation rules 2–4, and reported separately. The size limit is a tuning time: a 200-run grid on **30 s practice levels** in ≤ 10 h with 4 at once on Jacob's laptop. Interim subcircuit: 33,480 neurons / 3.39M connections, grid ~7.2 h. The stuck state (`docs/cascades.md`) is treated as a model property. |
-| D38 | Runs that enter the stuck state (Step 2 on) are kept and counted, flagged in logs and replays, and also reported excluded, together with the stuck rate. No re-running until a run works. |
+| D38 | Runs that enter the stuck state (Step 2 on) are kept and counted, flagged in logs and replays, and also reported excluded, together with the stuck rate. No re-running until a run works. On the subcircuit, the main flag is the stuck-state share (its 1,904 stuck-state neurons), with a backup flag for any runaway. |
+| D39 | **Step 0 go/no-go (T3): GO, cube first;** ship GO with more risk (Step 5). GO means the model carries the signals the game needs, not yet that the fly can play. Speed is conditional on 30 s levels and a re-benchmark after T4. Accepted risks, scientific limits and what would send us back are in `docs/FEASIBILITY.md`. |
 | D19 | End deliverable: a **record-and-replay viewer**. Closed-loop runs log every frame (game state, inputs, watched spikes) from the `run_frames` callback, and a viewer replays at real 60 fps with a brain-activity panel. It must visibly separate our input encoding from the fly's spikes, say it's a replay of a simulation, and never smooth or alter recorded activity. Live mode is optional, for small subcircuits only. |
 
 ### Open decisions (not yet made; don't decide these unilaterally)
@@ -279,9 +280,9 @@ Each `step()` call costs ~100–250 ms of Brian2 overhead regardless of network 
 ### Steps
 | Step | What |
 |---|---|
-| 0 | Feasibility (current) |
+| 0 | Feasibility: **complete, GO (D39)** |
 | 1 | Build the game, including a viewer that can replay a recorded run log |
-| 2 | Cube baseline with **default, untuned** values. Record this before any tuning; it's a key result. Closed-loop runs log every frame from here on (R1), and the first brain panel appears in the viewer (R2). |
+| 2 | (next, after T4) Cube baseline with **default, untuned** values. Record this before any tuning; it's a key result. Closed-loop runs log every frame from here on (R1), and the first brain panel appears in the viewer (R2). |
 | 3 | Tune at most 2–3 dials on generated levels, evaluate on held-out generated levels |
 | 4 | Controls and lesions: degree-preserving shuffled connectome; random network of the same size; LC4/LPLC2 silenced; Giant Fiber silenced. Does performance depend on the real wiring? |
 | 5 | Ship pathway: repeat Steps 2–4 |
@@ -303,7 +304,7 @@ Each `step()` call costs ~100–250 ms of Brian2 overhead regardless of network 
   - For each: count, side, FlyWire IDs, and connectivity (e.g. LC4→GF synapse counts).
   - **Make sure Codex is set to v783.**
   - Output: fill the "Target cell types" table in `docs/FEASIBILITY.md`, and put the IDs in `configs/target_neurons_783.csv` with columns `cell_type, side, flywire_id, source, notes`. This is a proposed convention; confirm with Jacob.
-- **S3, background reading** (no blockers): Shiu et al. methods; Giant Fiber escape; what LC4/LPLC2 and VS cells encode; optic-flow centering. Short notes go in `docs/notes/`.
+- **S3, background reading** (no blockers; **ongoing, not blocking**): Shiu et al. methods; Giant Fiber escape; what LC4/LPLC2 and VS cells encode; optic-flow centering. Short notes go in `docs/notes/`.
 - **S4, design the pathway tests** (needs S2): what to stimulate, at what rates, and what counts as "it works" for escape and for steering.
 - **S5, propose the subcircuit rule** (needs S2), with the biological reasoning, in `docs/decisions.md` under "Open".
 - **S6, license/citation check for the cell-type labels** (no blockers); update `data/README.md`.
@@ -317,7 +318,7 @@ Each `step()` call costs ~100–250 ms of Brian2 overhead regardless of network 
 **Together:**
 - **T1:** review each other's PRs.
 - **T2:** interpret the pathway results.
-- **T3:** go/no-go in `docs/FEASIBILITY.md`, which closes Step 0.
+- **T3:** go/no-go in `docs/FEASIBILITY.md`, which closes Step 0. **Done 2026-10-30: GO, cube first (D39).**
 - **T4:** interface decisions: brain time per frame, input encoding, output rule, dials and ranges, level seeds.
 
 **Dependencies:** S2 → S4, S5 · S4 → J4 · S5 + J2 → J5 · J4 + J5 → T3 → T4 → Step 2 · J3 → Step 1.
