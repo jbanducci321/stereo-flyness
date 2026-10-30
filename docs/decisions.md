@@ -343,6 +343,12 @@ Proposed by Shannyn after J5 checkpoint 4b showed D36 as written doesn't fit the
   2. Check that the 3× test flags exactly the 3 known cascade trials.
   3. Confirm that tuning uses 30 s practice levels. The length isn't decided yet (Step 1). With 90 s levels every grid triples, and even the smallest build becomes a ~17 h grid.
   4. Note which machine the 10 h is measured on (the benchmarks so far ran on Jacob's laptop).
+- **Results of checks 1–2 (2026-10-30; details in `docs/subcircuit_candidates.md`):**
+  1. **Speed and input kept:**
+     - The build is 33,480 neurons / 3.39M connections, at 17.2× real time each with 4 at once.
+     - A 200-run grid on 30 s levels would take **~7.2 h**, which passes.
+     - The Giant Fibers keep 87–88% of their input, as expected.
+  2. **The 3× test flags only 2 of the 3 cascades.** The third is 2.6× its condition's median. Every other trial is at most 1.6×, so the threshold needs revisiting before this is agreed.
 - **Alternatives considered:**
   - **D36 as written with a ~45k / 4.5M limit:** no rule change, and its 200-run grid (~8.5 h) also passes the time limit. But a quarter of the circuit comes from cascades, and it grows with future runs.
   - **Cascades excluded at ≥ 75 synapses:** fits 25k, but cuts the recruited inhibition.

@@ -131,6 +131,7 @@ D36's recipe was applied to all 1,210 whole-brain game-input trials: E1–E3, E5
 | Whole brain | 139k / 15.1M | 24.3× real time | (not measured) | ~12 min alone | ~20 h+ |
 | D36 as written, ≥ 30 syn (`d36_literal_30`) | 42.4k / 4.50M | 10.0× | 20.5× | ~10 min | **~8.5 h** |
 | Cascades excluded, ≥ 75 syn (`d36_nocascade_75`) | 23.6k / 1.92M | 6.9× | 13.8× | ~7 min | **~5.8 h** |
+| Cascades excluded, ≥ 30 syn (`d36_nocascade_30`, D37 proposed; measured 2026-10-30) | 33.5k / 3.39M | 8.9× | 17.2× | ~8.6 min | **~7.2 h** |
 
 - **Game-like input is much busier than the pathway tests.** With both sides driven and thousands of T4/T5 neurons stimulated, the speed-up over the whole brain is ~2.4–3.5×, not the ~8× of the right-side tests in checkpoint 3.
 - **Both builds allow an overnight tuning grid.** The difference between them is ~1.5× in speed.
@@ -144,3 +145,24 @@ D36's recipe was applied to all 1,210 whole-brain game-input trials: E1–E3, E5
 - Replace the neuron limit with a tuning-time limit: a 200-run grid on 30 s levels in ≤ 10 h, 4 at once.
 
 It is pending a speed benchmark of that build and confirmation of the practice-level length.
+
+**Checks for D37 (2026-10-30, measurement only; nothing validated):**
+- **Build `d36_nocascade_30`:**
+  - 33,480 neurons, 3,391,290 connections, with 0 pathway-test neurons missing.
+  - The Giant Fibers keep 87–88% of their input (82% of their inhibitory input), the same as `d36_literal_30`.
+- **Speed (on Jacob's laptop):**
+  - 8.9× real time alone, 17.2× each with 4 at once.
+  - A 200-run grid on 30 s levels takes **~7.2 h**, under the proposed 10 h.
+  - On 90 s levels it would take ~21.5 h.
+- **The 3× cascade test, applied to all 1,350 whole-brain trials, flags only 2 of the 3 known cascades:**
+
+  | Trial | Active neurons | Median of the condition's other trials | Ratio | Flagged by 3×? |
+  |---|---|---|---|---|
+  | corrected S1 up_R 100 Hz, trial 5 | 11,143 | 3,008 | 3.7× | Yes |
+  | original S1 up_L 200 Hz, trial 3 | 11,401 | 3,416 | 3.3× | Yes |
+  | corrected S2 down 25 + up 150 Hz, trial 2 | 12,808 | 4,845 | **2.6×** | **No** |
+
+  - It misses the third because that condition is already busy without a cascade.
+  - The highest ratio among the other 1,347 trials is 1.6× (a small E3 subset, 42 vs 26 neurons).
+  - So a threshold anywhere between ~1.7× and ~2.6× would separate the cascades cleanly. Choosing the threshold is Shannyn's call.
+  - This build excludes all 3 trials by hand.
