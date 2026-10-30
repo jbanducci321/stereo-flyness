@@ -196,3 +196,35 @@ These were added after Shannyn's probe review, alongside P1–P4. They are defin
 - **Front-to-back motion barely changes the escape response:** the Giant Fiber rates in P6 are within ~3 Hz of P1's.
 - **VS cells fire at ~82 Hz in P6.** That's more than S3's 65 Hz at 50 Hz, which drove all four horizontal types (T4a/b, T5a/b). Front-to-back alone drives VS harder than both directions together.
 - **No cascades:** D37's test, applied to all 1,410 whole-brain trials, flags only the 3 known cascades, none of them a probe.
+
+## J5 4c: interim subcircuit validation (2026-10-30)
+
+The interim subcircuit (`configs/subcircuits/interim.toml`, D36 + D37: 33,480 neurons / 3.39M connections) ran all 248 pathway-test and probe conditions (1,410 trials). It used the same seeds as the whole brain, 4 runs at once, and took 34 min in total. The report is `scripts/validate_subcircuit.py interim --train E1,E2,E3,E5b,E5c,S1,S2,S3`, written to git-ignored `results/subcircuits/interim/`.
+
+**D36 tolerance on the held-out probes P1–P7: PASS**
+
+| Rule | Result |
+|---|---|
+| 1. Same go/no-go verdicts and D32 picks | Yes, all 10 identical |
+| 2. Key-group rates within 10% (1 Hz under 10 Hz), both sides | Yes. The worst was P6 both-sides DNp20_L: 2.8 → 3.0 Hz (7.1%) |
+| 3. Giant Fiber first spikes within one frame, ≥ 95% of events | Yes, 360/360 |
+| 4. Median share of all whole-brain-active neurons kept, ≥ 90% in each probe type | Yes: P1–P5 and P7 100%, P6 97%. The lowest single condition was 93% (corrected P4, right side) |
+
+- **Speed:** on these tests the subcircuit runs a median 11.2× faster than the whole brain.
+- **The training conditions match exactly (0.0% error, r = 1.000), and that is by construction, not evidence.**
+  - In this model only spikes pass between neurons, so a neuron that never fires has no effect.
+  - A subcircuit that contains every neuron that fired in a run therefore reproduces that run exactly, as long as none of the neurons it leaves out would have fired.
+  - The held-out probes are the real test: there, rates are within 7.1%, and 93–100% of active neurons are kept.
+- **Controls that aren't game inputs (E4) fit less well, as expected:** they weren't used to build the subcircuit.
+  - Sugar: 67% of active neurons kept (98 of them were cut out).
+  - LC10a: 93% kept.
+  - Neither counts for the tolerance.
+- **Cascades:**
+  - The 3 whole-brain cascade trials are left out of rules 2–4 (D37).
+  - On the same seeds the subcircuit partly runs away too: 4,649–6,396 active neurons, against 11,143–12,808 in the whole brain, and ≥ 50% of the 1,904 stuck-state neurons it contains switch on. So it reproduces the start of the runaway, with fewer neurons to spread into.
+- **One subcircuit-only stuck run:**
+  - In E4 LC10a trial 3, the subcircuit entered the stuck state (2,163 active neurons against ~670 in the other trials; 78% of its stuck-state neurons). The whole brain didn't.
+  - **D37's cascade test doesn't flag it:** 1,490 extra neurons is below the 5,000 bar, because the subcircuit holds only 1,904 stuck-state neurons. Only the stuck-state diagnostic catches it.
+  - **For closed-loop runs on the subcircuit (D38), the stuck-state share is the detector that works.**
+  - LC10a isn't a game input or a probe, so this doesn't affect the tolerance.
+  - The rate is 4 stuck trials in 1,410 on the subcircuit, against 3 on the whole brain.
