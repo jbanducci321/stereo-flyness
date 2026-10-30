@@ -78,7 +78,7 @@ The canonical, up-to-date log is **`docs/decisions.md`**. Read it first. Summary
 | D15 | Sugar GRN v630 ID `720575940620900446` → v783 ID `720575940639259967`. We verified that 95% of its downstream partners are shared with the other sugar GRNs. Lesson: always check IDs against v783. |
 | D16 | Frame-stepping input: Shiu's `PoissonInput` (fixed rate) is replaced by a `PoissonGroup` + one-to-one `Synapses` with changeable rates. Validated as equivalent on the whole brain; see §6.3. |
 | D17 | Closed-loop runs use `BrainStepper.run_frames()` (one Brian2 run, callback per frame), not one `step()` per frame. This avoids ~100–250 ms of overhead per call, and the results are identical. |
-| D18 (provisional) | Subcircuit size target: up to ~20k neurons / ~3M connections, from benchmarks. The extraction rule itself is still open (S5). |
+| D18 (provisional) | Subcircuit size target: up to ~20k neurons / ~3M connections, from benchmarks. **Raised to ~25k / ~3M by D36, then replaced by D37's tuning-time limit.** |
 | D20 | Game physics: GD **2.2** (240 Hz tick), exact gameplay, native units (1 block = 30), 64-bit floats with the game's update order. Facts only from camila314/gdp and OpenGD; every constant is cited in `docs/game_physics.md`. The song and SFX come from the user's local files and are never committed. |
 | D21 | Stereo Madness layout: the official main-level data (OpenGD `mainLevels.json`, pinned), identical to server copy 77236587 on all 1,399 gameplay objects. Level 94729537 was rejected (a different level). `scripts/fetch_stereo_madness.py` writes it to git-ignored `data/gd/`. |
 | D22 | Level format: one JSON file per level, GD units with the ground at y = 0, gameplay objects as ready-made hitboxes (`kind` + corners), portals with x/y/mode. The engine derives ship bounds with `ship_bounds()`. Spec: `docs/level_format.md`; code: `game/level.py`, `game/objects.py`. |
@@ -88,10 +88,13 @@ The canonical, up-to-date log is **`docs/decisions.md`**. Read it first. Summary
 | D26 | Practice levels (`docs/level_generators.md`): seeded chunk generator (v3) with physics-based easy/medium/hard tiers; every level bot-validated. Difficulty is measured per level (cube press windows: easy ≥ ~142 ms; medium/hard include sub-50 ms moments). Suites: training 50/50/50, held-out 20/20/20 (cube/ship/mixed). Only seeds are committed (`configs/level_suites.toml`); levels are built into `results/levels/`. |
 | D27 | Steering tests run twice: on the **original** signs and on a T4/T5-corrected copy (every connection from T4a–d/T5a–d excitatory), written by `scripts/make_corrected_connectivity.py` into git-ignored `data/`. Escape tests use the original only. Every result is labelled. |
 | D28–D35 | Pathway-test rules, agreed before round 1 (after the pilot): the original signs carry forward (corrected only by a written fallback); escape and steering go/no-go rules; E4 controls (no input must give exactly 0 spikes); rules for picking round 2 rates; data ground rules; every neuron that fires is recorded frame by frame; E5a dropped. See `docs/decisions.md`. |
+| D36 | Subcircuit rule (S5): every neuron recruited by the game's inputs in whole-brain runs (both sides, both sign versions) plus their ≥ 30-synapse inputs. Interim subcircuit built in J5 for T3; final rebuild after T4. Tolerance agreed in advance (same verdicts, key rates within 10% or 1 Hz, Giant Fiber first spikes within one frame in ≥ 95% of events, ≥ 90% of all whole-brain-active neurons kept in each probe type), judged on held-out probes P1–P7 (locked 2026-10-30). Size limit ~25k / ~3M (updates D18; replaced by D37). Step 4 controls on the whole brain. See `docs/decisions.md`. |
+| D37 | Runaway-cascade trials (more than 2× and more than 5,000 above the median active count of their condition's other trials) are left out of subcircuit builds and validation rules 2–4, and reported separately. The size limit is a tuning time: a 200-run grid on **30 s practice levels** in ≤ 10 h with 4 at once on Jacob's laptop. Interim subcircuit: 33,480 neurons / 3.39M connections, grid ~7.2 h. The stuck state (`docs/cascades.md`) is treated as a model property. |
+| D38 | Runs that enter the stuck state (Step 2 on) are kept and counted, flagged in logs and replays, and also reported excluded, together with the stuck rate. No re-running until a run works. |
 | D19 | End deliverable: a **record-and-replay viewer**. Closed-loop runs log every frame (game state, inputs, watched spikes) from the `run_frames` callback, and a viewer replays at real 60 fps with a brain-activity panel. It must visibly separate our input encoding from the fly's spikes, say it's a replay of a simulation, and never smooth or alter recorded activity. Live mode is optional, for small subcircuits only. |
 
 ### Open decisions (not yet made; don't decide these unilaterally)
-- **Subcircuit rule:** which neurons to keep (core cell types + N hops, minimum synapse count). **Shannyn proposes** (task S5).
+- **Subcircuit rule:** decided in **D36** (recruited neurons + their ≥ 30-synapse inputs; interim build for T3, final rebuild after T4) and **D37** (cascade trials left out; tuning-time limit; 30 s practice levels).
 - **Brain time per game step:** e.g. ~16.7 ms at 60 fps. Geometry Dash 2.2 physics may run at 240 Hz (4.17 ms ticks).
 - **Input encoding:** how looming becomes the LC4/LPLC2 stimulation rate, and which neurons receive it. LC4 neurons tile the visual field, so obstacle position could map to specific neurons.
 - **Output rule:** what Giant Fiber activity counts as "jump" (one spike? N spikes in a window?).
@@ -241,6 +244,10 @@ Each `step()` call costs ~100–250 ms of Brian2 overhead regardless of network 
 
 - **240 Hz is affordable:** the cost tracks simulated time, not how often the game talks to the brain.
 - **Provisional subcircuit size target (D18): up to ~20k neurons / ~3M connections.** That puts a tuning grid at an overnight run on the laptop.
+- **Replaced by D37:**
+  - Practice levels are 30 s, and the limit is a 200-run grid in ≤ 10 h with 4 at once on Jacob's laptop.
+  - The interim subcircuit (33,480 neurons) takes ~7.2 h on game-like input.
+  - The 90 s column above predates that decision.
 
 ## 7. The game (Step 1 complete)
 
@@ -305,7 +312,7 @@ Each `step()` call costs ~100–250 ms of Brian2 overhead regardless of network 
 - **J2, frame-by-frame runner + benchmark** (in progress on `jb-frame-stepping`).
 - **J3, game physics research** (no blockers).
 - **J4, run the pathway tests** (needs S2 + S4), including silencing LC4/LPLC2 to check the Giant Fiber goes quiet.
-- **J5, extract and benchmark the subcircuit** (needs S5 + J2).
+- **J5, extract and benchmark the subcircuit** (needs S5 + J2). **Done 2026-10-30:** the interim subcircuit (33,480 neurons, D36 + D37) passes the D36 tolerance on all held-out probes, and a 30 s tuning grid takes ~7.2 h. See `docs/FEASIBILITY.md` (Subcircuit).
 
 **Together:**
 - **T1:** review each other's PRs.

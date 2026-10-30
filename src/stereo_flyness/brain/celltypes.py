@@ -5,6 +5,7 @@ which scripts/find_target_neurons.py downloads into data/. Its root IDs are alre
 but every ID handed out here is still checked against Completeness_783.csv (hard rule 4).
 """
 
+import numpy as np
 import pandas as pd
 
 SIDES = ("left", "right")
@@ -46,3 +47,31 @@ def top_partners(con: pd.DataFrame, post_id: int, n: int) -> list[int]:
     syn = rows.groupby("Presynaptic_ID")["Connectivity"].sum().reset_index()
     syn = syn.sort_values(["Connectivity", "Presynaptic_ID"], ascending=[False, True])
     return [int(i) for i in syn["Presynaptic_ID"].head(n)]
+
+
+def input_similarity(con: pd.DataFrame, ids: list[int]) -> np.ndarray:
+    """Cosine similarity of the neurons' input synapse counts (rows and columns in `ids` order).
+
+    Neurons that share input partners score high. For columnar visual inputs this is a stand-in
+    for "nearby in the visual field", since the connectome has no visual-field positions.
+    """
+    rows = con[con["Postsynaptic_ID"].isin(ids)]
+    m = rows.pivot_table(index="Postsynaptic_ID", columns="Presynaptic_ID", values="Connectivity",
+                         aggfunc="sum", fill_value=0).reindex(ids, fill_value=0)
+    x = m.to_numpy(float).copy()
+    norm = np.linalg.norm(x, axis=1, keepdims=True)
+    x = np.divide(x, norm, out=np.zeros_like(x), where=norm > 0)
+    return x @ x.T
+
+
+def grow_order(sim: np.ndarray, start: int) -> list[int]:
+    """Indices in the order a patch grows from `start`: each step adds the neuron with the
+    highest mean similarity to the patch so far (ties broken by index)."""
+    order, left = [start], [i for i in range(len(sim)) if i != start]
+    total = sim[start].copy()
+    while left:
+        best = max(left, key=lambda i: (total[i], -i))
+        order.append(best)
+        left.remove(best)
+        total += sim[best]
+    return order

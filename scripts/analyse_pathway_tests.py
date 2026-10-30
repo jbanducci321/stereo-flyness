@@ -22,7 +22,7 @@ from stereo_flyness.experiments.pathway_analysis import (
     by_rate, escape_rules, horizontal_rule, latency_rule, onoff_cycles, pick_e2_rate, pick_half_max,
     reliable, steering_rules, trial_row,
 )
-from stereo_flyness.experiments.pathway_tests import load_trial
+from stereo_flyness.experiments.pathway_tests import judged, load_trial
 
 REPORT = OUT / "analysis" / "report.md"
 
@@ -48,11 +48,11 @@ def verdict(ok) -> str:
     return "**PASS**" if ok else "**FAIL**"
 
 
-def load_all(conds):
+def load_all(conds, out_dir):
     rows, trials = [], {}
     for c in conds:
         for t in range(c.trials):
-            p = c.path(OUT, t)
+            p = c.path(out_dir, t)
             if not p.exists():
                 continue
             tr = load_trial(p)
@@ -64,17 +64,17 @@ def load_all(conds):
     return pd.DataFrame(rows), trials
 
 
-def main() -> None:
-    cfg = tomllib.loads(CONFIG.read_text())
-    conds = conditions(cfg)
+def analyse(out_dir, cfg, conds, title="# Pathway tests: analysis") -> dict:
+    """Judge the trials saved under `out_dir` (whole brain or a subcircuit). Returns the report
+    lines, the verdicts and the per-trial table."""
     by_key = {c.key: c for c in conds}
-    df, trials = load_all(conds)
+    df, trials = load_all(conds, out_dir)
     ann = pd.read_csv(fetch_annotations(), sep="\t", usecols=["root_id", "cell_type", "side"], low_memory=False)
     ctype = dict(zip(ann["root_id"].astype("int64"), ann["cell_type"].fillna("?")))
     cside = dict(zip(ann["root_id"].astype("int64"), ann["side"].fillna("?")))
     con = pd.read_parquet(PATH_CON, columns=["Presynaptic_ID", "Postsynaptic_ID", "Connectivity", "Excitatory"])
 
-    out = ["# Pathway tests: analysis", "",
+    out = [title, "",
            "Rules: D28–D35 in `docs/decisions.md`, agreed before round 1. Rates are mean Hz per neuron; ± is the SD across trials.",
            "Latencies are to the end of the 4.2 ms frame holding the first spike (upper bounds).", ""]
 
@@ -206,7 +206,7 @@ def main() -> None:
     # --- Steering ---
     out += ["## Steering: T4/T5 → VS cells → DNp20 / DNp22", ""]
     picks, steer_go = {}, {}
-    for sign in cfg["steering"]["signs"]:
+    for sign in [s for s in cfg["steering"]["signs"] if s in set(df["sign"])]:
         s1 = df[(df["experiment"] == "S1") & (df["sign"] == sign)]
         st = steering_rules(s1, "down_R", "up_R")
         down = s1[s1["group"] == "down_R"]
@@ -268,11 +268,20 @@ def main() -> None:
             f"- `[escape.e2] rates_hz = [{e2_rate}, 150]`" if e2_rate != 150 else "- E2: 150 Hz already covers it",
             f"- `[steering.half_max_rate_hz] original = {picks.get('original')}, corrected = {picks.get('corrected')}`", ""]
 
+    verdicts = {"escape": esc_go, **{f"escape_rule{i}": esc[f"rule{i}"] for i in range(4)},
+                **{f"steering_{s}": g for s, g in steer_go.items()}, "carry": carry,
+                "e2_rate": e2_rate, "half_max": picks}
+    return {"lines": out, "verdicts": verdicts, "df": df, "trials": trials}
+
+
+def main() -> None:
+    cfg = tomllib.loads(CONFIG.read_text())
+    res = analyse(OUT, cfg, [c for c in conditions(cfg) if judged(c, cfg)])  # D29-D31: main side only
     REPORT.parent.mkdir(parents=True, exist_ok=True)
-    REPORT.write_text("\n".join(out), encoding="utf-8")
-    df.to_csv(REPORT.parent / "trials.csv", index=False)
+    REPORT.write_text("\n".join(res["lines"]), encoding="utf-8")
+    res["df"].to_csv(REPORT.parent / "trials.csv", index=False)
     sys.stdout.reconfigure(encoding="utf-8")  # the report has arrows and ±; Windows consoles default to cp1252
-    print("\n".join(out))
+    print("\n".join(res["lines"]))
     print(f"\nWrote {REPORT.relative_to(OUT.parents[1])} and trials.csv")
 
 

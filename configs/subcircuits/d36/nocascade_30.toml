@@ -1,0 +1,13 @@
+# MEASUREMENT BUILD ONLY (speed), for D37 (proposed): D36's recipe without the 3 runaway-cascade
+# trials, keeping D36's >= 30-synapse cut-off. Not validated; D37 isn't agreed yet.
+name = "d36_nocascade_30"
+description = "D37 (proposed): recruited by game inputs without cascade trials + their >= 30-synapse inputs"
+
+[[include]]
+pathway_tests = true
+
+[[include]]
+active = { experiments = ["E1", "E2", "E3", "E5b", "E5c", "S1", "S2", "S3"], signs = ["original", "corrected"], exclude_trials = [["corrected/S1/up_R/100Hz", 5], ["corrected/S2/down_R_25Hz+up_R/150Hz", 2], ["original/S1/up_L/200Hz", 3]] }
+
+[[include]]
+hops = { from_active = { experiments = ["E1", "E2", "E3", "E5b", "E5c", "S1", "S2", "S3"], signs = ["original", "corrected"], exclude_trials = [["corrected/S1/up_R/100Hz", 5], ["corrected/S2/down_R_25Hz+up_R/150Hz", 2], ["original/S1/up_L/200Hz", 3]] }, n = 1, direction = "in", min_synapses = 30 }

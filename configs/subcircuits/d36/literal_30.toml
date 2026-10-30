@@ -1,0 +1,14 @@
+# D36 recipe applied literally: MEASUREMENT BUILD ONLY, not the interim subcircuit. At 42k neurons /
+# 4.5M connections it is over D36's ~25k / ~3M limit, and no synapse cut-off brings it under.
+# The size decision is pending (Shannyn / Jacob); see docs/subcircuit_candidates.md, "Interim size".
+name = "d36_literal_30"
+description = "D36 literal: recruited by game inputs (all sides, both signs, all trials) + their >= 30-synapse inputs"
+
+[[include]]
+pathway_tests = true
+
+[[include]]
+active = { experiments = ["E1", "E2", "E3", "E5b", "E5c", "S1", "S2", "S3"], signs = ["original", "corrected"] }
+
+[[include]]
+hops = { from_active = { experiments = ["E1", "E2", "E3", "E5b", "E5c", "S1", "S2", "S3"], signs = ["original", "corrected"] }, n = 1, direction = "in", min_synapses = 30 }

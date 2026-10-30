@@ -49,3 +49,69 @@ rate_hz = 150
 [steering.half_max_rate_hz]  # picked from round 1's S1 by D32
 original = 50                 # right VS reaches 64% of its sweep maximum
 corrected = 25                # right VS reaches 50.07% (25 Hz qualifies by D32's edge-case rule)
+
+# --- Subcircuit building and validation (D36, J5 checkpoint 4) ---
+
+# The game-input experiments repeated on the left side and on both sides at once, to find every
+# neuron the game's inputs can recruit. Used to BUILD the subcircuit; not judged by D29-D31.
+[cascade]                # runaway-cascade test for builds and validation (D37)
+ratio = 2.0              # more than 2x the median active count of the condition's other trials ...
+min_extra = 5000         # ... and more than 5,000 neurons above that median
+stuck_state = "configs/stuck_state_783.csv"  # diagnostic: neurons of the known self-sustaining state
+stuck_share = 0.5        # a trial is "in the stuck state" if >= 50% of them fire
+
+[recruitment]
+sides = ["left", "both"]
+trials = 5
+experiments = ["E1", "E2", "E3", "E5b", "E5c", "S1", "S2", "S3"]
+
+# Game-like probe tests, NEVER used to build a subcircuit: the held-out check of the D36 tolerance.
+# Drafts for Shannyn's review before the whole-brain run.
+[probes]
+sides = ["right", "left", "both"]
+trials = 5
+
+[probes.p1]              # expanding looming: random chunks of a side's LC4 + LPLC2 switch on one by one
+chunks = 4
+step_ms = 75             # a new chunk every 75 ms (all four on after 300 ms)
+rate_hz = 150
+off_ms = 200
+repeats = 2
+seed = 1
+
+[probes.p2]              # looming ramp: all of a side's LC4 + LPLC2, rate rising linearly, then off
+ramp_ms = 300
+top_hz = 200
+off_ms = 200
+repeats = 2
+
+[probes.p3]              # up/down switching: downward and upward motion alternating
+segment_ms = 150
+rate_hz = 100
+cycles = 3
+
+[probes.p4]              # steering over scrolling: constant horizontal motion, downward motion on/off
+horizontal_hz = 50
+down_hz = 100
+on_ms = 200
+off_ms = 200
+cycles = 3
+
+[probes.p5]              # spatial looming: an LC4 + LPLC2 patch grown outward by shared input partners
+first_neurons = 19       # per side at the first step, near E3's threshold; grows geometrically to all
+steps = 8
+step_ms = 40
+rate_hz = 150
+off_ms = 200
+repeats = 2
+seed = 1                 # picks the starting LC4 neuron on each side
+
+[probes.p6]              # looming over scrolling: P1's looming plus constant front-to-back motion
+types = ["T4a", "T5a"]
+horizontal_hz = 50
+
+[probes.p7]              # close obstacles: all of a side's LC4 + LPLC2 in short bursts
+rate_hz = 150
+on_ms = 100
+off_ms = 50
+cycles = 4
