@@ -24,6 +24,11 @@ This is the follow-up D37 asks for (J5, 2026-10-30). It uses `scripts/analyse_ca
 
 ## A better cascade test than a ratio
 
+> **Outcome (D37, agreed 2026-10-30):**
+> - **The rule:** more than 2× the condition's median *and* more than 5,000 above it. That doesn't depend on recognising this one state.
+> - **The diagnostic:** the stuck-state share below, with ≥ 50% meaning "in the stuck state". The 8,189 neurons are listed in `configs/stuck_state_783.csv`.
+> - **How stuck runs count from Step 2 onward:** D38.
+
 D37's proposed test (more than 3× the condition's median active count) flags only 2 of the 3 cascades (`docs/subcircuit_candidates.md`). Because there's one specific state, a test can look for that state directly:
 
 | Trials | Share of the 8,189 stuck-state neurons that fire |
@@ -34,7 +39,7 @@ D37's proposed test (more than 3× the condition's median active count) flags on
 - **Possible rule:** a trial is a cascade if **≥ 50%** of the stuck-state neurons fire.
 - The gap is wide, so any threshold from ~10% to ~95% gives the same answer on all current trials.
 - It doesn't depend on how busy a condition normally is, and the list of neurons can be saved with the analysis.
-- Whether to use it instead of a ratio is Shannyn's call (D37).
+- Agreed use: as a diagnostic alongside D37's rule, not as the rule itself.
 
 ## Why it might happen (hypotheses, not tested)
 

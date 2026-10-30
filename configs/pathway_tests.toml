@@ -54,6 +54,12 @@ corrected = 25                # right VS reaches 50.07% (25 Hz qualifies by D32'
 
 # The game-input experiments repeated on the left side and on both sides at once, to find every
 # neuron the game's inputs can recruit. Used to BUILD the subcircuit; not judged by D29-D31.
+[cascade]                # runaway-cascade test for builds and validation (D37)
+ratio = 2.0              # more than 2x the median active count of the condition's other trials ...
+min_extra = 5000         # ... and more than 5,000 neurons above that median
+stuck_state = "configs/stuck_state_783.csv"  # diagnostic: neurons of the known self-sustaining state
+stuck_share = 0.5        # a trial is "in the stuck state" if >= 50% of them fire
+
 [recruitment]
 sides = ["left", "both"]
 trials = 5

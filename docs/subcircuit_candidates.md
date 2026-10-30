@@ -131,13 +131,18 @@ D36's recipe was applied to all 1,210 whole-brain game-input trials: E1–E3, E5
 | Whole brain | 139k / 15.1M | 24.3× real time | (not measured) | ~12 min alone | ~20 h+ |
 | D36 as written, ≥ 30 syn (`d36_literal_30`) | 42.4k / 4.50M | 10.0× | 20.5× | ~10 min | **~8.5 h** |
 | Cascades excluded, ≥ 75 syn (`d36_nocascade_75`) | 23.6k / 1.92M | 6.9× | 13.8× | ~7 min | **~5.8 h** |
-| Cascades excluded, ≥ 30 syn (`d36_nocascade_30`, D37 proposed; measured 2026-10-30) | 33.5k / 3.39M | 8.9× | 17.2× | ~8.6 min | **~7.2 h** |
+| Cascades excluded, ≥ 30 syn (`d36_nocascade_30`, identical to `interim`; measured 2026-10-30) | 33.5k / 3.39M | 8.9× | 17.2× | ~8.6 min | **~7.2 h** |
 
 - **Game-like input is much busier than the pathway tests.** With both sides driven and thousands of T4/T5 neurons stimulated, the speed-up over the whole brain is ~2.4–3.5×, not the ~8× of the right-side tests in checkpoint 3.
 - **Both builds allow an overnight tuning grid.** The difference between them is ~1.5× in speed.
 - **Fidelity cost of `d36_nocascade_75`:** its 75-synapse cut-off keeps only ~74% of the Giant Fibers' input synapses (62–67% of their inhibitory input), against 87–89% for `d36_literal_30`. It may fail the D36 tolerance; that isn't checked yet.
 
 **Decision needed before the interim build:** see the options in the summary for Shannyn. Neither build has been validated, and the probes haven't been run on any subcircuit.
+
+**Outcome (2026-10-30):**
+- D37 is agreed. Its cascade test is more than 2× the condition's median *and* more than 5,000 above it, and it flags exactly the 3 known trials.
+- The interim subcircuit (`configs/subcircuits/interim.toml`) is built with it: 33,480 neurons / 3,391,290 connections, identical to `d36_nocascade_30`.
+- Practice levels are 30 s.
 
 **Update (2026-10-29):** Shannyn proposed a third option, logged as **D37 (proposed)** in `docs/decisions.md`:
 - Leave out cascade trials using a fixed test: more than 3× the median active count of the condition's other trials.
@@ -190,4 +195,4 @@ These were added after Shannyn's probe review, alongside P1–P4. They are defin
 
 - **Front-to-back motion barely changes the escape response:** the Giant Fiber rates in P6 are within ~3 Hz of P1's.
 - **VS cells fire at ~82 Hz in P6.** That's more than S3's 65 Hz at 50 Hz, which drove all four horizontal types (T4a/b, T5a/b). Front-to-back alone drives VS harder than both directions together.
-- **No cascades:** the 3× test, applied to all 1,410 whole-brain trials, still flags only the 2 known S1 trials.
+- **No cascades:** D37's test, applied to all 1,410 whole-brain trials, flags only the 3 known cascades, none of them a probe.

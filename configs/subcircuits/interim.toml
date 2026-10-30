@@ -1,0 +1,15 @@
+# The interim subcircuit (J5 -> T3): D36's recipe with D37's change. Every neuron that fires in the
+# whole-brain runs of the game's inputs (cascade trials left out by the D37 test), plus every
+# neuron with >= 30 synapses onto one of them, plus every pathway-test neuron.
+# Probes (P1-P7) are never used to build it; they validate it (D36).
+name = "interim"
+description = "D36 + D37: recruited by game inputs (no cascade trials) + their >= 30-synapse inputs"
+
+[[include]]
+pathway_tests = true
+
+[[include]]
+active = { experiments = ["E1", "E2", "E3", "E5b", "E5c", "S1", "S2", "S3"], signs = ["original", "corrected"], exclude_cascades = true }
+
+[[include]]
+hops = { from_active = { experiments = ["E1", "E2", "E3", "E5b", "E5c", "S1", "S2", "S3"], signs = ["original", "corrected"], exclude_cascades = true }, n = 1, direction = "in", min_synapses = 30 }

@@ -75,6 +75,7 @@ The GitHub repo is public. The FlyWire connectivity data is CC BY 4.0 and Shiu's
 - Based on benchmarks with neighbourhood stand-ins: one 90 s level in a few minutes on one core, and a tuning grid overnight.
 - The extraction rule itself is still open (Shannyn's S5). This only bounds its size. To be revisited with the real subcircuit (J5).
 - **Updated by D36 (2026-10-28):** the limit is now ~25k neurons / ~3M connections.
+- **Replaced by D37 (2026-10-30):** the limit is now a tuning time (a 200-run grid on 30 s practice levels in ≤ 10 h, 4 at once, on Jacob's laptop), not a neuron count.
 
 **D19. End deliverable: a record-and-replay viewer of the fly playing Stereo Madness** (2026-10-22)
 - **Goal:** watch the fly brain play Stereo Madness at real speed, with its brain activity shown beside the game. Looming neurons (LC4/LPLC2) light up as obstacles approach, the Giant Fiber flashes when it fires, and the cube jumps. Steering neurons drive hold/release in ship sections.
@@ -300,7 +301,7 @@ Proposed by Shannyn (S5), from the J5 candidate comparison (`docs/subcircuit_can
 - **If it doesn't fit or doesn't pass:**
   - **Over the size limit:** raise the synapse cut-off above 30 until it fits, as long as the tolerance still holds. If no cut-off fits, raise the limit (and log it) or rethink the rule.
   - **Fails the tolerance at ≥ 30 synapses:** lower the cut-off to **≥ 20** (keeps more inputs, so the subcircuit gets bigger), then re-check size and tolerance.
-- **Size limit:** **~25k neurons / ~3M connections** (updates D18).
+- **Size limit:** **~25k neurons / ~3M connections** (updates D18). **Replaced by D37:** a tuning-time limit.
 - **Controls (Step 4):**
   - The controls run on the **whole brain**.
   - If tuning uses the subcircuit, the shuffled-connectome control goes through the same pipeline: shuffle the whole brain, run the same pathway tests on it, apply this rule, build its own subcircuit.
@@ -318,54 +319,62 @@ Proposed by Shannyn (S5), from the J5 candidate comparison (`docs/subcircuit_can
   - activity-only (fails on unseen input);
   - the 2-step hybrid (just below the bar on S3).
 
-**D37. Cascade trials are left out of subcircuit builds; size limit set by tuning time** (2026-10-29, **proposed**)
-Proposed by Shannyn after J5 checkpoint 4b showed D36 as written doesn't fit the ~25k limit (`docs/subcircuit_candidates.md`, "Interim size"). Not agreed yet: waiting on Jacob's speed benchmark of the build below and on the level-length check. Changes D36 only where stated.
-- **Cascade trials:**
-  - A whole-brain trial counts as a **runaway cascade** if its number of active neurons is **more than 3× the median** of the same condition's other trials.
-  - Cascade trials are **left out of the recruited set** (D36 step 1) and **out of validation rules 2–4**.
-  - They are reported separately, as a whole-brain property.
-  - The same test applies to every later build, including the final one after T4.
-- **Everything else in D36 is unchanged**, including the **≥ 30-synapse** cut-off.
-- **Size limit (replaces ~25k neurons / ~3M connections):**
-  - A **200-run tuning grid on 30 s practice levels** must finish in **≤ 10 h with 4 runs at once**.
-  - The neuron limit was only ever a stand-in for speed. Game-like input made subcircuits only ~2.4–3.5× faster than the whole brain, not the ~8× the right-side tests suggested.
-- **Interim build:** ~33.5k neurons / ~3.39M connections (cascade-free, ≥ 30 synapses). It is benchmarked for speed before any validation.
+**D37. Cascade trials are left out of subcircuit builds; the size limit is a tuning-time limit** (2026-10-30)
+Proposed by Shannyn after J5 checkpoint 4b showed that D36 as written doesn't fit the ~25k limit (`docs/subcircuit_candidates.md`, "Interim size"). Agreed by both on 2026-10-30, before any subcircuit was validated or run on probes.
+- **Change to D36, the cascade test:**
+  - A whole-brain trial is a **runaway cascade** if its number of active neurons is **more than 2× the median** of the same condition's other trials **and more than 5,000 above it**.
+  - Cascade trials are **left out of the recruited set** (D36 step 1) and **out of validation rules 2–4**, and are reported separately.
+  - The settings are in `[cascade]` in `configs/pathway_tests.toml`, and the code is in `src/stereo_flyness/experiments/cascades.py`.
+  - Everything else in D36 is unchanged, including the **≥ 30-synapse** cut-off.
+- **Diagnostic:**
+  - Each flagged trial also reports the share of the known stuck-state neurons that fire: 8,189 neurons, listed in `configs/stuck_state_783.csv` (see `docs/cascades.md`).
+  - The known cascades score 97–98%, and every other trial at most 8.1%.
+  - A trial is "in the stuck state" if ≥ 50% of them fire.
+- **Size limit:**
+  - A **200-run tuning grid on 30 s practice levels** must finish in **≤ 10 h with 4 runs at once on Jacob's laptop**: Intel Core i7-10750H, 6 cores / 12 threads, 32 GB RAM, Windows 11.
+  - This replaces D36's ~25k / ~3M limit, which was a stand-in for speed.
+- **Practice levels for tuning are 30 s long.**
+  - The time limit depends on it: with 90 s levels, the grid would take ~21.5 h.
+  - Stereo Madness keeps its real length. It's run once and never tuned on (D7).
+- **Interim build** (`configs/subcircuits/interim.toml`; not validated yet):
+  - **33,480 neurons / 3.39M connections**, identical to the measurement build `d36_nocascade_30`.
+  - Speed: 8.9× slower than real time alone, 17.2× each with 4 at once, so the grid takes ~7.2 h.
+  - The Giant Fibers keep 87–88% of their input (82% of their inhibitory input).
+- **Check before the rebuild (2026-10-30):** the test, applied to all 1,410 whole-brain trials (probes included), flags exactly the 3 known cascades:
+  - their ratios are 3.7×, 2.6× and 3.3×, with +7,963 to +8,135 extra neurons;
+  - every other trial is at most 1.62× and at most +531.
 - **Why:**
-  - About 7,400 of the 27,960 recruited neurons fired only in 3 cascade trials out of 1,350. The subcircuit isn't expected to reproduce those anyway.
-  - In the final build, longer whole-brain runs of the game encoding would contain more cascades, so the literal rule would grow with every build.
-  - Raising the cut-off to fit 25k (≥ 75 synapses) would drop the Giant Fibers' inhibitory input to 62–67% (from ~88%). Keeping that input is the reason D36 was chosen.
-  - It was decided before any subcircuit was validated or run on probes, so the change was driven by size, not by fidelity.
-- **Expected but not yet measured:**
-  - It should keep the same ~87–89% of the Giant Fibers' input as `d36_literal_30`.
-  - Its speed should fall between the two measured builds (6.9× and 10.0× real time alone).
-- **To confirm before agreeing:**
-  1. Benchmark the cascade-free ≥ 30 build on the same game-like input (speed only, not fidelity).
-  2. Check that the 3× test flags exactly the 3 known cascade trials.
-  3. Confirm that tuning uses 30 s practice levels. The length isn't decided yet (Step 1). With 90 s levels every grid triples, and even the smallest build becomes a ~17 h grid.
-  4. Note which machine the 10 h is measured on (the benchmarks so far ran on Jacob's laptop).
-- **Results of checks 1–2 (2026-10-30; details in `docs/subcircuit_candidates.md`):**
-  1. **Speed and input kept:**
-     - The build is 33,480 neurons / 3.39M connections, at 17.2× real time each with 4 at once.
-     - A 200-run grid on 30 s levels would take **~7.2 h**, which passes.
-     - The Giant Fibers keep 87–88% of their input, as expected.
-  2. **The 3× test flags only 2 of the 3 cascades.** The third is 2.6× its condition's median. Every other trial is at most 1.6×, so the threshold needs revisiting before this is agreed.
+  - About 7,400 of the 27,960 recruited neurons fired only in 3 of 1,350 trials. Those trials entered a self-sustaining state (~8,300 neurons, centred on the mushroom body) that never stops, and the subcircuit isn't meant to reproduce it.
+  - Longer encoding runs in the final build would add more of these neurons each time.
+  - Raising the cut-off to fit 25k (≥ 75 synapses) would have cut the Giant Fibers' inhibitory input to 62–67%, the very input D36 was chosen to keep.
+  - It was decided before any subcircuit was validated or run on probes.
+- **Model property:**
+  - The stuck state is treated as a property of the model, not of the fly. The write-up says so, and says the hypothesis is untested (`docs/cascades.md`): no adaptation, no noise and a spiking APL let a recurrent mushroom-body loop lock in, whereas real APL inhibition is graded.
+  - The link to upward motion isn't supported (p = 0.24 within steering trials).
+  - Revisit if later tests show otherwise.
 - **Alternatives considered:**
-  - **D36 as written with a ~45k / 4.5M limit:** no rule change, and its 200-run grid (~8.5 h) also passes the time limit. But a quarter of the circuit comes from cascades, and it grows with future runs.
-  - **Cascades excluded at ≥ 75 synapses:** fits 25k, but cuts the recruited inhibition.
-- **Follow-up:**
-  - Investigate the cascades from the recorded data: where they start, and whether they stop.
-    - Done 2026-10-30, see `docs/cascades.md`.
-    - All 3 are the same self-sustaining state of ~8,300 neurons, centred on the mushroom body.
-    - It doesn't stop even with all input off, and it leaves the Giant Fibers and VS silent.
-    - A test for that state (≥ 50% of its neurons firing) separates the cascade trials (97–98%) from every other trial (≤ 8%). It could replace the ratio test.
-  - If they turn out to be a regular part of the brain's response to game input, revisit this decision.
+  - D36 as written, with the limit raised to ~45k / 4.5M;
+  - cascades excluded at ≥ 75 synapses;
+  - a 3× ratio test (it missed the S2 cascade, at 2.6×);
+  - the stuck-state test as the rule: precise, but it only recognises the state we've already seen.
+
+**D38. How runs that enter the stuck state are counted (Step 2 onward)** (2026-10-30)
+Agreed by both, with D37. It covers closed-loop runs on the subcircuit and the whole brain.
+- Stuck runs are **kept and counted in the main results**. The model does this, so we report it.
+- They are **flagged in the run log and the replay** (D19).
+- Results are **also reported with stuck runs excluded**, plus the **stuck rate**.
+- **No re-running with new seeds until a run works.**
+- **To do in Step 2:**
+  - the run recorder (R1) gets a live stuck-state flag: ≥ 50% of the stuck-state neurons firing over a rolling ~100 ms window, saved in the log and shown in the replay;
+  - it also gets a general flag for any sustained jump in active neurons, in case a different state appears.
+- **Step 7 (whole brain on GPU):** at ~0.2% per simulated second, roughly 1 in 6 whole-brain 90 s runs would get stuck. The subcircuit-vs-whole-brain comparison reports the stuck rate.
+  - That rate comes from 1 s tests in which the state only took off after ~0.6 s, so it's a rough guide for long runs.
 
 ## Open
 
 These are to be decided after Step 0:
 
-- Subcircuit rule: decided in D36 (recipe). D37 (proposed) would leave out cascade trials and replace the size limit with a tuning-time limit. The interim neuron list is built in J5; the final one after T4.
-- Practice-level length (Step 1): D37's time limit assumes 30 s levels.
+- Subcircuit rule: decided in D36 (recipe) and D37 (cascade trials left out, tuning-time limit). The interim neuron list is built in J5; the final one after T4.
 - Brain time per game step (e.g. ~16.7 ms; GD 2.2 physics may run at 240 Hz).
 - Input encoding: looming → LC4/LPLC2 stimulation rate, and which neurons receive it.
 - Output rule: what Giant Fiber activity counts as a jump.

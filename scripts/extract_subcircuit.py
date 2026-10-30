@@ -29,6 +29,7 @@ from run_pathway_tests import CONFIG as PATHWAY_CONFIG, OUT as PATHWAY_OUT, cond
 from stereo_flyness.brain.celltypes import CellTypes
 from stereo_flyness.brain.signs import CORRECTED_NAME
 from stereo_flyness.brain.subcircuit import active_neurons, hops, retained_input, write_subcircuit
+from stereo_flyness.experiments.cascades import find_cascades
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "data" / "subcircuits"
@@ -41,14 +42,20 @@ _ACTIVE_CACHE = {}
 
 def active(a, pathway_conds):
     """Neurons active in the whole-brain pathway-test trials named by an `active` table:
-    `experiments`, `sign` or `signs` (default original), optional `min_rate_hz`, and optional
-    `exclude_trials` ([[condition key, trial], ...]). Every side's runs are included."""
+    `experiments`, `sign` or `signs` (default original), optional `min_rate_hz`, optional
+    `exclude_trials` ([[condition key, trial], ...]) and optional `exclude_cascades = true` (leave
+    out every trial the D37 cascade test flags). Every side's runs are included."""
     key = repr(sorted(a.items()))
     if key not in _ACTIVE_CACHE:
         signs = a.get("signs", [a.get("sign", "original")])
+        used = [c for c in pathway_conds if c.experiment in a["experiments"] and c.sign in signs]
         skip = {(k, t) for k, t in a.get("exclude_trials", [])}
-        paths = [c.path(PATHWAY_OUT, t) for c in pathway_conds
-                 if c.experiment in a["experiments"] and c.sign in signs
+        if a.get("exclude_cascades"):
+            cc = tomllib.loads(PATHWAY_CONFIG.read_text())["cascade"]
+            cascades = find_cascades(used, PATHWAY_OUT, cc["ratio"], cc["min_extra"])
+            print(f"Leaving out {len(cascades)} cascade trials (D37): {sorted(cascades)}")
+            skip |= cascades
+        paths = [c.path(PATHWAY_OUT, t) for c in used
                  for t in range(c.trials) if c.path(PATHWAY_OUT, t).exists() and (c.key, t) not in skip]
         if not paths:
             sys.exit(f"No saved pathway-test trials for {a}. Run scripts/run_pathway_tests.py first.")

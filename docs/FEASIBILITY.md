@@ -130,6 +130,11 @@ Source: flywire_annotations v3.1.0, all IDs checked against `Completeness_783.cs
 
 ### What this means for the plan
 - **Subcircuit target: up to ~20k neurons / ~3M connections.** That keeps one 90 s level at a few minutes on one core.
+  - **Superseded by D37 (2026-10-30):**
+    - Practice levels for tuning are **30 s**.
+    - The limit is now a tuning time: a 200-run grid in ≤ 10 h with 4 at once on this laptop.
+    - The interim subcircuit (33,480 neurons / 3.39M connections) measured 8.9× slower than real time alone and 17.2× each with 4 at once on game-like input, so a grid takes **~7.2 h**.
+    - Game-like input is much busier than the sugar input used here: the subcircuit is only ~2.4–3.5× faster than the whole brain (`docs/subcircuit_candidates.md`).
   - With 4 parallel workers (each slower from contention), a tuning grid of ~25 dial settings × 8 training levels (200 level runs) takes roughly **2–7 hours**. That's overnight-feasible on the laptop.
   - Smaller subcircuits (~5k) are proportionally faster.
 - **The whole brain is usable for occasional runs:** ~25–40 min per level on CPU. A whole-brain Stereo Madness comparison (Step 7) is possible on the laptop overnight; a GPU would make it routine.
