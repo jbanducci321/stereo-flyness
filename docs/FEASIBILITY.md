@@ -190,8 +190,8 @@ Source: flywire_annotations v3.1.0, all IDs checked against `Completeness_783.cs
     - To be re-checked on the final rebuild after T4.
 - **Runaway "stuck" state** (`docs/cascades.md`; D37, D38):
   - About 0.2% per simulated second, the whole brain falls into a self-sustaining state of ~8,300 neurons, centred on the mushroom body. Nothing stops it, even with all input off.
-  - It leaves the Giant Fibers and VS silent when there's no input. Whether they still respond to input while stuck is untested.
-  - Treated as a property of the model. Stuck runs are kept, flagged and counted (D38).
-  - For Step 2, check that a loom during the stuck state still drives the Giant Fiber. If it doesn't, a stuck run can't jump.
+  - It leaves the Giant Fibers and VS silent when there's no input.
+  - **Tested in a larger stuck state we could switch on** (~12,500 neurons): a loom still drives the right Giant Fiber, but at 112 vs 186 Hz, first spike 25–29 ms vs 4.2 ms, and the left Giant Fiber goes silent. The natural state's effect is untested (`docs/cascades.md`, follow-up (a)).
+  - Treated as a property of the model. Stuck runs are kept, flagged and counted (D38). Step 2 compares jump timing in stuck vs normal runs.
 
 ## Recommended stack
