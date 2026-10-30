@@ -441,13 +441,108 @@ Agreed by both, from a joint draft (Jacob) reviewed and extended by Shannyn. Ful
 - **Step 7 (whole brain on GPU):** at ~0.2% per simulated second, roughly 1 in 6 whole-brain 90 s runs would get stuck. The subcircuit-vs-whole-brain comparison reports the stuck rate.
   - That rate comes from 1 s tests in which the state only took off after ~0.6 s, so it's a rough guide for long runs.
 
+**D40. Brain time: real time, consulted every physics tick (T4)** (2026-10-30)
+Agreed by both, from Shannyn's T4 cube draft (`docs/notes/t4_proposals.md` §1) and Jacob's answers (`docs/notes/t4_engineering_answers.md`).
+- **Brain time runs at real game time.** One brain frame per 240 Hz physics tick, exactly 1000/240 ms.
+  - The frame callback runs on the exact interval, so Brian2 alternates 42, 42 and 41 steps of 0.1 ms. Every 3 frames is 12.5 ms, and brain time equals game time with no drift (tested).
+  - This replaces `run_frames`' rounding to 4.2 ms for the closed loop. The pathway tests keep their 4.2 ms frames.
+- **Order within a tick:**
+  1. game state at tick *i* sets the input for brain frame *i*;
+  2. the brain runs frame *i*;
+  3. its spikes set `held` for game tick *i* + 1.
+  - That's one tick (~4.2 ms) of delay, the same for every press.
+- **Why:**
+  - The timings that matter are physiological (8–13 ms from LC4/LPLC2 to the Giant Fiber, E2). Running the brain faster or slower than the game would rescale them.
+  - A 16.7 ms frame is longer than the Giant Fiber's whole onset latency, so 60 fps steps would blur it.
+  - With `run_frames`, the cost depends on simulated time, not on how often the game talks to the brain.
+- **No dial.**
+
+**D41. Input encoding for the cube: a growing LC4/LPLC2 patch tracking the nearest obstacle's angular size (T4)** (2026-10-30)
+Agreed by both (draft §2, with Jacob's real-height change and Shannyn's corrections). Ship mode is decided in Step 5.
+- **The eye** sits at the cube's front face (x + 15), at the cube's centre height, looking along the direction of travel.
+- **What the eye sees is visual cells, not hitboxes.**
+  - Each object fills a 30 × 30 cell: its hitbox centre ± 15. So a spike looks 30 units tall, not 12.
+  - Cells in the same column that touch vertically are **merged into one object**, so a two-block wall is one object 60 units tall.
+- **Which objects loom:** columns ahead of the eye that overlap the cube's current vertical extent, i.e. on a collision course. Solids and hazards are treated alike, because the fly can't tell them apart.
+- **Angular size:** θ = atan((top − eye) / d) + atan((eye − bottom) / d), for the nearest looming column, where *d* is the gap from the eye to its front face. This is geometry, not a dial.
+- **Which neurons are driven:**
+  - On each side, the fraction **f = min(1, θ / θ_full)** of the LC4 neurons and the same fraction of the LPLC2 neurons, on both eyes equally.
+  - Neurons are added in a fixed patch order grown by shared input partners: probe P5's construction and code (`loom_patches`, seed fixed per side, never tuned).
+  - Every driven neuron gets the same Poisson rate **R**; the rest get 0 Hz.
+  - It's implemented as one "loom" input group with per-neuron rates, so the input structure is fixed for the whole run.
+- **Logged every tick, separately from the fly's spikes** (hard rule 10): θ, f, R, and which neurons are driven.
+- **Choices we state as ours** (they go in the README):
+  - Ceilings and other objects off the collision course don't loom, which happens to help the cube.
+  - The collision course uses the cube's current height, so obstacles below stop looming mid-jump.
+  - θ_full and the patch shape are geometric assumptions, not measured receptive fields.
+- **Kept as a later option:** splitting the features, with LC4 following dθ/dt and LPLC2 following θ. For a single 30-unit object r/v is fixed (48 ms), so θ would determine dθ/dt. But with real heights a two-block wall has r/v ≈ 96 ms, so the split could tell tall objects from close ones. It's left out of v1 for simplicity.
+
+**D42. Output rule: any Giant Fiber spike is a one-tick press (T4)** (2026-10-30)
+Agreed by both (draft §3).
+- `held` is true on tick *i* + 1 if **either** Giant Fiber spiked in brain frame *i*. Otherwise it's false.
+- No spike count, no threshold, no refractory window.
+- **Why:**
+  - A single Giant Fiber spike drives the jump in the real fly, and real looms gave one or two spikes (von Reyn et al. 2014).
+  - The cube only jumps from the ground, so spikes in mid-air do nothing.
+  - A press lasts one tick, so holding never re-jumps by itself.
+  - With no input the model gives zero spikes (D30), so there are no spurious presses.
+- **What it gives up:** the model's Giant Fiber fires at 100–200 Hz while driven, against one or two spikes per loom in the fly. The rule takes the first spike. The README states the rates are unrealistic.
+- **No dial.** Stuck runs are counted as they play out (D38). In a stuck state the Giant Fiber may fire late (`docs/cascades.md`).
+
+**D43. Cube dials, θ_full calibration, Step 2 runs and their order (T4)** (2026-10-30)
+Agreed by both (draft §4, Shannyn's threshold on `sc-t4-threshold`, and the follow-up messages).
+- **One cube dial: R**, the stimulation rate of driven neurons. Step 2 uses 150 Hz (Shiu's default); the Step 3 tuning range is 25–200 Hz.
+  - The other two dials allowed by D5 are kept for ship mode, or as a spare.
+  - Not dials:
+    - brain time (D40);
+    - the output rule (D42);
+    - which objects loom, object size and patch order (D41);
+    - θ_full (calibrated, below).
+- **θ_full is calibrated to the fly, not tuned:**
+  - **Target:** the mean angular-size threshold of short-mode (Giant Fiber-driven) takeoffs at r/v = 40 ms in von Reyn et al. 2014 Fig. 5b: **θ ≈ 39° (s.d. ≈ 14°)**. Shannyn and her Claude read it independently.
+    - Short mode, because our Giant Fiber spike stands in for that escape.
+    - r/v = 40 ms is the condition closest to the game's 48 ms.
+    - The mean, because the figure plots mean ± s.d. The s.d. is reported as the spread.
+    - **Caveat:** their threshold is the retinal size at a fixed neural delay before takeoff, which we treat as the size at which the Giant Fiber pathway triggers. Close, but not identical.
+  - **Method:**
+    - Find the θ_full at which the **whole brain's** Giant Fiber (right or left) first spikes, on average, when a game-like loom (θ growing as in D41, r/v = 48 ms) reaches 39°.
+    - This is open-loop, on the whole brain (the reference network, which also avoids a circular dependency on the final subcircuit), at R = 150 Hz.
+    - About 10 θ_full values × 10 trials of ~1 s, under an hour with 4 workers.
+  - **Fixed once, before the Step 2 baseline, and logged.** It isn't revisited in Step 3: if R is tuned, θ_full stays.
+- **Predictions, recorded before Step 2:**
+  - **Calibrated:** the cube presses about mid-way through the single-spike window, at a gap of ~42 units, ~136 ms before contact (θ = 39°; the window is θ > ~23°).
+  - **θ_full = 180°:** it jumps at or before the window opens. In P5 the Giant Fiber fired at the first step, 19 neurons per side, ≈ 22.5°.
+- **Step 2 runs**, all untuned, with nothing chosen afterwards. They're played closed-loop on the 20 held-out cube levels, on the final subcircuit:
+  - **Baseline of record:** calibrated θ_full, collision-course looming, R = 150 Hz.
+  - **Comparison 1:** θ_full = 180° (uncalibrated).
+  - **Comparison 2:** "every object ahead looms", with calibrated θ_full.
+  - The comparisons are reported next to the baseline and never replace it.
+- **Order of work for Step 2:**
+  1. encoding and output code (D40–D42);
+  2. whole-brain calibration;
+  3. whole-brain recruitment runs;
+  4. the final subcircuit: build, validate, benchmark;
+  5. the baseline of record and the comparisons.
+- **Whole-brain recruitment runs (for the final subcircuit, D36):**
+  - **Bot-driven:** the cube follows the bot's winning path while the brain sees the level through the encoding. The brain doesn't control the cube, so every part of each level is seen.
+  - **Labelled bot-driven** in the logs and any replay, so a recruitment run can never be shown as the fly playing (hard rule 10, D19).
+  - **Levels:** 10 cube training levels, fixed now and in proportion to the suite: easy seeds 0–3, medium 0–3, hard 0–1 (`cube-easy-0` … `cube-hard-1`).
+  - **Settings**, one run per level × setting, ~70 runs of 30 s, about an overnight run with 4 at once:
+    - the calibrated θ_full at R = 25, 50, 100, 150 and 200 Hz (the Step 3 range);
+    - θ_full = 180° at R = 150 Hz;
+    - "every object looms" with the calibrated θ_full at R = 150 Hz.
+  - **Poisson seeds:** fixed from `base_seed` and each run's name, as in the pathway tests.
+  - **Stuck runs:** D37's cascade test needs repeat trials, and these runs are one per level × setting, so D38's stuck-state flag is used instead (≥ 50% of the stuck-state neurons over ~100 ms). A stuck run is dropped from the frame the flag starts.
+- **Validating the final subcircuit:**
+  - **D36's tolerance**, on closed-loop runs on different levels from the recruitment runs: the next cube training levels (easy 4–5, medium 4–5, hard 2), never the held-out suite or Stereo Madness.
+  - **It must also reproduce the calibration:** on the calibration looms, the Giant Fiber's first spike falls within one frame of the whole brain's (D36 rule 3). Near 39° that is about ±1.1°.
+  - It is benchmarked against D37's time limit.
+- **Ship mode (Step 5):** constraints only, in the draft §5.
+
 ## Open
 
-These are to be decided after Step 0:
+Still open:
 
 - Subcircuit rule: decided in D36 (recipe) and D37 (cascade trials left out, tuning-time limit). The interim neuron list is built in J5; the final one after T4.
-- Brain time per game step (e.g. ~16.7 ms; GD 2.2 physics may run at 240 Hz).
-- Input encoding: looming → LC4/LPLC2 stimulation rate, and which neurons receive it.
-- Output rule: what Giant Fiber activity counts as a jump.
-- The dials and their allowed ranges.
+- Brain time, input encoding, output rule and the cube dials: decided in T4 (D40–D43). Ship mode is decided in Step 5.
 - Closed-loop simulation: resolved for now by D17 (Brian2 runtime with `run_frames`). Our own reimplementation of the same equations (e.g. PyTorch, validated against Brian2) stays an option if subcircuit runs are still too slow, or for the GPU phase.

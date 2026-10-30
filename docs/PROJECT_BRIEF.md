@@ -92,14 +92,15 @@ The canonical, up-to-date log is **`docs/decisions.md`**. Read it first. Summary
 | D37 | Runaway-cascade trials (more than 2× and more than 5,000 above the median active count of their condition's other trials) are left out of subcircuit builds and validation rules 2–4, and reported separately. The size limit is a tuning time: a 200-run grid on **30 s practice levels** in ≤ 10 h with 4 at once on Jacob's laptop. Interim subcircuit: 33,480 neurons / 3.39M connections, grid ~7.2 h. The stuck state (`docs/cascades.md`) is treated as a model property. |
 | D38 | Runs that enter the stuck state (Step 2 on) are kept and counted, flagged in logs and replays, and also reported excluded, together with the stuck rate. No re-running until a run works. On the subcircuit, the main flag is the stuck-state share (its 1,904 stuck-state neurons), with a backup flag for any runaway. |
 | D39 | **Step 0 go/no-go (T3): GO, cube first;** ship GO with more risk (Step 5). GO means the model carries the signals the game needs, not yet that the fly can play. Speed is conditional on 30 s levels and a re-benchmark after T4. Accepted risks, scientific limits and what would send us back are in `docs/FEASIBILITY.md`. |
+| D40 | **Brain time:** real time, one brain frame per 240 Hz tick at exactly 1000/240 ms (42/42/41 steps). Game tick *i* → brain frame *i* → `held` for tick *i* + 1. |
+| D41 | **Cube input encoding:** the nearest object on a collision course (visual cells, stacked cells merged); θ from its real top and bottom; a growing patch of LC4 + LPLC2 on both sides covering θ/θ_full, in P5's patch order, at rate R; logged every tick. The LC4-speed / LPLC2-size split is a later option. |
+| D42 | **Output rule:** any spike from either Giant Fiber → a one-tick press on the next tick. No count, threshold or refractory window. |
+| D43 | **Cube dials and Step 2 plan:** R is the only cube dial (150 Hz, range 25–200). θ_full is calibrated on the whole brain to the fly's threshold (39° ± 14°, von Reyn 2014 Fig. 5b), not tuned. Baseline of record: calibrated, collision course, R = 150 Hz; comparisons at 180° and "every object looms". Order: code → calibration → bot-driven whole-brain recruitment (10 training levels) → final subcircuit → baseline. |
 | D19 | End deliverable: a **record-and-replay viewer**. Closed-loop runs log every frame (game state, inputs, watched spikes) from the `run_frames` callback, and a viewer replays at real 60 fps with a brain-activity panel. It must visibly separate our input encoding from the fly's spikes, say it's a replay of a simulation, and never smooth or alter recorded activity. Live mode is optional, for small subcircuits only. |
 
 ### Open decisions (not yet made; don't decide these unilaterally)
 - **Subcircuit rule:** decided in **D36** (recruited neurons + their ≥ 30-synapse inputs; interim build for T3, final rebuild after T4) and **D37** (cascade trials left out; tuning-time limit; 30 s practice levels).
-- **Brain time per game step:** e.g. ~16.7 ms at 60 fps. Geometry Dash 2.2 physics may run at 240 Hz (4.17 ms ticks).
-- **Input encoding:** how looming becomes the LC4/LPLC2 stimulation rate, and which neurons receive it. LC4 neurons tile the visual field, so obstacle position could map to specific neurons.
-- **Output rule:** what Giant Fiber activity counts as "jump" (one spike? N spikes in a window?).
-- **The dials and their allowed ranges.**
+- **Brain time, input encoding, output rule, cube dials:** decided in T4 (**D40–D43**). Ship mode is decided in Step 5.
 - **Closed-loop simulation approach:** resolved for now by D17 (Brian2 with `run_frames`). Our own reimplementation (e.g. PyTorch, validated against Brian2) stays an option for speed or for the GPU phase.
 - **Code LICENSE.**
 
@@ -319,7 +320,7 @@ Each `step()` call costs ~100–250 ms of Brian2 overhead regardless of network 
 - **T1:** review each other's PRs.
 - **T2:** interpret the pathway results.
 - **T3:** go/no-go in `docs/FEASIBILITY.md`, which closes Step 0. **Done 2026-10-30: GO, cube first (D39).**
-- **T4:** interface decisions: brain time per frame, input encoding, output rule, dials and ranges, level seeds.
+- **T4:** interface decisions: brain time per frame, input encoding, output rule, dials and ranges, level seeds. **Done 2026-10-30 (D40–D43).**
 
 **Dependencies:** S2 → S4, S5 · S4 → J4 · S5 + J2 → J5 · J4 + J5 → T3 → T4 → Step 2 · J3 → Step 1.
 
