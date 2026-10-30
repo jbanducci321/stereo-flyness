@@ -4,7 +4,7 @@
 
 ## Go / no-go
 
-Pathway-test verdicts (J4), judged by rules agreed before the full runs (D28–D35). Details: `docs/pathway_results.md`. Step 0's overall go/no-go (T3) also needs the subcircuit (S5/J5) to reproduce these whole-brain results.
+Pathway-test verdicts (J4), judged by rules agreed before the full runs (D28–D35). Details: `docs/pathway_results.md`. The interim subcircuit (J5) reproduces them within the tolerance agreed in advance (D36/D37; see "Subcircuit" below). Step 0's overall go/no-go is decided together in T3.
 
 | Pathway | Pathway tests | Why |
 |---|---|---|
@@ -12,6 +12,10 @@ Pathway-test verdicts (J4), judged by rules agreed before the full runs (D28–D
 | Motion (T4/T5 → VS → descending neurons) → ship | **GO** (original signs; corrected also GO) | "Down" drives VS cells and DNp20 in 10/10 trials; "up" gives 0 and suppresses "down" via LPi09; horizontal motion drives VS less than "down" |
 
 Sign version carried forward (D28): **original**.
+
+| Check | Result | Why |
+|---|---|---|
+| Interim subcircuit reproduces the whole brain (J5, D36 tolerance) | **PASS** | On all 7 held-out probes: identical verdicts, key rates within 7.1%, Giant Fiber first spikes 360/360 within one frame, 97–100% of active neurons kept. 11× faster than the whole brain; a 30 s tuning grid fits overnight (~7.2 h) |
 
 ## Environment
 
@@ -99,8 +103,42 @@ Source: flywire_annotations v3.1.0, all IDs checked against `Completeness_783.cs
 
 ## Subcircuit
 
-- Extraction rule:
-- Neurons / synapses:
+**Result: the interim subcircuit passes the D36 tolerance on every held-out probe.**
+- Built and validated 2026-10-30 (J5). The rule and the tolerance were both agreed before validation (D36, D37).
+- Details: `docs/subcircuit_candidates.md` (the candidate comparison, "Interim size" and "J5 4c") and `docs/cascades.md`.
+
+**Extraction rule (D36 + D37):**
+- Every neuron that fires in whole-brain runs of the game's inputs: LC4/LPLC2 and T4/T5, right, left and both sides, both sign versions. Runaway-cascade trials are left out.
+- Plus every neuron with a ≥ 30-synapse connection onto one of them.
+- Plus every pathway-test neuron.
+- Connectome weights are unchanged (D5).
+- Spec: `configs/subcircuits/interim.toml`.
+
+**Size:**
+- **33,480 neurons** (24.1% of the brain) and **3,391,290 connections** (22.5%; 17.6M synapses).
+- The Giant Fibers keep 87–88% of their input synapses (82% of their inhibitory input). The VS cells keep ~99–100%, and DNp20/22 91–97%.
+
+**Speed** (Jacob's laptop, i7-10750H, 6 cores / 12 threads):
+- On game-like input (`scripts/benchmark_subcircuit.py`): 8.9× slower than real time alone, 17.2× each with 4 at once.
+- So a 200-run tuning grid on 30 s practice levels takes **~7.2 h**, inside D37's 10 h limit.
+- On the pathway tests it runs a median 11.2× faster than the whole brain. On busier, game-like input that drops to ~2.4–3.5×.
+
+**Validation:** the same 1,410 trials as the whole brain, with the same seeds. The tolerance is judged on the held-out probes P1–P7, which were never used to build it:
+
+| D36 rule | Result |
+|---|---|
+| 1. Same go/no-go verdicts and D32 picks | Pass: all 10 identical |
+| 2. Key-group rates within 10% (1 Hz under 10 Hz), both sides | Pass: worst 7.1% (P6 DNp20_L, 2.8 → 3.0 Hz) |
+| 3. Giant Fiber first spikes within one frame in ≥ 95% of events | Pass: 360/360 |
+| 4. Median share of all whole-brain-active neurons kept, ≥ 90% per probe type | Pass: 97–100% (lowest single condition 93%) |
+| 5. Same closed-loop actions | Judged from Step 2 on |
+
+**Caveats:**
+- **The training runs match exactly by construction.** Only spikes pass between neurons in this model, so a subcircuit that contains every neuron that fired in a run reproduces it exactly. The probes are the evidence.
+- **The probes are our own game-like stand-ins.** The final subcircuit is rebuilt and validated again once T4 fixes the input encoding (D36).
+- **The stuck state** (below and `docs/cascades.md`):
+  - The subcircuit partly reproduces the whole brain's 3 runaway cascades, and entered the stuck state once on its own (a control trial).
+  - D37's cascade test can't flag a stuck subcircuit, because it holds only 1,904 of the 8,189 stuck-state neurons. The stuck-state share can, so closed-loop runs on the subcircuit should flag with it (D38).
 
 ## Benchmarks
 
@@ -139,11 +177,21 @@ Source: flywire_annotations v3.1.0, all IDs checked against `Completeness_783.cs
   - Smaller subcircuits (~5k) are proportionally faster.
 - **The whole brain is usable for occasional runs:** ~25–40 min per level on CPU. A whole-brain Stereo Madness comparison (Step 7) is possible on the laptop overnight; a GPU would make it routine.
 - **Caveat:** the real looming input may drive more or less activity than the sugar input used here. Re-benchmark on the real subcircuit once it's extracted (J5).
+  - **Done (J5):** game-like input is much busier. See "Subcircuit" above and D37.
 
 ## Risks and open questions
 
 - **Horizontal motion drives the ship pathway too** (pathway tests, S3): at 50 Hz, horizontal T4/T5 input gives DNp20 64 Hz vs 104 Hz for downward motion. A ship input encoding that drives horizontal-motion neurons (e.g. for the level scrolling) would push the controller. Decide in T4.
 - **Sustained Giant Fiber firing:** the Giant Fiber fires continuously while driven and for up to ~30 ms after (E2), unlike a real escape (a few spikes). The output rule (T4) must turn this into single jumps.
 - **Whole-brain results must survive the subcircuit:** the left Giant Fiber route and the feed-forward inhibition (E5) depend on non-looming partners, so S5's rule should keep them.
+  - **Kept in the interim subcircuit (J5):**
+    - The E5 conditions match exactly, but they were used to build it, so that's by construction.
+    - The real evidence is the held-out probes: both Giant Fibers are within tolerance in all of them, on every side.
+    - To be re-checked on the final rebuild after T4.
+- **Runaway "stuck" state** (`docs/cascades.md`; D37, D38):
+  - About 0.2% per simulated second, the whole brain falls into a self-sustaining state of ~8,300 neurons, centred on the mushroom body. Nothing stops it, even with all input off.
+  - It leaves the Giant Fibers and VS silent when there's no input. Whether they still respond to input while stuck is untested.
+  - Treated as a property of the model. Stuck runs are kept, flagged and counted (D38).
+  - For Step 2, check that a loom during the stuck state still drives the Giant Fiber. If it doesn't, a stuck run can't jump.
 
 ## Recommended stack

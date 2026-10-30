@@ -312,7 +312,7 @@ Each `step()` call costs ~100–250 ms of Brian2 overhead regardless of network 
 - **J2, frame-by-frame runner + benchmark** (in progress on `jb-frame-stepping`).
 - **J3, game physics research** (no blockers).
 - **J4, run the pathway tests** (needs S2 + S4), including silencing LC4/LPLC2 to check the Giant Fiber goes quiet.
-- **J5, extract and benchmark the subcircuit** (needs S5 + J2).
+- **J5, extract and benchmark the subcircuit** (needs S5 + J2). **Done 2026-10-30:** the interim subcircuit (33,480 neurons, D36 + D37) passes the D36 tolerance on all held-out probes, and a 30 s tuning grid takes ~7.2 h. See `docs/FEASIBILITY.md` (Subcircuit).
 
 **Together:**
 - **T1:** review each other's PRs.
