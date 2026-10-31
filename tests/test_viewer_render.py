@@ -71,3 +71,17 @@ def test_save_still_writes_an_image(tmp_path):
     save_still(tl, 1.0, tmp_path / "still.png")
     img = pygame.image.load(str(tmp_path / "still.png"))
     assert img.get_size() == SIZE
+
+
+def test_brain_runs_are_labelled_with_who_drove_the_cube():
+    """Hard rule 10, D19: a bot-driven run can never look like the fly playing."""
+    surface = pygame.Surface(SIZE)
+    plain = make_timeline()
+    render_frame(surface, plain, 0)
+    strip = pygame.Rect(0, SIZE[1] - 34, 900, 30)
+    before = pygame.surfarray.array3d(surface.subsurface(strip)).copy()
+    for driver in ("fly", "bot"):
+        tl = make_timeline()
+        tl.driver = driver
+        render_frame(surface, tl, 0)
+        assert (pygame.surfarray.array3d(surface.subsurface(strip)) != before).any(), driver

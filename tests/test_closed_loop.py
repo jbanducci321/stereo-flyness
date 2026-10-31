@@ -35,12 +35,12 @@ def spike_level(col=20, length=1500):
     return Level("one spike", "test", length, [Box("spike", *hitbox("spike", 30 * col + 15, 15))])
 
 
-def run(connectome, level, theta_full=78.0, rate=200.0, seed=3):
+def run(connectome, level, theta_full=78.0, rate=200.0, seed=3, policy=None):
     """theta_full = 78: with one neuron per patch, the patch switches on at 39 deg (D43)."""
     enc = CubeEncoder(level, PATCHES, theta_full, rate)
     st = BrainStepper(*connectome, inputs={"loom": enc.ids}, watch={"GF_R": [GF], "GF_L": [], "other": [OTHER]},
                       seed=seed)
-    return play(Game(level), st, enc, chunk_frames=60), st
+    return play(Game(level), st, enc, policy=policy, chunk_frames=60), st
 
 
 def test_jump_rule():
@@ -50,12 +50,12 @@ def test_jump_rule():
 
 
 def test_the_fly_jumps_the_spike(connectome):
-    result, st = run(connectome, spike_level())
-    ticks = pd.DataFrame(result.ticks)
-    s = result.summary
+    rec, st = run(connectome, spike_level())
+    ticks = rec.brain
+    s = rec.summary
     assert s["driver"] == "fly" and s["completed"] and s["jumps"] >= 1
-    # Every row's tick is the state the brain saw; rows are consecutive
-    assert list(ticks["tick"]) == list(range(len(ticks)))
+    # Frame i saw the game after i ticks; frames are consecutive
+    assert list(ticks["tick_seen"]) == list(range(len(ticks))) == list(ticks["frame"])
     # Input only while the spike looms, and none once it's behind the eye
     assert (ticks.loc[ticks["theta_deg"] == 0, ["driven_right_LC4", "driven_left_LPLC2"]] == 0).all().all()
     # Brain time equals game time exactly (D40): 240 frames per second
@@ -64,24 +64,53 @@ def test_the_fly_jumps_the_spike(connectome):
 
 def test_press_follows_the_spike_by_one_tick(connectome):
     """D40/D42: Giant Fiber spikes in frame i set `held` for the game tick that follows frame i."""
-    result, _ = run(connectome, spike_level())
-    ticks = pd.DataFrame(result.ticks)
+    rec, _ = run(connectome, spike_level())
+    ticks = rec.brain
+    game = rec.game_log.to_frame()
+    assert (game["held"].to_numpy() == ticks["held"].to_numpy()).all()  # frame i's press is game tick i+1
+    assert (game["tick"].to_numpy() == ticks["frame"].to_numpy() + 1).all()
     assert (ticks["held"] == ((ticks["spikes_GF_R"] + ticks["spikes_GF_L"]) > 0)).all()
-    jump = ticks.index[ticks["events"].str.contains("jump")][0]
+    jump = game.index[game["events"].str.contains("jump")][0]
     assert ticks.loc[jump, "held"] and ticks.loc[jump, "spikes_GF_R"] > 0
 
 
 def test_no_input_no_press(connectome):
     """Nothing looms, so nothing is driven and the Giant Fiber never fires (D30)."""
     empty = Level("empty", "test", 600, [])
-    result, _ = run(connectome, empty)
-    ticks = pd.DataFrame(result.ticks)
-    assert result.summary["completed"] and result.summary["presses"] == 0
+    rec, _ = run(connectome, empty)
+    ticks = rec.brain
+    assert rec.summary["completed"] and rec.summary["presses"] == 0
     assert ticks["spikes_GF_R"].sum() == 0 and ticks["active_neurons"].sum() == 0
 
 
 def test_a_silent_fly_dies_on_the_spike(connectome):
     """With the patch never driven (theta_full huge, R = 0), the cube runs into the spike."""
-    result, _ = run(connectome, spike_level(), theta_full=1e9, rate=0.0)
-    assert not result.summary["completed"] and result.summary["death"]["kind"] == "spike"
-    assert result.summary["presses"] == 0
+    rec, _ = run(connectome, spike_level(), theta_full=1e9, rate=0.0)
+    assert not rec.summary["completed"] and rec.summary["death_kind"] == "spike"
+    assert rec.summary["presses"] == 0
+
+
+def test_bot_driven_runs_are_labelled_and_the_brain_still_watches(connectome):
+    """D43 recruitment runs: the policy drives, the brain's own presses are only recorded."""
+    rec, _ = run(connectome, spike_level(), theta_full=1e9, rate=0.0, policy=lambda g: False)
+    assert rec.summary["driver"] == "bot" and rec.driver == "bot"
+    assert not rec.summary["completed"]  # the "bot" never presses, so it hits the spike
+    fly = run(connectome, spike_level())[0]
+    bot = run(connectome, spike_level(), policy=lambda g: False)[0]
+    assert fly.summary["completed"] and not bot.summary["completed"]
+    assert bot.brain["fly_press"].any() and not bot.brain["held"].any()  # the brain wanted to jump
+
+
+def test_saved_run_replays_in_the_viewer_format(connectome, tmp_path):
+    from stereo_flyness.game.recorder import RunLog
+    from stereo_flyness.interface.fly_log import load_fly_run
+
+    rec, _ = run(connectome, spike_level())
+    rec.save(tmp_path / "run")
+    loaded = load_fly_run(tmp_path / "run")
+    assert loaded["run"]["driver"] == "fly"
+    assert RunLog.load(tmp_path / "run").summary.completed  # what the replay viewer reads
+    assert len(loaded["brain"]) == len(loaded["game"].rows)
+    sp = loaded["spikes"]
+    gf_i = list(sp["flyids"]).index(GF)
+    assert sp["count"][sp["neuron"] == gf_i].sum() == loaded["brain"]["spikes_GF_R"].sum()

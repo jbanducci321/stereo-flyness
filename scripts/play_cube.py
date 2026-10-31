@@ -8,12 +8,13 @@ final subcircuit (D43); until then, runs here are smoke tests and say so.
 Usage:
     uv run python scripts/play_cube.py cube-easy-0 --network interim --theta-full 180
     uv run python scripts/play_cube.py cube-easy-0 cube-easy-1 --suite training --jobs 2
+    uv run python scripts/play_cube.py cube-easy-0 --bot      # bot drives, brain watches (D43)
 
-Writes results/closed_loop/<network>/<settings>/<level>/ticks.csv and summary.json (git-ignored).
+Writes results/closed_loop/<network>/<settings>/<driver>/<level>/, a recorded run (`fly_log`):
+the game's run log (replayable), brain.parquet, spikes.npz and run.json (git-ignored).
 """
 
 import argparse
-import json
 import sys
 import tomllib
 from pathlib import Path
@@ -29,6 +30,7 @@ from stereo_flyness.brain.celltypes import CellTypes
 from stereo_flyness.experiments.pathway_tests import loom_patches
 from stereo_flyness.game.engine import Game
 from stereo_flyness.game.suites import load_level
+from stereo_flyness.experiments.cascades import load_stuck_state
 from stereo_flyness.interface.closed_loop import play
 from stereo_flyness.interface.encoding import CubeEncoder
 
@@ -36,21 +38,22 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "results" / "closed_loop"
 
 
-def one(name, suite, path_comp, path_con, patches, gf, args, out, seed):
+def one(name, suite, path_comp, path_con, patches, gf, stuck_ids, args, out, seed):
     from stereo_flyness.brain.stepper import BrainStepper
 
-    level, _ = load_level(LEVELS, job(name, suite))
+    level, bot = load_level(LEVELS, job(name, suite))
     enc = CubeEncoder(level, patches, args.theta_full, args.rate, args.mode)
     st = BrainStepper(path_comp, path_con, inputs={"loom": enc.ids}, watch=gf, seed=seed)
-    result = play(Game(level), st, enc)
-    d = out / name
-    d.mkdir(parents=True, exist_ok=True)
-    pd.DataFrame(result.ticks).to_csv(d / "ticks.csv", index=False)
-    summary = {**result.summary, "suite": suite, "network": args.network, "seed": seed, "commit": git_commit(),
-               "status": "smoke test: uncalibrated settings, interim network (not the D43 baseline)"
-               if args.network != "final" else "D43 run"}
-    (d / "summary.json").write_text(json.dumps(summary, indent=2))
-    return summary
+    policy = None
+    if args.bot:
+        inputs = bot.tick_inputs
+        policy = lambda game: inputs[game.ticks] if game.ticks < len(inputs) else False  # noqa: E731
+    meta = {"suite": suite, "network": args.network, "seed": seed, "commit": git_commit(),
+            "status": "D43 run" if args.network == "final" else
+            "smoke test: uncalibrated settings, interim network (not the D43 baseline)"}
+    rec = play(Game(level), st, enc, policy=policy, stuck_ids=stuck_ids, meta=meta)
+    rec.save(out / rec.driver / name)
+    return rec.summary
 
 
 def main() -> None:
@@ -63,6 +66,7 @@ def main() -> None:
     parser.add_argument("--mode", default="collision", choices=["collision", "all"])
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--jobs", type=int, default=1)
+    parser.add_argument("--bot", action="store_true", help="the bot drives; the brain only watches (D43)")
     args = parser.parse_args()
     sys.stdout.reconfigure(encoding="utf-8")
 
@@ -72,13 +76,16 @@ def main() -> None:
     patches = loom_patches(con, cells, cfg["probes"]["p5"]["seed"])  # P5's patch order (D41)
     gf = {"GF_R": cells.ids("DNp01", side="right"), "GF_L": cells.ids("DNp01", side="left")}
     path_comp, con_paths, _ = network(None if args.network == "whole_brain" else args.network)
+    stuck_ids = load_stuck_state(ROOT / cfg["cascade"]["stuck_state"])  # restricted to the network (D38)
     out = OUT / args.network / f"{args.theta_full:g}deg_{args.mode}_R{args.rate:g}"
     summaries = Parallel(n_jobs=args.jobs)(
-        delayed(one)(n, args.suite, path_comp, con_paths["original"], patches, gf, args, out, args.seed)
+        delayed(one)(n, args.suite, path_comp, con_paths["original"], patches, gf, stuck_ids, args, out, args.seed)
         for n in args.levels)
     for s in summaries:
-        death = "completed" if s["completed"] else f"died at {100 * s['progress']:.0f}% ({s['death']['kind']} at x {s['death']['x']:.0f})"
-        print(f"{s['level']}: {death}; {s['jumps']} jumps, {s['presses']} presses in {s['seconds']:.1f} s [{s['status']}]")
+        end = "completed" if s["completed"] else f"died at {100 * s['progress']:.0f}% ({s['death_kind']} at x {s['death_x']:.0f})"
+        stuck = "" if s["stuck_from_frame"] is None else f"; STUCK from frame {s['stuck_from_frame']}"
+        print(f"{s['level']} [{s['driver']}-driven]: {end}; {s['jumps']} jumps, {s['presses']} presses in "
+              f"{s['seconds']:.1f} s{stuck} [{s['status']}]")
     print(f"Wrote {out.relative_to(ROOT)}")
 
 
