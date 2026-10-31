@@ -30,6 +30,7 @@ from stereo_flyness.brain.celltypes import CellTypes
 from stereo_flyness.brain.signs import CORRECTED_NAME
 from stereo_flyness.brain.subcircuit import active_neurons, hops, retained_input, write_subcircuit
 from stereo_flyness.experiments.cascades import find_cascades
+from stereo_flyness.experiments.recruitment import recruited_neurons
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "data" / "subcircuits"
@@ -43,9 +44,19 @@ _ACTIVE_CACHE = {}
 def active(a, pathway_conds):
     """Neurons active in the whole-brain pathway-test trials named by an `active` table:
     `experiments`, `sign` or `signs` (default original), optional `min_rate_hz`, optional
-    `exclude_trials` ([[condition key, trial], ...]) and optional `exclude_cascades = true` (leave
-    out every trial the D37 cascade test flags). Every side's runs are included."""
+    `exclude_trials` ([[condition key, trial], ...]), optional `exclude_cascades = true` (leave
+    out every trial the D37 cascade test flags) and optional `recruitment = "<dir>"` (also every
+    neuron active in the bot-driven recruitment runs under that folder, before any stuck flag;
+    D43). Every side's runs are included."""
     key = repr(sorted(a.items()))
+    if key not in _ACTIVE_CACHE and "recruitment" in a:
+        base = active({k: v for k, v in a.items() if k != "recruitment"}, pathway_conds)
+        folders = sorted(p.parent for p in (ROOT / a["recruitment"]).rglob("run.json"))
+        if not folders:
+            sys.exit(f"No recruitment runs under {a['recruitment']}. Run scripts/run_recruitment.py first.")
+        rec, report = recruited_neurons(folders)
+        print(f"Recruitment runs: {report}")
+        _ACTIVE_CACHE[key] = base[0] | rec, base[1] + report["runs"]
     if key not in _ACTIVE_CACHE:
         signs = a.get("signs", [a.get("sign", "original")])
         used = [c for c in pathway_conds if c.experiment in a["experiments"] and c.sign in signs]

@@ -1,0 +1,22 @@
+# Whole-brain recruitment runs for the final subcircuit (D43, D36). Fixed in advance (D43).
+# Run with scripts/run_recruitment.py. Results go to git-ignored results/recruitment/.
+#
+# Bot-driven: the cube follows the bot's winning path and the brain only watches, so every part
+# of each level is seen. Runs are labelled "bot" in logs and replays (hard rule 10, D19).
+# Stuck runs (D38 flag) contribute only the frames before the flag starts.
+
+network = "whole_brain"
+base_seed = 0            # Poisson seed = crc32 of "<base_seed>/recruitment/<level>/<setting>"
+suite = "training"
+levels = ["cube-easy-0", "cube-easy-1", "cube-easy-2", "cube-easy-3",
+          "cube-medium-0", "cube-medium-1", "cube-medium-2", "cube-medium-3",
+          "cube-hard-0", "cube-hard-1"]
+
+# The calibrated theta_full (D43), filled in once the whole-brain calibration is logged.
+# Until then the script refuses to run unless --theta-full is given.
+theta_full_deg = 0.0
+
+[settings]
+calibrated_rates_hz = [25, 50, 100, 150, 200]   # the Step 3 tuning range, collision-course looming
+uncalibrated_theta_full_deg = 180.0             # comparison 1, at R = 150 Hz
+every_object_looms_rate_hz = 150.0              # comparison 2, calibrated theta_full
