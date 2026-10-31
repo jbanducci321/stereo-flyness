@@ -584,6 +584,17 @@ Shannyn's proposal, after the interim dry run gave θ_full ≈ 1,165°. **The wh
   - Measured (`scripts/measure_run_up.py`): each obstacle's gap when it first becomes the nearest looming object, along the bot's path on the 50 cube training levels. Columns that touch the previous one horizontally (e.g. the second column of a two-wide block, 982 of 2,462) are left out, since they aren't a new approach. **P10 115, median 270, P90 719 units** (n = 1,480). Counting every column gives 29 / 138 / 480.
   - The definition (what counts as a new approach) is Jacob's and needs Shannyn's confirmation.
   - Our earlier 600 is longer than 88% of real run-ups, so the dry run's θ_full ≈ 1,165° came from an unusually long approach.
+- **Dry run result (2026-10-31; interim subcircuit, R × f, R = 150 Hz, 10 trials per point, θ_full 90–540°, start gaps 270 / 600 / 1,200 / 115 / 719):**
+
+  | Check (bar fixed before the run) | Result | |
+  |---|---|---|
+  | 1. calibrated θ_full ≤ 360° (judged at gap 270) | **204°** | pass |
+  | 2. s.d. at the calibrated value ≤ 28° | **8.1°** | pass |
+  | 3. first-spike θ shift, gap 600 vs 1,200, < 5° | 44.3° vs 39.0°: **5.3°** | **fail, by 0.3°** |
+
+  - At θ_full = 204°, the first-spike θ per start gap: 115 → 41.4°, 270 → 39.0°, 600 → 44.3°, 719 → 41.1°, 1,200 → 39.0°. The calibrated θ_full from each gap alone: 196°, 204°, 191°, 197°, 204°.
+  - The shift doesn't grow with distance: 1,200 matches 270, and only 600 is off. With ~8° s.d. and 10 trials, the uncertainty of a difference of two means is ~3.5°, so 5.3° can't be told apart from no shift. But the bar was set in advance and it isn't met as written. **Decision pending (Shannyn).**
+  - At 39° the patch drives ~60 of 314 neurons (~19%), each at ~29 Hz. No trial got stuck.
 
 ## Open
 
