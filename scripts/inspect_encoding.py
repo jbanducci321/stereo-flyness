@@ -66,14 +66,54 @@ def bot_run(enc: CubeEncoder, level, inputs) -> pd.DataFrame:
 def threshold_fly(enc: CubeEncoder, level, threshold: float) -> dict:
     """An ideal fly with no brain: it presses on every tick after one where θ >= `threshold`
     (one tick late, as in D40/D42). A check of the encoding and threshold, not a model result."""
-    game, held, presses = Game(level), False, 0
+    game, held, presses, trace = Game(level), False, 0, []
     while not game.over:
         game.tick(held)
-        held = game.player.mode == "cube" and enc.encode(game.player).theta_deg >= threshold
+        p = game.player
+        loom = enc.encode(p)
+        held = p.mode == "cube" and loom.theta_deg >= threshold
         presses += held
+        trace.append((game.ticks, p.x, p.y, p.vy, p.on_ground, None if loom.obstacle is None else loom.obstacle.x0,
+                      loom.theta_deg, held))
     d = game.death
     return {"completed": game.finished, "progress": game.progress, "ticks_pressed": presses,
-            "death": None if d is None else f"{d.kind} at x {d.x:.0f}", "mode_at_end": game.player.mode}
+            "death": None if d is None else f"{d.kind} at x {d.x:.0f}", "mode_at_end": game.player.mode,
+            "cause": None if d is None else death_cause(level, d, pd.DataFrame(trace, columns=[
+                "tick", "x", "y", "vy", "on_ground", "obstacle_x0", "theta", "held"]), threshold)}
+
+
+INVISIBLE, WRONG_MOMENT = "(a) invisible to the encoding", "(b) visible, but the threshold is the wrong moment"
+
+
+def death_cause(level, death, trace: pd.DataFrame, threshold: float) -> str:
+    """Why the ideal fly died, from the object that killed it (its visual cell) and what the
+    encoding showed on the way there. Starts with the class: (a) the object never loomed, or
+    (b) it loomed, but pressing at `threshold` didn't clear it."""
+    hits = [b for b in level.boxes if b.kind == death.kind and not (
+        death.x + 15 < b.x0 or b.x1 < death.x - 15 or death.y + 15 < b.y0 or b.y1 < death.y - 15)]
+    if not hits:
+        return "unknown (no matching object)"
+    b = min(hits, key=lambda b: abs((b.x0 + b.x1) / 2 - death.x) + abs((b.y0 + b.y1) / 2 - death.y))
+    cx, cy = (b.x0 + b.x1) / 2, (b.y0 + b.y1) / 2
+    cell_x0, bottom, top = round(cx - 15, 6), cy - 15, cy + 15
+    recent = trace[trace["tick"] > death.tick - 480]  # the last 2 s
+    seen = recent[recent["obstacle_x0"].round(6) == cell_x0]
+    where = f"{b.kind} cell x {cell_x0:.0f}, y {bottom:.0f}-{top:.0f}"
+    if seen.empty:
+        reached = trace[trace["x"] + 15 >= cell_x0]
+        at = reached.iloc[0] if len(reached) else trace.iloc[-1]
+        if at["y"] - 15 >= top - 1e-6:
+            return f"{INVISIBLE}: never loomed; below the cube when reached, landed onto from above ({where})"
+        if at["y"] + 15 <= bottom + 1e-6:
+            return f"{INVISIBLE}: never loomed; above the cube when reached ({where})"
+        return f"{INVISIBLE}: never loomed ({where})"
+    over = seen[seen["theta"] >= threshold]
+    if over.empty:
+        return f"{WRONG_MOMENT}: loomed but stayed under {threshold:g}° (max {seen['theta'].max():.0f}°) ({where})"
+    ground = over[over["on_ground"]]
+    if ground.empty:
+        return f"{WRONG_MOMENT}: reached {threshold:g}° only while airborne, so no jump was possible ({where})"
+    return f"{WRONG_MOMENT}: jumped at {threshold:g}° but still hit it ({where}; jump at gap {cell_x0 - ground['x'].iloc[0] - 15:.0f})"
 
 
 def jumps(df: pd.DataFrame, threshold: float) -> pd.DataFrame:
@@ -136,7 +176,8 @@ def main() -> None:
         ideal = threshold_fly(enc, level, THRESHOLD_DEG)
         lines += ["", f"- **Ideal {THRESHOLD_DEG:g}° fly** (no brain; presses whenever θ ≥ {THRESHOLD_DEG:g}°, "
                   "one tick late): " + ("**completes the level**" if ideal["completed"] else
-                                         f"dies at {100 * ideal['progress']:.0f}% ({ideal['death']})") + "."]
+                                         f"dies at {100 * ideal['progress']:.0f}% ({ideal['death']}). "
+                                         f"Cause: {ideal['cause']}") + "."]
         lines.append("")
     (out / "summary.md").write_text("\n".join(lines), encoding="utf-8")
     print("\n".join(lines))

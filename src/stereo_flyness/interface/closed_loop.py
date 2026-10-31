@@ -38,7 +38,8 @@ def play(game, stepper, encoder, policy=None, stuck_ids=(), meta: dict | None = 
     across chunks), so it stops at most one chunk after the game ends.
     """
     max_ticks = max_ticks or int(game.level.length / X_PER_TICK) + 10 * TICKS_PER_SECOND
-    rec = FlyRecorder(game, stepper.flyids, "fly" if policy is None else "bot", stuck_ids, meta, **flag_settings)
+    rec = FlyRecorder(game, stepper.flyids, "fly" if policy is None else "bot", stuck_ids, meta,
+                      stimulated_ids=encoder.ids, **flag_settings)
     state = {"row": None, "done": False}
 
     def see():
@@ -67,5 +68,6 @@ def play(game, stepper, encoder, policy=None, stuck_ids=(), meta: dict | None = 
     while not state["done"]:
         stepper.run_frames(chunk_frames, TICK, on_frame, exact=True)
     rec.finish(game, {"theta_full_deg": encoder.theta_full_deg, "rate_hz": encoder.rate_hz, "mode": encoder.mode,
+                      "rate_scaling": encoder.rate_scaling,
                       "presses": int(sum(r["held"] for r in rec.rows))})
     return rec

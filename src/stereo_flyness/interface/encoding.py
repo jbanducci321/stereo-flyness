@@ -13,6 +13,9 @@ Every choice here is ours, not the fly's (PROJECT_BRIEF §2):
 - **Patch:** on each side, a fraction f = min(1, θ / θ_full) of the LC4 neurons and the same
   fraction of the LPLC2 neurons are driven at rate R, in the fixed patch order of probe P5
   (`loom_patches`). Everything else gets 0 Hz. Both eyes are driven equally.
+- **Rate scaling** (`rate_scaling=True`, proposed 2026-10-31, being dry-run before D41 changes):
+  each driven neuron fires at R x f instead of R, so a small distant object drives few neurons
+  weakly and the total input grows steeply as it nears. θ_full stays the only calibrated number.
 
 Only cube mode is encoded; ship mode is a Step 5 decision, so in ship mode nothing looms.
 """
@@ -75,7 +78,7 @@ class Loom:
     obstacle: Obstacle | None
     f: float  # fraction of each population driven
     driven: dict  # {(side, type): number of neurons driven, from the start of the patch order}
-    rate_hz: float
+    rate_hz: float  # each driven neuron's rate: R, or R x f with rate scaling
 
 
 class CubeEncoder:
@@ -86,12 +89,14 @@ class CubeEncoder:
     patch order); `rates(loom)` gives the matching rate vector.
     """
 
-    def __init__(self, level, patches, theta_full_deg: float, rate_hz: float, mode: str = "collision"):
+    def __init__(self, level, patches, theta_full_deg: float, rate_hz: float, mode: str = "collision",
+                 rate_scaling: bool = False):
         if mode not in ("collision", "all"):
             raise ValueError(f"mode must be 'collision' or 'all', not {mode!r}")
         if theta_full_deg <= 0:
             raise ValueError("theta_full_deg must be positive")
         self.mode, self.theta_full_deg, self.rate_hz = mode, theta_full_deg, rate_hz
+        self.rate_scaling = rate_scaling
         self.obstacles = obstacles(level.boxes)
         self._x0 = [o.x0 for o in self.obstacles]
         self.order = [(s, t) for s in SIDES for t in TYPES]
@@ -124,10 +129,12 @@ class CubeEncoder:
         theta_deg = math.degrees(theta)
         f = min(1.0, theta_deg / self.theta_full_deg)
         driven = {key: int(round(f * len(self.patches[key]))) for key in self.order}
-        return Loom(theta_deg, None if o is None else o.x0 - (player.x + EYE_AHEAD), o, f, driven, self.rate_hz)
+        rate = self.rate_hz * f if self.rate_scaling else self.rate_hz
+        return Loom(theta_deg, None if o is None else o.x0 - (player.x + EYE_AHEAD), o, f, driven, rate)
 
     def rates(self, loom: Loom) -> np.ndarray:
-        """Per-neuron rates (Hz) in `ids` order: R for the first `driven` of each patch, else 0."""
+        """Per-neuron rates (Hz) in `ids` order: the loom's rate for the first `driven` of each
+        patch, else 0."""
         out = np.zeros(len(self.ids))
         for key, n in loom.driven.items():
             s = self._slices[key]

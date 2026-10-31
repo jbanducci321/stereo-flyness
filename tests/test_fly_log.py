@@ -56,6 +56,16 @@ def test_backup_flag_needs_3x_median_and_the_floor():
     assert rec.backup["from_frame"] is None
 
 
+
+def test_backup_count_leaves_out_stimulated_neurons():
+    game, rec = recorder(window=1, backup_floor=50, stimulated_ids=range(900, 970))  # neurons 0-69
+    feed(game, rec, [np.arange(10)] * 20 + [np.arange(80)] * 2)
+    rec.finish(game)
+    assert rec.settings["stimulated_neurons_excluded"] == 70
+    assert [r["active_in_window"] for r in rec.rows[-3:]] == [0, 10, 10]
+    assert rec.backup["from_frame"] is None  # only 10 of the 80 aren't ours
+    assert rec.rows[-1]["active_neurons"] == 80  # the raw count is still logged
+
 def test_driver_must_be_fly_or_bot():
     with pytest.raises(ValueError, match="driver"):
         FlyRecorder(Game(Level("x", "t", 100, [])), FLYIDS, "human")

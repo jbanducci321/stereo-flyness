@@ -15,10 +15,12 @@ Flags (D38):
 - **stuck state:** at least `stuck_share` of the stuck-state neurons (the whole-brain list,
   restricted to the network that's running) fired within the last `window` frames (~100 ms).
   Computed live, frame by frame. A run is flagged from the first frame it's true.
-- **backup:** the number of distinct neurons active within the window is above `backup_factor`
-  times the run's own median, and above `backup_floor`. Computed when the run ends, since it
-  needs the median. The floor is our choice: a quiet run's median can be near 0, and 3 x 0
-  would flag any activity at all.
+- **backup:** the number of distinct neurons active within the window, **not counting the
+  neurons we stimulate** (`stimulated_ids`), is above `backup_factor` times the run's own
+  median, and above `backup_floor` (1,000; D38 amendment). Computed when the run ends, since it
+  needs the median. The floor is needed because a quiet run's median can be near 0, and 3 x 0
+  would flag any activity at all. Leaving out the stimulated neurons keeps our input from
+  counting as the fly's activity (hard rule 10), e.g. thousands of T4/T5 in ship mode.
 """
 
 import json
@@ -50,7 +52,7 @@ class _Window:
 
 class FlyRecorder:
     def __init__(self, game, flyids, driver: str, stuck_ids=(), meta: dict | None = None,
-                 window: int = WINDOW_TICKS, stuck_share: float = 0.5, backup_factor: float = 3.0,
+                 stimulated_ids=(), window: int = WINDOW_TICKS, stuck_share: float = 0.5, backup_factor: float = 3.0,
                  backup_floor: int = 1000):
         if driver not in ("fly", "bot"):
             raise ValueError("driver must be 'fly' or 'bot'")
@@ -58,8 +60,10 @@ class FlyRecorder:
         self.flyids = np.asarray(flyids, dtype=np.int64)
         index = {int(f): i for i, f in enumerate(self.flyids)}
         self.stuck_idx = np.array(sorted(index[int(i)] for i in stuck_ids if int(i) in index), dtype=np.int64)
+        self.stim_idx = np.array(sorted({index[int(i)] for i in stimulated_ids if int(i) in index}), dtype=np.int64)
         self.settings = {"window_frames": window, "stuck_share": stuck_share, "backup_factor": backup_factor,
-                         "backup_floor": backup_floor, "stuck_neurons": int(len(self.stuck_idx))}
+                         "backup_floor": backup_floor, "stuck_neurons": int(len(self.stuck_idx)),
+                         "stimulated_neurons_excluded": int(len(self.stim_idx))}
         self.game_log = RunLog(game.level.name)
         self.rows, self._frames, self._neurons, self._counts = [], [], [], []
         self._all = _Window(len(self.flyids), window)
@@ -73,7 +77,7 @@ class FlyRecorder:
         self._frames.append(np.full(len(active), i, dtype=np.int32))
         self._neurons.append(active.astype(np.int32))
         self._counts.append(np.asarray(last_counts)[active].astype(np.uint16))
-        self._all.push(active)
+        self._all.push(np.setdiff1d(active, self.stim_idx, assume_unique=True))
         self._stuck.push(np.intersect1d(active, self.stuck_idx, assume_unique=True))
         share = self._stuck.distinct / len(self.stuck_idx) if len(self.stuck_idx) else 0.0
         stuck = share >= self.settings["stuck_share"]
