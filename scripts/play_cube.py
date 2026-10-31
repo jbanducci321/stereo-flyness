@@ -42,7 +42,7 @@ def one(name, suite, path_comp, path_con, patches, gf, stuck_ids, args, out, see
     from stereo_flyness.brain.stepper import BrainStepper
 
     level, bot = load_level(LEVELS, job(name, suite))
-    enc = CubeEncoder(level, patches, args.theta_full, args.rate, args.mode)
+    enc = CubeEncoder(level, patches, args.theta_full, args.rate, args.mode, args.rate_scaling)
     st = BrainStepper(path_comp, path_con, inputs={"loom": enc.ids}, watch=gf, seed=seed)
     policy = None
     if args.bot:
@@ -64,6 +64,7 @@ def main() -> None:
     parser.add_argument("--theta-full", type=float, default=180.0)
     parser.add_argument("--rate", type=float, default=150.0)
     parser.add_argument("--mode", default="collision", choices=["collision", "all"])
+    parser.add_argument("--rate-scaling", action="store_true", help="driven neurons fire at R x f (D45)")
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--jobs", type=int, default=1)
     parser.add_argument("--bot", action="store_true", help="the bot drives; the brain only watches (D43)")

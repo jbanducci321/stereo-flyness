@@ -498,7 +498,7 @@ Agreed by both (draft §3).
 
 **D43. Cube dials, θ_full calibration, Step 2 runs and their order (T4)** (2026-10-30)
 Agreed by both (draft §4, Shannyn's threshold on `sc-t4-threshold`, and the follow-up messages).
-- **One cube dial: R**, the stimulation rate of driven neurons. Step 2 uses 150 Hz (Shiu's default); the Step 3 tuning range is 25–200 Hz.
+- **One cube dial: R**, the stimulation rate of driven neurons. Step 2 uses 150 Hz (Shiu's default); the Step 3 tuning range is 25–200 Hz. (D45 restates R as the peak per-neuron rate near contact, if R × f is adopted.)
   - The other two dials allowed by D5 are kept for ship mode, or as a spare.
   - Not dials:
     - brain time (D40);
@@ -521,7 +521,7 @@ Agreed by both (draft §4, Shannyn's threshold on `sc-t4-threshold`, and the fol
   - **θ_full = 180°:** it jumps at or before the window opens. In P5 the Giant Fiber fired at the first step, 19 neurons per side, ≈ 22.5°.
 - **Step 2 runs**, all untuned, with nothing chosen afterwards. They're played closed-loop on the 20 held-out cube levels, on the final subcircuit:
   - **Baseline of record:** calibrated θ_full, collision-course looming, R = 150 Hz.
-  - **Comparison 1:** θ_full = 180° (uncalibrated).
+  - **Comparison 1:** θ_full = 180° (uncalibrated). **Replaced by D45:** the pre-D45 encoding (flat R, calibrated the same way).
   - **Comparison 2:** "every object ahead looms", with calibrated θ_full.
   - The comparisons are reported next to the baseline and never replace it.
 - **Order of work for Step 2:**
@@ -536,7 +536,7 @@ Agreed by both (draft §4, Shannyn's threshold on `sc-t4-threshold`, and the fol
   - **Levels:** 10 cube training levels, fixed now and in proportion to the suite: easy seeds 0–3, medium 0–3, hard 0–1 (`cube-easy-0` … `cube-hard-1`).
   - **Settings**, one run per level × setting, ~70 runs of 30 s, about an overnight run with 4 at once:
     - the calibrated θ_full at R = 25, 50, 100, 150 and 200 Hz (the Step 3 range);
-    - θ_full = 180° at R = 150 Hz;
+    - θ_full = 180° at R = 150 Hz (**replaced by D45:** the pre-D45 encoding, flat R = 150 Hz at its own calibrated θ_full);
     - "every object looms" with the calibrated θ_full at R = 150 Hz.
   - **Poisson seeds:** fixed from `base_seed` and each run's name, as in the pathway tests.
   - **Stuck runs:** D37's cascade test needs repeat trials, and these runs are one per level × setting, so D38's stuck-state flag is used instead (≥ 50% of the stuck-state neurons over ~100 ms). A stuck run is dropped from the frame the flag starts.
@@ -567,8 +567,8 @@ Shannyn's request, agreed by both. `scripts/ideal_fly.py`, no brain.
 - **Step 2:** the ideal fly is run on the 20 held-out levels **together with the baseline**, at 39° only, and reported next to it. The held-out levels aren't looked at before then.
 - **Deaths by obstacle type** in Step 2 use the same (a)/(b) classes.
 
-**D45. The input encoding is reviewed before the whole-brain calibration** (2026-10-31, in progress)
-Shannyn's proposal, after the interim dry run gave θ_full ≈ 1,165°. **The whole-brain calibration and the recruitment runs are on hold until this is settled**: the recruited set depends on the encoding.
+**D45. The cube encoding's rates scale with the patch: R × f** (2026-10-31)
+Shannyn's proposal, after the interim dry run gave θ_full ≈ 1,165°. The whole-brain calibration and the recruitment runs waited for this, since the recruited set depends on the encoding. **Adopted after the check-3 rerun passed (below).**
 - **Why the current encoding is a problem:**
   - At θ_full ≈ 1,165° the patch never passes ~15% of the neurons, even at contact. Jump timing is set by how long ~6–11 neurons fire at full R, not by the growing patch.
   - A 3° object barely expanding drives the Giant Fiber, which isn't biological: LC4/LPLC2 respond weakly to small, slow images.
@@ -581,9 +581,11 @@ Shannyn's proposal, after the interim dry run gave θ_full ≈ 1,165°. **The wh
   3. the first-spike θ moves by < ~5° between start gaps of 600 and 1,200 units.
   - **If it passes:** D41 and D43 are updated and the change logged. **If it fails:** we discuss the LC4 = dθ/dt, LPLC2 = θ split (D41's later option).
 - **The calibration start gap comes from the levels, not by choice** (agreed): the median run-up before an obstacle in the cube training suite, with sensitivity at the 10th and 90th percentiles.
-  - Measured (`scripts/measure_run_up.py`): each obstacle's gap when it first becomes the nearest looming object, along the bot's path on the 50 cube training levels. Columns that touch the previous one horizontally (e.g. the second column of a two-wide block, 982 of 2,462) are left out, since they aren't a new approach. **P10 115, median 270, P90 719 units** (n = 1,480). Counting every column gives 29 / 138 / 480.
-  - The definition (what counts as a new approach) is Jacob's and needs Shannyn's confirmation.
-  - Our earlier 600 is longer than 88% of real run-ups, so the dry run's θ_full ≈ 1,165° came from an unusually long approach.
+  - Measured (`scripts/measure_run_up.py`): each obstacle's gap when it first becomes the nearest looming object, along the bot's path on the 50 cube training levels.
+  - **What counts as a new approach (agreed 2026-10-31):** only a continuation of the same object is left out, i.e. a column touching the previous looming one with the same bottom and top (e.g. the second column of a two-wide block, 800 of 2,462). A touching column with a different top or bottom (a staircase step) is a new approach.
+  - **Result: P10 30, median 245, P90 628 units** (n = 1,662). The dry run below used 270, from a first definition that also left out staircase steps (P10 115, median 270, P90 719). Counting every column gives 29 / 138 / 480.
+  - **The P10 can't be a calibration start:** at 30 units a 30-unit spike already subtends ~53°, past the 39° target. The P10 sensitivity check needs another lower point (to agree).
+  - Our earlier 600 is longer than 90% of real run-ups, so the first dry run's θ_full ≈ 1,165° came from an unusually long approach.
 - **Dry run result (2026-10-31; interim subcircuit, R × f, R = 150 Hz, 10 trials per point, θ_full 90–540°, start gaps 270 / 600 / 1,200 / 115 / 719):**
 
   | Check (bar fixed before the run) | Result | |
@@ -595,6 +597,14 @@ Shannyn's proposal, after the interim dry run gave θ_full ≈ 1,165°. **The wh
   - At θ_full = 204°, the first-spike θ per start gap: 115 → 41.4°, 270 → 39.0°, 600 → 44.3°, 719 → 41.1°, 1,200 → 39.0°. The calibrated θ_full from each gap alone: 196°, 204°, 191°, 197°, 204°.
   - The shift doesn't grow with distance: 1,200 matches 270, and only 600 is off. With ~8° s.d. and 10 trials, the uncertainty of a difference of two means is ~3.5°, so 5.3° can't be told apart from no shift. But the bar was set in advance and it isn't met as written. **Decision pending (Shannyn).**
   - At 39° the patch drives ~60 of 314 neurons (~19%), each at ~29 Hz. No trial got stuck.
+  - **The calibrated 204° is close to the geometric 180°** (the old uncalibrated comparison): with R × f, calibration lands near the value geometry alone suggests.
+- **Check 3 is rerun, with rules fixed before the run** (Shannyn, 2026-10-31): 30 fresh trials (new seeds, trials 10–39) at θ_full = 204°, start gaps 600 vs 1,200, judged alone (not pooled with the first 10), same bar (< 5°). **Pass:** R × f is adopted, and both the 10-trial fail and the 30-trial result are reported here. **Fail:** it's a fail, and we discuss the LC4/LPLC2 split.
+- **Rerun result (2026-10-31): pass.** First-spike θ at θ_full = 204°: **37.6 ± 6.6° from 600 and 37.8 ± 10.6° from 1,200, a shift of 0.1°** (bar < 5°). 30/30 trials fired at each gap, none got stuck.
+  - Both results are reported, as agreed: the first 10-trial run missed the bar by 0.3° (5.3°), and the fresh 30-trial run passes (0.1°).
+  - **So R × f is adopted** for the cube encoding (the rule set before the rerun). D41's text is updated after Shannyn's von Reyn et al. 2017 check. Until then the code keeps `rate_scaling` as an explicit switch, and every run states which encoding it used.
+- **Agreed with the rerun (2026-10-31), updating D43:**
+  - **Comparison 1 is now the pre-D45 encoding:** flat rate R = 150 Hz, calibrated the same way (first Giant Fiber spike at 39°, same start gap, R = 150), and labelled "pre-D45 encoding". It shows the effect of the one encoding change we made after seeing data. It replaces θ_full = 180° in the Step 2 comparisons and in the recruitment runs (`preD45_flat_R150`). So the whole-brain calibration is run twice: R × f and flat R.
+  - **R's range stays 25–200 Hz**, restated: R is the **peak per-neuron rate, reached near contact** (f = 1). At the 39° threshold each driven neuron fires at ~0.19 × R.
 
 ## Open
 
@@ -602,5 +612,5 @@ Still open:
 
 - Subcircuit rule: decided in D36 (recipe) and D37 (cascade trials left out, tuning-time limit). The interim neuron list is built in J5; the final one after T4.
 - Brain time, input encoding, output rule and the cube dials: decided in T4 (D40–D43). Ship mode is decided in Step 5.
-- The cube encoding's rates (flat R or R × f) and the calibration start gap: being settled in D45, before the whole-brain calibration.
+- The cube encoding's rates: R × f, adopted in D45 (D41's text is updated after the von Reyn et al. 2017 check). Still to agree: the lower point for the start-gap sensitivity check (the P10, 30 units, is past the target).
 - Closed-loop simulation: resolved for now by D17 (Brian2 runtime with `run_frames`). Our own reimplementation of the same equations (e.g. PyTorch, validated against Brian2) stays an option if subcircuit runs are still too slow, or for the GPU phase.
