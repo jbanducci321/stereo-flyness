@@ -128,7 +128,7 @@ class BrainStepper:
         self.net.run(n_dt * defaultclock.dt)
         return self._read_counts()
 
-    def run_frames(self, n_frames, frame, on_frame):
+    def run_frames(self, n_frames, frame, on_frame, exact=False):
         """Advance `n_frames` frames of length `frame` in a single Brian2 run.
 
         After each frame, ``on_frame(i, counts)`` is called with the frame index and that
@@ -140,7 +140,14 @@ class BrainStepper:
         ``Network.run``, which makes Brian2 regenerate its code objects (about 100-200 ms
         each time, whatever the network size). This pays that cost once. The results are
         identical to calling `step(frame)` in a loop.
+
+        By default the frame is rounded to a whole number of time steps (a 4.1667 ms game tick
+        becomes 42 steps = 4.2 ms, as in the pathway tests). With ``exact=True`` (the closed
+        loop, D40) it isn't: frame k ends at the first time step at or after k * `frame`, so a
+        240 Hz tick alternates 42, 42 and 41 steps and brain time never drifts from game time.
         """
+        if exact:
+            return self._run_frames_exact(n_frames, frame, on_frame)
         n_dt = int(round(float(frame / defaultclock.dt)))
         frame_dt = n_dt * defaultclock.dt
         if int(round(float(self.net.t / defaultclock.dt))) % n_dt:
@@ -161,6 +168,36 @@ class BrainStepper:
         self.net.add(_frame_boundary)
         try:
             self.net.run(n_frames * frame_dt)
+        finally:
+            self.net.remove(_frame_boundary)
+        on_frame(state["i"], self._read_counts())  # the last frame ends with the run
+
+    def _run_frames_exact(self, n_frames, frame, on_frame):
+        """`run_frames` with unrounded frames.
+
+        Brian2 runs a `frame`-interval operation at network time k * `frame`, between neuron
+        time steps, so frame k holds every step before k * `frame`: 42, 42, 41, ... steps for
+        a 240 Hz tick (checked in the tests). Each run ends exactly on the frame grid (not on a
+        whole step), so successive calls continue the same grid.
+        """
+        k0 = float(self.net.t / frame)
+        if abs(k0 - round(k0)) > 1e-6:
+            raise ValueError("run_frames must start on a frame boundary.")
+        k0 = int(round(k0))
+        state = {"i": 0, "first": True}
+
+        # The call at the very start of the run has no finished frame to report.
+        @network_operation(dt=frame, when="start")
+        def _frame_boundary():
+            if state["first"]:
+                state["first"] = False
+                return
+            on_frame(state["i"], self._read_counts())
+            state["i"] += 1
+
+        self.net.add(_frame_boundary)
+        try:
+            self.net.run((k0 + n_frames) * frame - self.net.t)
         finally:
             self.net.remove(_frame_boundary)
         on_frame(state["i"], self._read_counts())  # the last frame ends with the run
