@@ -469,6 +469,7 @@ Agreed by both (draft §2, with Jacob's real-height change and Shannyn's correct
 - **What the eye sees is visual cells, not hitboxes.**
   - Each object fills a 30 × 30 cell: its hitbox centre ± 15. So a spike looks 30 units tall, not 12.
   - Cells in the same column that touch vertically are **merged into one object**, so a two-block wall is one object 60 units tall.
+  - **Amended by D47 (2026-11-01):** cells are clipped at the ground (y = 0). The eye can't see below the floor.
 - **Which objects loom:** columns ahead of the eye that overlap the cube's current vertical extent, i.e. on a collision course. Solids and hazards are treated alike, because the fly can't tell them apart.
 - **Angular size:** θ = atan((top − eye) / d) + atan((eye − bottom) / d), for the nearest looming column, where *d* is the gap from the eye to its front face. This is geometry, not a dial.
 - **Which neurons are driven:**
@@ -481,7 +482,7 @@ Agreed by both (draft §2, with Jacob's real-height change and Shannyn's correct
   - Ceilings and other objects off the collision course don't loom, which happens to help the cube.
   - The collision course uses the cube's current height, so obstacles below stop looming mid-jump.
   - θ_full and the patch shape are geometric assumptions, not measured receptive fields.
-  - **Objects the cube lands onto are invisible to the encoding** (added 2026-10-31, agreed by both). No "loom from below" rule: the Giant Fiber escape is a takeoff response to things approaching head-on or from the side, while landing on something uses a different behaviour (the landing response). It also wouldn't help, because a press in mid-air does nothing. This is the main cause of the ideal fly's deaths (D44).
+  - **Objects the cube lands onto are invisible to the encoding** (added 2026-10-31, agreed by both). No "loom from below" rule: the Giant Fiber escape is a takeoff response to things approaching head-on or from the side, while landing on something uses a different behaviour (the landing response). It also wouldn't help, because a press in mid-air does nothing. This was the main cause of the ideal fly's deaths (D44); after D47's ground clip it causes about a third (10 of 29).
 - **Kept as a later option:** splitting the features, with LC4 following dθ/dt and LPLC2 following θ. For a single 30-unit object r/v is fixed (48 ms), so θ would determine dθ/dt. But with real heights a two-block wall has r/v ≈ 96 ms, so the split could tell tall objects from close ones. It's left out of v1 for simplicity.
 
 **D42. Output rule: any Giant Fiber spike is a one-tick press (T4)** (2026-10-30)
@@ -568,6 +569,7 @@ Shannyn's request, agreed by both. `scripts/ideal_fly.py`, no brain.
   - So "the best any fly with this encoding could do" holds only roughly: ~29/50 for any single fixed threshold.
 - **Step 2:** the ideal fly is run on the 20 held-out levels **together with the baseline**, at 39° only, and reported next to it. The held-out levels aren't looked at before then.
 - **Deaths by obstacle type** in Step 2 use the same (a)/(b) classes, plus (c) short run-up (D45).
+- **Recomputed with D47's ground clip (2026-11-01):** the ceiling drops. The numbers above are kept as the record of the old encoding; D47 has the new ones, which are the ones Step 2 is read against.
 
 **D45. The cube encoding's rates scale with the patch: R × f** (2026-10-31)
 Shannyn's proposal, after the interim dry run gave θ_full ≈ 1,165°. The whole-brain calibration and the recruitment runs waited for this, since the recruited set depends on the encoding. **Adopted after the check-3 rerun passed (below).**
@@ -643,6 +645,31 @@ Rule 5's method and settings proposed by Jacob and amended by Shannyn; agreed by
     - If rule 5 fails at some R, that R is **dropped from the Step 3 range** until fixed.
     - If a comparison fails, that comparison **runs on the whole brain** instead.
   - **Fly-driven closed loop** on the same levels (R × f, R = 150) is reported as a description, not judged.
+  - **Rule 5 runs use D47's corrected encoding.** A first start on the old encoding was stopped after ~10 min (subcircuit only, no whole-brain runs) and its partial results deleted.
+
+**D47. Visual cells are clipped at the ground (D41 amendment)** (2026-11-01)
+Found by Shannyn in her encoding check (`scripts/inspect_encoding.py cube-easy-0 cube-medium-0 cube-hard-0 --theta-full 200`); agreed by both on 2026-11-01, before the rule 5 runs and the Step 2 baseline.
+- **The error:** each object fills the 30 × 30 cell around its hitbox centre (D41). A pit spike's hitbox centre is at y ≈ 2, so its cell ran from −13 to 17, and 13 units of it were underground. Seen from the cube's eye (y = 15), it read **~52° at a gap of 26** instead of **~34.5°** for the part above the floor.
+- **The fix:** cells are clipped at y = 0, and a cell entirely below the floor isn't seen. It's geometry, not a dial, and it changes only objects that reach below the floor (`encoding.py`, `GROUND`).
+- **Check (rerun of Shannyn's command):** pit spikes now read **34.5° at a gap of 25.9**, with nothing below y = 0. Everything else she checked (θ, tall columns, f, the bot label) is unchanged.
+- **What it affects:**
+  - **Not the calibration:** its looms are spikes on the ground (cell 0–30), so θ_full = 200° (R × f) and 1,082° (flat R) stand.
+  - **Recruitment isn't redone** (Shannyn's reading, agreed). 5 of the 10 recruitment levels have objects below the floor (170 in all: medium-1 to 3, hard-0 and 1). With the clip, those objects drive a subset of the same input neurons, at the same or lower rates. That doesn't strictly guarantee the neurons downstream are a subset too, so this is stated as a limit. But rule 5 (D46) compares the subcircuit with the whole brain on the corrected encoding, so a missing neuron that mattered would show up there.
+  - **Rule 5 and Step 2 use the corrected encoding.** The rule 5 levels medium-4, medium-5 and hard-2 have 12, 14 and 27 below-floor objects; easy-4 and easy-5 have none.
+- **The ideal-fly ceiling drops (D44, recomputed):**
+
+  | | Easy | Medium | Hard | Total |
+  |---|---|---|---|---|
+  | 10 recruitment levels, collision course | 4/4 | 0/4 | 0/2 | 4/10 (unchanged) |
+  | 10 recruitment levels, every object looms | 4/4 | 1/4 (was 2/4) | 0/2 | 5/10 |
+  | 50 training levels, collision course | 20/20 | **1/20 (was 6/20)** | 0/10 | **21/50 (was 26/50)** |
+  | 50 training levels, every object looms | 20/20 | 2/20 (was 9/20) | 0/10 | 22/50 (was 29/50) |
+
+  - Deaths on the 50 levels, collision course: 29, of which **10 (a) invisible and 19 (b) wrong moment** (was 19 (a), 5 (b)).
+  - Threshold check (never used to choose one): the best fixed thresholds (45–50°) now complete 22/50 (was 29/50); 39° completes 21. Thresholds of 20–35° still complete none.
+  - **Why it drops:** medium and hard levels have corridors of raised slabs (cell y 38–68) with a pit spike under each, in the same column. The cube has to jump up onto the slab. On the ground the slab isn't on a collision course, so it doesn't loom; only the pit spike does. With the underground part, the pit spike reached 39° at a gap of ~38 and the jump happened to land on the slab. Clipped, it reaches 39° at ~22, too late, and the cube hits the slab.
+  - So the old error was accidentally helping. **The fix stands on geometry, not on the score**: changing it back, or adding a rule to make slabs loom, because the ceiling dropped would be tuning toward performance. Whether slabs should loom is a question for the encoding (D41's collision-course rule), not for this fix, and isn't changed before Step 2.
+- **Ceilings:** cube levels have no ceiling boundary; ceilings exist only in ship mode, which isn't encoded (nothing looms). Clipping at a ship ceiling is a Step 5 question. Overhead objects in cube mode don't reach below the floor, so the fix doesn't touch them.
 
 ## Open
 
@@ -651,5 +678,5 @@ Still open:
 - Subcircuit rule: decided in D36 (recipe) and D37 (cascade trials left out, tuning-time limit). The interim neuron list is built in J5; the final one after T4.
 - Brain time, input encoding, output rule and the cube dials: decided in T4 (D40–D43). Ship mode is decided in Step 5.
 - The cube encoding's rates: R × f, adopted in D45 (D41's text is updated after the von Reyn et al. 2017 check). Calibrated on the whole brain: 200° (R × f) and 1,082° (flat R).
-- The final subcircuit: built, rules 1–4, the calibration and speed pass (D46). Rule 5 is next.
+- The final subcircuit: built, rules 1–4, the calibration and speed pass (D46). Rule 5 is next, on the encoding with D47's ground clip.
 - Closed-loop simulation: resolved for now by D17 (Brian2 runtime with `run_frames`). Our own reimplementation of the same equations (e.g. PyTorch, validated against Brian2) stays an option if subcircuit runs are still too slow, or for the GPU phase.
