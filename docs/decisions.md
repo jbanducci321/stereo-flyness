@@ -516,6 +516,7 @@ Agreed by both (draft §4, Shannyn's threshold on `sc-t4-threshold`, and the fol
     - This is open-loop, on the whole brain (the reference network, which also avoids a circular dependency on the final subcircuit), at R = 150 Hz.
     - About 10 θ_full values × 10 trials of ~1 s, under an hour with 4 workers.
   - **Fixed once, before the Step 2 baseline, and logged.** It isn't revisited in Step 3: if R is tuned, θ_full stays.
+  - **Result (2026-10-31, D45): θ_full = 200° (R × f, start gap 245)**, and 1,082° for the flat-rate comparison.
 - **Predictions, recorded before Step 2:**
   - **Calibrated:** the cube presses about mid-way through the single-spike window, at a gap of ~42 units, ~136 ms before contact (θ = 39°; the window is θ > ~23°).
   - **θ_full = 180°:** it jumps at or before the window opens. In P5 the Giant Fiber fired at the first step, 19 neurons per side, ≈ 22.5°.
@@ -607,6 +608,17 @@ Shannyn's proposal, after the interim dry run gave θ_full ≈ 1,165°. The whol
 - **Agreed with the rerun (2026-10-31), updating D43:**
   - **Comparison 1 is now the pre-D45 encoding:** flat rate R = 150 Hz, calibrated the same way (first Giant Fiber spike at 39°, same start gap, R = 150), and labelled "pre-D45 encoding". It shows the effect of the one encoding change we made after seeing data. It replaces θ_full = 180° in the Step 2 comparisons and in the recruitment runs (`preD45_flat_R150`). So the whole-brain calibration is run twice: R × f and flat R.
   - **R's range stays 25–200 Hz**, restated: R is the **peak per-neuron rate, reached near contact** (f = 1). At the 39° threshold each driven neuron fires at ~0.19 × R.
+- **Official whole-brain calibration (2026-10-31, commit `c930c77`):** R = 150 Hz, start gap 245, 10 trials per θ_full, open loop, no trial stuck. Results in `results/calibration/whole_brain/` (git-ignored); values in `configs/recruitment.toml`.
+
+  | Encoding | Grid (°) | **Calibrated θ_full** | s.d. at it | Neurons driven at 39° |
+  |---|---|---|---|---|
+  | **R × f (baseline of record)** | 90, 135, 180, 270, 360, 540 | **200°** | 8.5° | 62 of 314, each at ~29 Hz |
+  | Flat R (comparison 1, pre-D45) | 360, 720, 1,440, 2,880, 5,760 | **1,082°** | 9.3° | 12 of 314, each at 150 Hz |
+
+  - The whole brain's 200° is within 4° of the interim subcircuit's 204°.
+  - **Sensitivity** (R × f at 200°, 20 fresh trials per gap): first Giant Fiber spike at **37.4 ± 8.5° from the P25 (135 units)** and **35.8 ± 8.8° from the P90 (628 units)**, against 39° at the median by construction. The start gap moves it by ≤ ~3°.
+  - **Recording quirk, not a result:** with flat R at θ_full = 5,760°, 2 of 10 trials fired only after the spike's front face had passed the eye, where the encoding reads θ = 0 (the hitbox is smaller than the visual cell). So that row shows 0°. It doesn't affect the calibration, which comes from the 720–1,440° bracket.
+  - With flat R, the Giant Fiber still fires with only ~8–14 neurons driven, so jump timing depends on integration time. That is what comparison 1 is there to show.
 
 ## Open
 
@@ -614,5 +626,5 @@ Still open:
 
 - Subcircuit rule: decided in D36 (recipe) and D37 (cascade trials left out, tuning-time limit). The interim neuron list is built in J5; the final one after T4.
 - Brain time, input encoding, output rule and the cube dials: decided in T4 (D40–D43). Ship mode is decided in Step 5.
-- The cube encoding's rates: R × f, adopted in D45 (D41's text is updated after the von Reyn et al. 2017 check). The whole-brain calibrations (R × f and flat R, start gap 245) are next, then the recruitment runs.
+- The cube encoding's rates: R × f, adopted in D45 (D41's text is updated after the von Reyn et al. 2017 check). Calibrated on the whole brain: 200° (R × f) and 1,082° (flat R). The recruitment runs are next.
 - Closed-loop simulation: resolved for now by D17 (Brian2 runtime with `run_frames`). Our own reimplementation of the same equations (e.g. PyTorch, validated against Brian2) stays an option if subcircuit runs are still too slow, or for the GPU phase.
