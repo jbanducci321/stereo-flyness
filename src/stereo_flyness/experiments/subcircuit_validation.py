@@ -137,3 +137,48 @@ def first_spike_agreement(whole_trials: list[dict], sub_trials: list[dict], grou
             total += 1
             match += a is not None and b is not None and abs(a - b) <= max_frames
     return match, total
+
+
+def approaches(theta_deg: np.ndarray, gap: np.ndarray) -> list[tuple[int, int]]:
+    """Obstacle approaches in a recorded run (D46), as [start, end) frames: from when an object
+    becomes the nearest looming one until it stops looming. The cube only moves forward, so the
+    gap to one object only shrinks; a jump up in the gap means a new nearest object."""
+    out, start = [], None
+    for i, th in enumerate(theta_deg):
+        looming = th > 0
+        new = looming and (start is None or gap[i] > gap[i - 1] + 1e-9)
+        if start is not None and (not looming or new):
+            out.append((start, i))
+            start = None
+        if new:
+            start = i
+    if start is not None:
+        out.append((start, len(theta_deg)))
+    return out
+
+
+def press_agreement(whole: pd.DataFrame, sub: pd.DataFrame, max_frames: int = 1) -> dict:
+    """D36 rule 5 as amended by D46, on one bot-driven level run on both networks (same seed):
+    the first press of each approach is compared. Matched if both press within `max_frames` of
+    each other; a miss if only one presses or they're further apart. Approaches where neither
+    presses are counted apart and aren't in the share."""
+    n = min(len(whole), len(sub))
+    w, s = whole.iloc[:n], sub.iloc[:n]
+    if not np.allclose(w["theta_deg"], s["theta_deg"]):
+        raise ValueError("the two runs didn't see the same input; rule 5 needs bot-driven runs")
+    out = {"approaches": 0, "neither": 0, "matched": 0, "only_whole": 0, "only_sub": 0, "apart": 0, "diffs": []}
+    pw, ps = w["fly_press"].to_numpy(bool), s["fly_press"].to_numpy(bool)
+    for a, b in approaches(w["theta_deg"].to_numpy(), w["gap"].to_numpy()):
+        out["approaches"] += 1
+        fw, fs = np.flatnonzero(pw[a:b]), np.flatnonzero(ps[a:b])
+        if not len(fw) and not len(fs):
+            out["neither"] += 1
+        elif not len(fs):
+            out["only_whole"] += 1
+        elif not len(fw):
+            out["only_sub"] += 1
+        else:
+            d = int(fs[0] - fw[0])
+            out["diffs"].append(d)
+            out["matched" if abs(d) <= max_frames else "apart"] += 1
+    return out

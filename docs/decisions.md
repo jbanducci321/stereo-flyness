@@ -543,6 +543,7 @@ Agreed by both (draft §4, Shannyn's threshold on `sc-t4-threshold`, and the fol
   - **Stuck runs:** D37's cascade test needs repeat trials, and these runs are one per level × setting, so D38's stuck-state flag is used instead (≥ 50% of the stuck-state neurons over ~100 ms). A stuck run is dropped from the frame the flag starts.
 - **Validating the final subcircuit:**
   - **D36's tolerance**, on closed-loop runs on different levels from the recruitment runs: the next cube training levels (easy 4–5, medium 4–5, hard 2), never the held-out suite or Stereo Madness.
+    - **Amended by D46 (2026-11-01):** rule 5 is judged on bot-driven runs, per obstacle approach, at five settings.
   - **It must also reproduce the calibration:** on the calibration looms, the Giant Fiber's first spike falls within one frame of the whole brain's (D36 rule 3). Near 39° that is about ±1.1°.
   - It is benchmarked against D37's time limit.
 - **Ship mode (Step 5):** constraints only, in the draft §5.
@@ -620,11 +621,35 @@ Shannyn's proposal, after the interim dry run gave θ_full ≈ 1,165°. The whol
   - **Recording quirk, not a result:** with flat R at θ_full = 5,760°, 2 of 10 trials fired only after the spike's front face had passed the eye, where the encoding reads θ = 0 (the hitbox is smaller than the visual cell). So that row shows 0°. It doesn't affect the calibration, which comes from the 720–1,440° bracket.
   - With flat R, the Giant Fiber still fires with only ~8–14 neurons driven, so jump timing depends on integration time. That is what comparison 1 is there to show.
 
+**D46. The final subcircuit: build, checks so far, and how rule 5 is judged** (2026-11-01)
+Rule 5's method and settings proposed by Jacob and amended by Shannyn; agreed by both on 2026-11-01, before any rule 5 run.
+- **Recruitment runs (2026-11-01, commit `66601f1`):** 70 whole-brain, bot-driven runs (10 levels × 7 settings, `configs/recruitment.toml`), 4 at once in 6 h 57 min. All completed; **none entered the stuck state**, so no frames were dropped (515,004 frames used).
+- **Build** (`configs/subcircuits/final.toml`): **33,486 neurons, 3,392,494 connections** (24.2% / 22.5% of the brain).
+  - The recruitment runs fired 1,250 neurons (per setting: 367 for flat R up to 1,207 at R = 200). All but **6** were already in the interim build (33,480), so the real encoding adds almost nothing the pathway tests hadn't recruited.
+  - The Giant Fibers keep 87–88% of their input (82% of their inhibitory input), as in the interim build.
+- **D36 rules 1–4 on the held-out probes: pass.** 248 conditions, same seeds as the whole brain. Same go/no-go verdicts; key-group rates worst 7.1% (DNp20 left in P6, 2.8 → 3.0 Hz); Giant Fiber first spikes 360/360 within one frame; lowest per-type share of active neurons kept 97% (P6).
+  - 4 subcircuit trials entered the stuck state (3 on the whole brain): the 3 known cascades, plus one E4 control (LC10a), which isn't a game input.
+- **Calibration reproduced: pass.** On the official calibration looms (same θ_full, trial and seed; `scripts/compare_calibration.py`), the Giant Fiber's first spike falls on **the same frame in 110/110 trials**: 60/60 R × f and 50/50 flat R.
+  - **For the write-up (Shannyn):** the model's spread at the calibrated θ_full (s.d. 8.5°) is smaller than the fly's (14°), so the model is a less variable fly.
+- **Speed (D37 limit, ≤ 10 h for 200 runs of 30 s, 4 at once): pass.** Stand-in input: 16.5× slower than real time each, ~6.9 h for the grid. Real levels, bot-driven, R × f at R = 150: 4 runs of ~30 s in 6.4 min, ~5.4 h for the grid.
+- **Rule 5 is judged on bot-driven runs** (amends D36 rule 5 and D43's "closed-loop runs"):
+  - **Why:** in fly-driven closed loop the two networks' games split at their first different jump, and the fly dies early on medium and hard levels (D44: 0/6 even for the ideal fly), so few actions would be compared. With the bot driving, both networks see identical input over the whole level.
+  - **Levels:** cube training easy 4–5, medium 4–5, hard 2 (unchanged). Same Poisson seed on both networks.
+  - **Unit: one obstacle approach**, from when an object becomes the nearest looming one until it stops looming. Each obstacle gives a burst of presses, so only **the first press of each approach** is compared.
+    - **Matched** if both networks' first presses fall within **±1 frame**. **A miss** if only one network presses during the approach, or both do but further apart.
+    - **Pass at ≥ 95% of approaches** in which at least one network presses. Approaches where neither presses are counted and reported, but left out of the share, so they can't inflate it (Jacob's reading; stricter than counting them as agreement).
+  - **Settings (5):** R × f at the calibrated 200° with **R = 25, 150 and 200 Hz** (the Step 3 range; low R near threshold is the most fragile), plus the two Step 2 comparisons at R = 150: **flat R at 1,082°** and **"every object looms"** at 200°.
+  - **Fixed in advance:**
+    - If rule 5 fails at some R, that R is **dropped from the Step 3 range** until fixed.
+    - If a comparison fails, that comparison **runs on the whole brain** instead.
+  - **Fly-driven closed loop** on the same levels (R × f, R = 150) is reported as a description, not judged.
+
 ## Open
 
 Still open:
 
 - Subcircuit rule: decided in D36 (recipe) and D37 (cascade trials left out, tuning-time limit). The interim neuron list is built in J5; the final one after T4.
 - Brain time, input encoding, output rule and the cube dials: decided in T4 (D40–D43). Ship mode is decided in Step 5.
-- The cube encoding's rates: R × f, adopted in D45 (D41's text is updated after the von Reyn et al. 2017 check). Calibrated on the whole brain: 200° (R × f) and 1,082° (flat R). The recruitment runs are next.
+- The cube encoding's rates: R × f, adopted in D45 (D41's text is updated after the von Reyn et al. 2017 check). Calibrated on the whole brain: 200° (R × f) and 1,082° (flat R).
+- The final subcircuit: built, rules 1–4, the calibration and speed pass (D46). Rule 5 is next.
 - Closed-loop simulation: resolved for now by D17 (Brian2 runtime with `run_frames`). Our own reimplementation of the same equations (e.g. PyTorch, validated against Brian2) stays an option if subcircuit runs are still too slow, or for the GPU phase.

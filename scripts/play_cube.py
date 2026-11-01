@@ -10,7 +10,8 @@ Usage:
     uv run python scripts/play_cube.py cube-easy-0 cube-easy-1 --suite training --jobs 2
     uv run python scripts/play_cube.py cube-easy-0 --bot      # bot drives, brain watches (D43)
 
-Writes results/closed_loop/<network>/<settings>/<driver>/<level>/, a recorded run (`fly_log`):
+Writes results/closed_loop/<network>/<settings>/<driver>/<level>/ (settings end in `_flat` without
+`--rate-scaling`), a recorded run (`fly_log`):
 the game's run log (replayable), brain.parquet, spikes.npz and run.json (git-ignored).
 """
 
@@ -78,7 +79,7 @@ def main() -> None:
     gf = {"GF_R": cells.ids("DNp01", side="right"), "GF_L": cells.ids("DNp01", side="left")}
     path_comp, con_paths, _ = network(None if args.network == "whole_brain" else args.network)
     stuck_ids = load_stuck_state(ROOT / cfg["cascade"]["stuck_state"])  # restricted to the network (D38)
-    out = OUT / args.network / f"{args.theta_full:g}deg_{args.mode}_R{args.rate:g}"
+    out = OUT / args.network / f"{args.theta_full:g}deg_{args.mode}_R{args.rate:g}{'' if args.rate_scaling else '_flat'}"
     summaries = Parallel(n_jobs=args.jobs)(
         delayed(one)(n, args.suite, path_comp, con_paths["original"], patches, gf, stuck_ids, args, out, args.seed)
         for n in args.levels)
