@@ -12,12 +12,12 @@ This is a **wiring-diagram simulation**, not an uploaded fly. Each neuron is a s
 
 | Comes from the connectome | Comes from our code |
 |---|---|
-| Which neurons connect, how strongly, and with what sign | **What the fly sees:** the angular size of the nearest obstacle on a collision course, turned into a growing patch of driven looming-detector neurons (LC4, LPLC2) |
+| Which neurons connect, how strongly, and with what sign | **What the fly sees:** the angular size of the nearest obstacle on a collision course, turned into a growing patch of driven looming-detector neurons (LC4, LPLC2). As the patch grows, each driven neuron also fires faster (rate × patch fraction) |
 | How activity spreads from those neurons through the brain | **What counts as a jump:** any spike from either Giant Fiber (DNp01) becomes a one-tick button press |
-| Whether, and when, the Giant Fiber fires in response | **How much input:** one tuned dial for the cube, the input rate. The patch size is calibrated once to the real fly's escape threshold (~39°, von Reyn et al. 2014), never tuned on the game |
+| Whether, and when, the Giant Fiber fires in response | **How much input:** one tuned dial for the cube, the peak input rate. The patch size is calibrated once, on the whole brain, so the Giant Fiber first fires at the real fly's escape threshold (~39°, von Reyn et al. 2014); it is never tuned on the game |
 | | **Timing and modes:** the brain runs at real game time, one frame per 240 Hz physics tick; which readout is used in cube vs ship mode |
 
-All of our design choices live in `src/stereo_flyness/interface/` and are logged, with their reasons, in [docs/decisions.md](docs/decisions.md) (cube interface: D40–D43).
+All of our design choices live in `src/stereo_flyness/interface/` and are logged, with their reasons, in [docs/decisions.md](docs/decisions.md) (cube interface: D40–D45).
 
 ### Choices we made that happen to help the fly
 
@@ -25,6 +25,7 @@ These are ours, not the fly's, and every result should be read with them in mind
 
 - **Only objects on a collision course loom.** Ceilings overhead don't, so the cube isn't pushed to jump into them.
 - **"Collision course" uses the cube's current height,** so an obstacle stops looming once the cube is above it.
+- **Objects the cube lands onto are invisible to the encoding.** The Giant Fiber escape is a takeoff response to things approaching head-on or from the side; landing on something is a different behaviour. So a spike right after an obstacle can't be anticipated. This causes most of the deaths of a fly that jumps exactly at the real threshold (D44).
 - **The fly can't tell hazards from blocks:** both loom the same way. Obstacles are seen as their full 30 × 30 grid cells, not their smaller hitboxes.
 - **Which neurons an obstacle drives is approximated.** We don't have visual-field positions for LC4/LPLC2, so the growing patch is built from neurons that share inputs.
 - **Our code, not the fly, decides when the game switches between cube and ship.**
@@ -47,13 +48,6 @@ These are ours, not the fly's, and every result should be read with them in mind
 - The rules for judging each experiment are written down **before** its results are seen ([docs/decisions.md](docs/decisions.md)).
 - Stereo Madness is held out: nothing is tuned on it, and it's played once at the end.
 - Replays show the recorded activity unaltered, say they are replays of a simulation, and show our input separately from the fly's own spikes.
-
-### Choices and limits we state
-
-- **What the fly "sees" is our encoding** (D41): the nearest obstacle's angular size drives a growing patch of LC4/LPLC2 neurons. The patch shape and its full size (θ_full) are geometric assumptions, not measured receptive fields.
-- **Only obstacles on a collision course loom.** Ceilings don't, which happens to help the cube, and obstacles below the cube stop looming mid-jump.
-- **Objects the cube lands onto are invisible to the encoding.** The Giant Fiber escape is a takeoff response to things approaching head-on or from the side; landing on something is a different behaviour. So a spike right after an obstacle can't be anticipated. This causes most of the deaths of a fly that jumps exactly at the fly's threshold (D44).
-- **The model's Giant Fiber fires at 100–200 Hz while driven**, against one or two spikes per loom in a real fly. Our jump rule takes the first spike (D42).
 
 ## Plan
 
