@@ -469,6 +469,7 @@ Agreed by both (draft §2, with Jacob's real-height change and Shannyn's correct
 - **What the eye sees is visual cells, not hitboxes.**
   - Each object fills a 30 × 30 cell: its hitbox centre ± 15. So a spike looks 30 units tall, not 12.
   - Cells in the same column that touch vertically are **merged into one object**, so a two-block wall is one object 60 units tall.
+  - **Amended by D47 (2026-11-01):** cells are clipped at the ground (y = 0). The eye can't see below the floor.
 - **Which objects loom:** columns ahead of the eye that overlap the cube's current vertical extent, i.e. on a collision course. Solids and hazards are treated alike, because the fly can't tell them apart.
 - **Angular size:** θ = atan((top − eye) / d) + atan((eye − bottom) / d), for the nearest looming column, where *d* is the gap from the eye to its front face. This is geometry, not a dial.
 - **Which neurons are driven:**
@@ -481,7 +482,7 @@ Agreed by both (draft §2, with Jacob's real-height change and Shannyn's correct
   - Ceilings and other objects off the collision course don't loom, which happens to help the cube.
   - The collision course uses the cube's current height, so obstacles below stop looming mid-jump.
   - θ_full and the patch shape are geometric assumptions, not measured receptive fields.
-  - **Objects the cube lands onto are invisible to the encoding** (added 2026-10-31, agreed by both). No "loom from below" rule: the Giant Fiber escape is a takeoff response to things approaching head-on or from the side, while landing on something uses a different behaviour (the landing response). It also wouldn't help, because a press in mid-air does nothing. This is the main cause of the ideal fly's deaths (D44).
+  - **Objects the cube lands onto are invisible to the encoding** (added 2026-10-31, agreed by both). No "loom from below" rule: the Giant Fiber escape is a takeoff response to things approaching head-on or from the side, while landing on something uses a different behaviour (the landing response). It also wouldn't help, because a press in mid-air does nothing. This was the main cause of the ideal fly's deaths (D44); after D47's ground clip it causes about a third (10 of 29).
 - **Kept as a later option:** splitting the features, with LC4 following dθ/dt and LPLC2 following θ. For a single 30-unit object r/v is fixed (48 ms), so θ would determine dθ/dt. But with real heights a two-block wall has r/v ≈ 96 ms, so the split could tell tall objects from close ones. It's left out of v1 for simplicity.
 
 **D42. Output rule: any Giant Fiber spike is a one-tick press (T4)** (2026-10-30)
@@ -498,7 +499,7 @@ Agreed by both (draft §3).
 
 **D43. Cube dials, θ_full calibration, Step 2 runs and their order (T4)** (2026-10-30)
 Agreed by both (draft §4, Shannyn's threshold on `sc-t4-threshold`, and the follow-up messages).
-- **One cube dial: R**, the stimulation rate of driven neurons. Step 2 uses 150 Hz (Shiu's default); the Step 3 tuning range is 25–200 Hz.
+- **One cube dial: R**, the stimulation rate of driven neurons. Step 2 uses 150 Hz (Shiu's default); the Step 3 tuning range is 25–200 Hz. (D45 restates R as the peak per-neuron rate near contact, if R × f is adopted.)
   - The other two dials allowed by D5 are kept for ship mode, or as a spare.
   - Not dials:
     - brain time (D40);
@@ -516,12 +517,13 @@ Agreed by both (draft §4, Shannyn's threshold on `sc-t4-threshold`, and the fol
     - This is open-loop, on the whole brain (the reference network, which also avoids a circular dependency on the final subcircuit), at R = 150 Hz.
     - About 10 θ_full values × 10 trials of ~1 s, under an hour with 4 workers.
   - **Fixed once, before the Step 2 baseline, and logged.** It isn't revisited in Step 3: if R is tuned, θ_full stays.
+  - **Result (2026-10-31, D45): θ_full = 200° (R × f, start gap 245)**, and 1,082° for the flat-rate comparison.
 - **Predictions, recorded before Step 2:**
   - **Calibrated:** the cube presses about mid-way through the single-spike window, at a gap of ~42 units, ~136 ms before contact (θ = 39°; the window is θ > ~23°).
   - **θ_full = 180°:** it jumps at or before the window opens. In P5 the Giant Fiber fired at the first step, 19 neurons per side, ≈ 22.5°.
 - **Step 2 runs**, all untuned, with nothing chosen afterwards. They're played closed-loop on the 20 held-out cube levels, on the final subcircuit:
   - **Baseline of record:** calibrated θ_full, collision-course looming, R = 150 Hz.
-  - **Comparison 1:** θ_full = 180° (uncalibrated).
+  - **Comparison 1:** θ_full = 180° (uncalibrated). **Replaced by D45:** the pre-D45 encoding (flat R, calibrated the same way).
   - **Comparison 2:** "every object ahead looms", with calibrated θ_full.
   - The comparisons are reported next to the baseline and never replace it.
 - **Order of work for Step 2:**
@@ -536,12 +538,13 @@ Agreed by both (draft §4, Shannyn's threshold on `sc-t4-threshold`, and the fol
   - **Levels:** 10 cube training levels, fixed now and in proportion to the suite: easy seeds 0–3, medium 0–3, hard 0–1 (`cube-easy-0` … `cube-hard-1`).
   - **Settings**, one run per level × setting, ~70 runs of 30 s, about an overnight run with 4 at once:
     - the calibrated θ_full at R = 25, 50, 100, 150 and 200 Hz (the Step 3 range);
-    - θ_full = 180° at R = 150 Hz;
+    - θ_full = 180° at R = 150 Hz (**replaced by D45:** the pre-D45 encoding, flat R = 150 Hz at its own calibrated θ_full);
     - "every object looms" with the calibrated θ_full at R = 150 Hz.
   - **Poisson seeds:** fixed from `base_seed` and each run's name, as in the pathway tests.
   - **Stuck runs:** D37's cascade test needs repeat trials, and these runs are one per level × setting, so D38's stuck-state flag is used instead (≥ 50% of the stuck-state neurons over ~100 ms). A stuck run is dropped from the frame the flag starts.
 - **Validating the final subcircuit:**
   - **D36's tolerance**, on closed-loop runs on different levels from the recruitment runs: the next cube training levels (easy 4–5, medium 4–5, hard 2), never the held-out suite or Stereo Madness.
+    - **Amended by D46 (2026-11-01):** rule 5 is judged on bot-driven runs, per obstacle approach, at five settings.
   - **It must also reproduce the calibration:** on the calibration looms, the Giant Fiber's first spike falls within one frame of the whole brain's (D36 rule 3). Near 39° that is about ±1.1°.
   - It is benchmarked against D37's time limit.
 - **Ship mode (Step 5):** constraints only, in the draft §5.
@@ -565,10 +568,11 @@ Shannyn's request, agreed by both. `scripts/ideal_fly.py`, no brain.
   - It isn't smooth. Thresholds of 14–36° complete no level at all, even easy ones. On `cube-easy-0`, 24–36° clears the first spike but lands on a later one. So a small timing shift changes where the cube lands. With the fly's real spread (s.d. ~14°), real runs can do better or worse than the ideal fly on any one level.
   - So "the best any fly with this encoding could do" holds only roughly: ~29/50 for any single fixed threshold.
 - **Step 2:** the ideal fly is run on the 20 held-out levels **together with the baseline**, at 39° only, and reported next to it. The held-out levels aren't looked at before then.
-- **Deaths by obstacle type** in Step 2 use the same (a)/(b) classes.
+- **Deaths by obstacle type** in Step 2 use the same (a)/(b) classes, plus (c) short run-up (D45).
+- **Recomputed with D47's ground clip (2026-11-01):** the ceiling drops. The numbers above are kept as the record of the old encoding; D47 has the new ones, which are the ones Step 2 is read against.
 
-**D45. The input encoding is reviewed before the whole-brain calibration** (2026-10-31, in progress)
-Shannyn's proposal, after the interim dry run gave θ_full ≈ 1,165°. **The whole-brain calibration and the recruitment runs are on hold until this is settled**: the recruited set depends on the encoding.
+**D45. The cube encoding's rates scale with the patch: R × f** (2026-10-31)
+Shannyn's proposal, after the interim dry run gave θ_full ≈ 1,165°. The whole-brain calibration and the recruitment runs waited for this, since the recruited set depends on the encoding. **Adopted after the check-3 rerun passed (below).**
 - **Why the current encoding is a problem:**
   - At θ_full ≈ 1,165° the patch never passes ~15% of the neurons, even at contact. Jump timing is set by how long ~6–11 neurons fire at full R, not by the growing patch.
   - A 3° object barely expanding drives the Giant Fiber, which isn't biological: LC4/LPLC2 respond weakly to small, slow images.
@@ -581,9 +585,13 @@ Shannyn's proposal, after the interim dry run gave θ_full ≈ 1,165°. **The wh
   3. the first-spike θ moves by < ~5° between start gaps of 600 and 1,200 units.
   - **If it passes:** D41 and D43 are updated and the change logged. **If it fails:** we discuss the LC4 = dθ/dt, LPLC2 = θ split (D41's later option).
 - **The calibration start gap comes from the levels, not by choice** (agreed): the median run-up before an obstacle in the cube training suite, with sensitivity at the 10th and 90th percentiles.
-  - Measured (`scripts/measure_run_up.py`): each obstacle's gap when it first becomes the nearest looming object, along the bot's path on the 50 cube training levels. Columns that touch the previous one horizontally (e.g. the second column of a two-wide block, 982 of 2,462) are left out, since they aren't a new approach. **P10 115, median 270, P90 719 units** (n = 1,480). Counting every column gives 29 / 138 / 480.
-  - The definition (what counts as a new approach) is Jacob's and needs Shannyn's confirmation.
-  - Our earlier 600 is longer than 88% of real run-ups, so the dry run's θ_full ≈ 1,165° came from an unusually long approach.
+  - Measured (`scripts/measure_run_up.py`): each obstacle's gap when it first becomes the nearest looming object, along the bot's path on the 50 cube training levels.
+  - **What counts as a new approach (agreed 2026-10-31):** only a continuation of the same object is left out, i.e. a column touching the previous looming one with the same bottom and top (e.g. the second column of a two-wide block, 800 of 2,462). A touching column with a different top or bottom (a staircase step) is a new approach.
+  - **Result: P10 30, median 245, P90 628 units** (n = 1,662). The dry run below used 270, from a first definition that also left out staircase steps (P10 115, median 270, P90 719). Counting every column gives 29 / 138 / 480.
+  - **The P10 can't be a calibration start:** at 30 units a 30-unit spike already subtends ~53°, past the 39° target.
+  - **Agreed (2026-10-31): the official calibration starts at 245 units** (the median, by the agreed rule, so not a choice). **Sensitivity is reported at the P25 (135 units) and the P90 (628 units)**, in place of the P10. The P25 had to be comfortably above the 39° point of a single block (~42 units, so ≥ ~60), and it is.
+  - **Short run-ups:** **10.7%** of approaches start with the object already at or past 39° (after landings and staircase steps), so the fly can't respond "at 39°" there. The Step 2 death analysis adds **(c) short run-up** to D44's (a)/(b). The ideal 39° fly has no (c) deaths on the 50 training levels: it presses at once and clears them. The class matters for the real fly, which responds later.
+  - Our earlier 600 is longer than 90% of real run-ups, so the first dry run's θ_full ≈ 1,165° came from an unusually long approach.
 - **Dry run result (2026-10-31; interim subcircuit, R × f, R = 150 Hz, 10 trials per point, θ_full 90–540°, start gaps 270 / 600 / 1,200 / 115 / 719):**
 
   | Check (bar fixed before the run) | Result | |
@@ -595,6 +603,88 @@ Shannyn's proposal, after the interim dry run gave θ_full ≈ 1,165°. **The wh
   - At θ_full = 204°, the first-spike θ per start gap: 115 → 41.4°, 270 → 39.0°, 600 → 44.3°, 719 → 41.1°, 1,200 → 39.0°. The calibrated θ_full from each gap alone: 196°, 204°, 191°, 197°, 204°.
   - The shift doesn't grow with distance: 1,200 matches 270, and only 600 is off. With ~8° s.d. and 10 trials, the uncertainty of a difference of two means is ~3.5°, so 5.3° can't be told apart from no shift. But the bar was set in advance and it isn't met as written. **Decision pending (Shannyn).**
   - At 39° the patch drives ~60 of 314 neurons (~19%), each at ~29 Hz. No trial got stuck.
+  - **The calibrated 204° is close to the geometric 180°** (the old uncalibrated comparison): with R × f, calibration lands near the value geometry alone suggests.
+- **Check 3 is rerun, with rules fixed before the run** (Shannyn, 2026-10-31): 30 fresh trials (new seeds, trials 10–39) at θ_full = 204°, start gaps 600 vs 1,200, judged alone (not pooled with the first 10), same bar (< 5°). **Pass:** R × f is adopted, and both the 10-trial fail and the 30-trial result are reported here. **Fail:** it's a fail, and we discuss the LC4/LPLC2 split.
+- **Rerun result (2026-10-31): pass.** First-spike θ at θ_full = 204°: **37.6 ± 6.6° from 600 and 37.8 ± 10.6° from 1,200, a shift of 0.1°** (bar < 5°). 30/30 trials fired at each gap, none got stuck.
+  - Both results are reported, as agreed: the first 10-trial run missed the bar by 0.3° (5.3°), and the fresh 30-trial run passes (0.1°).
+  - **So R × f is adopted** for the cube encoding (the rule set before the rerun). D41's text is updated after Shannyn's von Reyn et al. 2017 check. Until then the code keeps `rate_scaling` as an explicit switch, and every run states which encoding it used.
+- **Agreed with the rerun (2026-10-31), updating D43:**
+  - **Comparison 1 is now the pre-D45 encoding:** flat rate R = 150 Hz, calibrated the same way (first Giant Fiber spike at 39°, same start gap, R = 150), and labelled "pre-D45 encoding". It shows the effect of the one encoding change we made after seeing data. It replaces θ_full = 180° in the Step 2 comparisons and in the recruitment runs (`preD45_flat_R150`). So the whole-brain calibration is run twice: R × f and flat R.
+  - **R's range stays 25–200 Hz**, restated: R is the **peak per-neuron rate, reached near contact** (f = 1). At the 39° threshold each driven neuron fires at ~0.19 × R.
+- **Official whole-brain calibration (2026-10-31, commit `c930c77`):** R = 150 Hz, start gap 245, 10 trials per θ_full, open loop, no trial stuck. Results in `results/calibration/whole_brain/` (git-ignored); values in `configs/recruitment.toml`.
+
+  | Encoding | Grid (°) | **Calibrated θ_full** | s.d. at it | Neurons driven at 39° |
+  |---|---|---|---|---|
+  | **R × f (baseline of record)** | 90, 135, 180, 270, 360, 540 | **200°** | 8.5° | 62 of 314, each at ~29 Hz |
+  | Flat R (comparison 1, pre-D45) | 360, 720, 1,440, 2,880, 5,760 | **1,082°** | 9.3° | 12 of 314, each at 150 Hz |
+
+  - The whole brain's 200° is within 4° of the interim subcircuit's 204°.
+  - **Sensitivity** (R × f at 200°, 20 fresh trials per gap): first Giant Fiber spike at **37.4 ± 8.5° from the P25 (135 units)** and **35.8 ± 8.8° from the P90 (628 units)**, against 39° at the median by construction. The start gap moves it by ≤ ~3°.
+  - **Recording quirk, not a result:** with flat R at θ_full = 5,760°, 2 of 10 trials fired only after the spike's front face had passed the eye, where the encoding reads θ = 0 (the hitbox is smaller than the visual cell). So that row shows 0°. It doesn't affect the calibration, which comes from the 720–1,440° bracket.
+  - With flat R, the Giant Fiber still fires with only ~8–14 neurons driven, so jump timing depends on integration time. That is what comparison 1 is there to show.
+
+**D46. The final subcircuit: build, checks so far, and how rule 5 is judged** (2026-11-01)
+Rule 5's method and settings proposed by Jacob and amended by Shannyn; agreed by both on 2026-11-01, before any rule 5 run.
+- **Recruitment runs (2026-11-01, commit `66601f1`):** 70 whole-brain, bot-driven runs (10 levels × 7 settings, `configs/recruitment.toml`), 4 at once in 6 h 57 min. All completed; **none entered the stuck state**, so no frames were dropped (515,004 frames used).
+- **Build** (`configs/subcircuits/final.toml`): **33,486 neurons, 3,392,494 connections** (24.2% / 22.5% of the brain).
+  - The recruitment runs fired 1,250 neurons (per setting: 367 for flat R up to 1,207 at R = 200). All but **6** were already in the interim build (33,480), so the real encoding adds almost nothing the pathway tests hadn't recruited.
+  - The Giant Fibers keep 87–88% of their input (82% of their inhibitory input), as in the interim build.
+- **D36 rules 1–4 on the held-out probes: pass.** 248 conditions, same seeds as the whole brain. Same go/no-go verdicts; key-group rates worst 7.1% (DNp20 left in P6, 2.8 → 3.0 Hz); Giant Fiber first spikes 360/360 within one frame; lowest per-type share of active neurons kept 97% (P6).
+  - 4 subcircuit trials entered the stuck state (3 on the whole brain): the 3 known cascades, plus one E4 control (LC10a), which isn't a game input.
+- **Calibration reproduced: pass.** On the official calibration looms (same θ_full, trial and seed; `scripts/compare_calibration.py`), the Giant Fiber's first spike falls on **the same frame in 110/110 trials**: 60/60 R × f and 50/50 flat R.
+  - **For the write-up (Shannyn):** the model's spread at the calibrated θ_full (s.d. 8.5°) is smaller than the fly's (14°), so the model is a less variable fly.
+- **Speed (D37 limit, ≤ 10 h for 200 runs of 30 s, 4 at once): pass.** Stand-in input: 16.5× slower than real time each, ~6.9 h for the grid. Real levels, bot-driven, R × f at R = 150: 4 runs of ~30 s in 6.4 min, ~5.4 h for the grid.
+- **Rule 5 is judged on bot-driven runs** (amends D36 rule 5 and D43's "closed-loop runs"):
+  - **Why:** in fly-driven closed loop the two networks' games split at their first different jump, and the fly dies early on medium and hard levels (D44: 0/6 even for the ideal fly), so few actions would be compared. With the bot driving, both networks see identical input over the whole level.
+  - **Levels:** cube training easy 4–5, medium 4–5, hard 2 (unchanged). Same Poisson seed on both networks.
+  - **Unit: one obstacle approach**, from when an object becomes the nearest looming one until it stops looming. Each obstacle gives a burst of presses, so only **the first press of each approach** is compared.
+    - **Matched** if both networks' first presses fall within **±1 frame**. **A miss** if only one network presses during the approach, or both do but further apart.
+    - **Pass at ≥ 95% of approaches** in which at least one network presses. Approaches where neither presses are counted and reported, but left out of the share, so they can't inflate it (Jacob's reading; stricter than counting them as agreement).
+  - **Settings (5):** R × f at the calibrated 200° with **R = 25, 150 and 200 Hz** (the Step 3 range; low R near threshold is the most fragile), plus the two Step 2 comparisons at R = 150: **flat R at 1,082°** and **"every object looms"** at 200°.
+  - **Fixed in advance:**
+    - If rule 5 fails at some R, that R is **dropped from the Step 3 range** until fixed.
+    - If a comparison fails, that comparison **runs on the whole brain** instead.
+  - **Fly-driven closed loop** on the same levels (R × f, R = 150) is reported as a description, not judged.
+  - **Rule 5 runs use D47's corrected encoding.** A first start on the old encoding was stopped after ~10 min (subcircuit only, no whole-brain runs) and its partial results deleted.
+- **Rule 5 result (2026-11-01, commit `bc2c350`, D47's encoding): pass at every setting.** 50 bot-driven runs (5 levels × 5 settings × 2 networks), none stuck. Report: `scripts/validate_closed_loop.py final` → `results/closed_loop/final/rule5.md` (git-ignored).
+
+  | Setting | Approaches | Neither pressed | Judged | Matched (±1 frame) | Share |
+  |---|---|---|---|---|---|
+  | R × f, 200°, R = 25 | 325 | 92 | 233 | 233 | **100%** |
+  | R × f, 200°, R = 150 (baseline) | 325 | 38 | 287 | 287 | **100%** |
+  | R × f, 200°, R = 200 | 325 | 33 | 292 | 292 | **100%** |
+  | Flat R, 1,082°, R = 150 (comparison 1) | 325 | 50 | 275 | 275 | **100%** |
+  | Every object looms, 200°, R = 150 (comparison 2) | 311 | 68 | 243 | 243 | **100%** |
+
+  - Every matched first press falls on **the same frame** on both networks; no approach had a press on only one network.
+  - So the whole Step 3 range (R = 25–200) stays, and both Step 2 comparisons run on the subcircuit.
+  - **Fly-driven (described, not judged):** on all 5 levels both networks played the same game, with presses never differing: easy-4 and easy-5 died at 25% and 24%, medium-4 at 10%, medium-5 at 59%, hard-2 at 10%. These are training levels, not the held-out suite, and no setting was chosen from them.
+  - **Label error, not a result:** the whole brain's `run.json` files from these runs say "smoke test: … interim network" in `status`, a leftover default in `play_cube.py` (fixed after the runs). Their `network` (`whole_brain`) and `commit` fields are correct. The recorded logs are left as they are.
+- **So the final subcircuit is validated** (D36 rules 1–5, the calibration, the D37 time limit) and is the network for Step 2 and Step 3.
+
+**D47. Visual cells are clipped at the ground (D41 amendment)** (2026-11-01)
+Found by Shannyn in her encoding check (`scripts/inspect_encoding.py cube-easy-0 cube-medium-0 cube-hard-0 --theta-full 200`); agreed by both on 2026-11-01, before the rule 5 runs and the Step 2 baseline.
+- **The error:** each object fills the 30 × 30 cell around its hitbox centre (D41). A pit spike's hitbox centre is at y ≈ 2, so its cell ran from −13 to 17, and 13 units of it were underground. Seen from the cube's eye (y = 15), it read **~52° at a gap of 26** instead of **~34.5°** for the part above the floor.
+- **The fix:** cells are clipped at y = 0, and a cell entirely below the floor isn't seen. It's geometry, not a dial, and it changes only objects that reach below the floor (`encoding.py`, `GROUND`).
+- **Check (rerun of Shannyn's command):** pit spikes now read **34.5° at a gap of 25.9**, with nothing below y = 0. Everything else she checked (θ, tall columns, f, the bot label) is unchanged.
+- **What it affects:**
+  - **Not the calibration:** its looms are spikes on the ground (cell 0–30), so θ_full = 200° (R × f) and 1,082° (flat R) stand.
+  - **Recruitment isn't redone** (Shannyn's reading, agreed). 5 of the 10 recruitment levels have objects below the floor (170 in all: medium-1 to 3, hard-0 and 1). With the clip, those objects drive a subset of the same input neurons, at the same or lower rates. That doesn't strictly guarantee the neurons downstream are a subset too, so this is stated as a limit. But rule 5 (D46) compares the subcircuit with the whole brain on the corrected encoding, so a missing neuron that mattered would show up there.
+  - **Rule 5 and Step 2 use the corrected encoding.** The rule 5 levels medium-4, medium-5 and hard-2 have 12, 14 and 27 below-floor objects; easy-4 and easy-5 have none.
+- **The ideal-fly ceiling drops (D44, recomputed):**
+
+  | | Easy | Medium | Hard | Total |
+  |---|---|---|---|---|
+  | 10 recruitment levels, collision course | 4/4 | 0/4 | 0/2 | 4/10 (unchanged) |
+  | 10 recruitment levels, every object looms | 4/4 | 1/4 (was 2/4) | 0/2 | 5/10 |
+  | 50 training levels, collision course | 20/20 | **1/20 (was 6/20)** | 0/10 | **21/50 (was 26/50)** |
+  | 50 training levels, every object looms | 20/20 | 2/20 (was 9/20) | 0/10 | 22/50 (was 29/50) |
+
+  - Deaths on the 50 levels, collision course: 29, of which **10 (a) invisible and 19 (b) wrong moment** (was 19 (a), 5 (b)).
+  - Threshold check (never used to choose one): the best fixed thresholds (45–50°) now complete 22/50 (was 29/50); 39° completes 21. Thresholds of 20–35° still complete none.
+  - **Why it drops:** medium and hard levels have corridors of raised slabs (cell y 38–68) with a pit spike under each, in the same column. The cube has to jump up onto the slab. On the ground the slab isn't on a collision course, so it doesn't loom; only the pit spike does. With the underground part, the pit spike reached 39° at a gap of ~38 and the jump happened to land on the slab. Clipped, it reaches 39° at ~22, too late, and the cube hits the slab.
+  - So the old error was accidentally helping. **The fix stands on geometry, not on the score**: changing it back, or adding a rule to make slabs loom, because the ceiling dropped would be tuning toward performance. Whether slabs should loom is a question for the encoding (D41's collision-course rule), not for this fix, and isn't changed before Step 2.
+- **Ceilings:** cube levels have no ceiling boundary; ceilings exist only in ship mode, which isn't encoded (nothing looms). Clipping at a ship ceiling is a Step 5 question. Overhead objects in cube mode don't reach below the floor, so the fix doesn't touch them.
 
 ## Open
 
@@ -602,5 +692,6 @@ Still open:
 
 - Subcircuit rule: decided in D36 (recipe) and D37 (cascade trials left out, tuning-time limit). The interim neuron list is built in J5; the final one after T4.
 - Brain time, input encoding, output rule and the cube dials: decided in T4 (D40–D43). Ship mode is decided in Step 5.
-- The cube encoding's rates (flat R or R × f) and the calibration start gap: being settled in D45, before the whole-brain calibration.
+- The cube encoding's rates: R × f, adopted in D45 (D41's text is updated after the von Reyn et al. 2017 check). Calibrated on the whole brain: 200° (R × f) and 1,082° (flat R).
+- The final subcircuit: built and validated (D46: rules 1–5, the calibration and the time limit pass, on D47's encoding). The Step 2 baseline is next.
 - Closed-loop simulation: resolved for now by D17 (Brian2 runtime with `run_frames`). Our own reimplementation of the same equations (e.g. PyTorch, validated against Brian2) stays an option if subcircuit runs are still too slow, or for the GPU phase.

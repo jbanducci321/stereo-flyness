@@ -83,12 +83,15 @@ def threshold_fly(enc: CubeEncoder, level, threshold: float) -> dict:
 
 
 INVISIBLE, WRONG_MOMENT = "(a) invisible to the encoding", "(b) visible, but the threshold is the wrong moment"
+SHORT_RUN_UP = "(c) short run-up"
 
 
 def death_cause(level, death, trace: pd.DataFrame, threshold: float) -> str:
     """Why the ideal fly died, from the object that killed it (its visual cell) and what the
-    encoding showed on the way there. Starts with the class: (a) the object never loomed, or
-    (b) it loomed, but pressing at `threshold` didn't clear it."""
+    encoding showed on the way there. Starts with the class: (a) the object never loomed,
+    (c) it was already at or past `threshold` when it started looming (after a landing or a
+    staircase step), so no response "at the threshold" was possible, or (b) it loomed from
+    below `threshold`, but pressing there didn't clear it (D44, D45)."""
     hits = [b for b in level.boxes if b.kind == death.kind and not (
         death.x + 15 < b.x0 or b.x1 < death.x - 15 or death.y + 15 < b.y0 or b.y1 < death.y - 15)]
     if not hits:
@@ -107,6 +110,9 @@ def death_cause(level, death, trace: pd.DataFrame, threshold: float) -> str:
         if at["y"] + 15 <= bottom + 1e-6:
             return f"{INVISIBLE}: never loomed; above the cube when reached ({where})"
         return f"{INVISIBLE}: never loomed ({where})"
+    if seen["theta"].iloc[0] >= threshold:
+        return (f"{SHORT_RUN_UP}: already {seen['theta'].iloc[0]:.0f}° when it started looming "
+                f"(gap {cell_x0 - seen['x'].iloc[0] - 15:.0f}) ({where})")
     over = seen[seen["theta"] >= threshold]
     if over.empty:
         return f"{WRONG_MOMENT}: loomed but stayed under {threshold:g}° (max {seen['theta'].max():.0f}°) ({where})"

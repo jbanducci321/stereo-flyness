@@ -25,8 +25,9 @@ These are ours, not the fly's, and every result should be read with them in mind
 
 - **Only objects on a collision course loom.** Ceilings overhead don't, so the cube isn't pushed to jump into them.
 - **"Collision course" uses the cube's current height,** so an obstacle stops looming once the cube is above it.
-- **Objects the cube lands onto are invisible to the encoding.** The Giant Fiber escape is a takeoff response to things approaching head-on or from the side; landing on something is a different behaviour. So a spike right after an obstacle can't be anticipated. This causes most of the deaths of a fly that jumps exactly at the real threshold (D44).
-- **The fly can't tell hazards from blocks:** both loom the same way. Obstacles are seen as their full 30 × 30 grid cells, not their smaller hitboxes.
+  The same rule works against the cube for a raised platform it has to jump onto: from the ground the platform doesn't loom, so only what's under it can cue the jump (D47).
+- **Objects the cube lands onto are invisible to the encoding.** The Giant Fiber escape is a takeoff response to things approaching head-on or from the side; landing on something is a different behaviour. So a spike right after an obstacle can't be anticipated. This causes about a third of the deaths of a fly that jumps exactly at the real threshold (D44, D47).
+- **The fly can't tell hazards from blocks:** both loom the same way. Obstacles are seen as their full 30 × 30 grid cells, not their smaller hitboxes, clipped at the floor: the eye can't see underground (D47).
 - **Which neurons an obstacle drives is approximated.** We don't have visual-field positions for LC4/LPLC2, so the growing patch is built from neurons that share inputs.
 - **Our code, not the fly, decides when the game switches between cube and ship.**
 

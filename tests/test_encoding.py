@@ -116,3 +116,15 @@ def test_bad_settings_raise():
         encoder(level(), mode="some")
     with pytest.raises(ValueError, match="theta_full"):
         encoder(level(), theta_full=0)
+
+
+def test_cells_are_clipped_at_the_ground():
+    # A pit spike whose cell spans -13 to 17 (Shannyn's case) is seen only above the floor
+    pit = Box("spike", *hitbox("spike", 315, 2))
+    (o,) = obstacles([pit])
+    assert (o.bottom, o.top) == (0, 17)
+    loom = encoder(level(pit)).encode(on_ground(300 - 26 - 15))  # gap 26
+    assert loom.theta_deg == pytest.approx(math.degrees(angular_size(26, 0, 17, 15)))
+    assert loom.theta_deg == pytest.approx(34.4, abs=0.1)  # ~51.5 deg before the clip
+    # A cell entirely below the floor isn't seen at all
+    assert obstacles([Box("spike", *hitbox("spike", 315, -20))]) == []
