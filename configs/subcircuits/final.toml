@@ -3,8 +3,8 @@
 # before any stuck flag. Then every neuron with >= 30 synapses onto a recruited neuron, plus every
 # pathway-test neuron. Probes (P1-P7) never build it; they validate it (D36).
 #
-# Set RECRUITMENT_DIR below once the calibrated theta_full is logged and the batch has run:
-# results/recruitment/whole_brain/theta<calibrated theta_full>
+# Recruitment: the 70 whole-brain runs of 2026-11-01 (configs/recruitment.toml), all 7 settings:
+# theta_full 200 deg (R x f) and 1,082 deg (flat R, comparison 1). None entered the stuck state.
 name = "final"
 description = "D36 + D37 + D43: recruited by game inputs and the real encoding + their >= 30-synapse inputs"
 
@@ -12,7 +12,7 @@ description = "D36 + D37 + D43: recruited by game inputs and the real encoding +
 pathway_tests = true
 
 [[include]]
-active = { experiments = ["E1", "E2", "E3", "E5b", "E5c", "S1", "S2", "S3"], signs = ["original", "corrected"], exclude_cascades = true, recruitment = "RECRUITMENT_DIR" }
+active = { experiments = ["E1", "E2", "E3", "E5b", "E5c", "S1", "S2", "S3"], signs = ["original", "corrected"], exclude_cascades = true, recruitment = "results/recruitment/whole_brain/theta200_flat1082" }
 
 [[include]]
-hops = { from_active = { experiments = ["E1", "E2", "E3", "E5b", "E5c", "S1", "S2", "S3"], signs = ["original", "corrected"], exclude_cascades = true, recruitment = "RECRUITMENT_DIR" }, n = 1, direction = "in", min_synapses = 30 }
+hops = { from_active = { experiments = ["E1", "E2", "E3", "E5b", "E5c", "S1", "S2", "S3"], signs = ["original", "corrected"], exclude_cascades = true, recruitment = "results/recruitment/whole_brain/theta200_flat1082" }, n = 1, direction = "in", min_synapses = 30 }
