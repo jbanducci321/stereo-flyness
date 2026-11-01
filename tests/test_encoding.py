@@ -92,6 +92,18 @@ def test_patch_fraction_and_rates():
     assert full.f == 1.0 and set(full.driven.values()) == {10}
 
 
+
+def test_rate_scaling_multiplies_r_by_f():
+    # same 10% patch as above, but each driven neuron fires at R x f = 15 Hz
+    d = 15 / math.tan(math.radians(9))
+    enc = CubeEncoder(level(obj("spike", 10)), PATCHES, 180, 150, rate_scaling=True)
+    loom = enc.encode(on_ground(300 - d - 15))
+    assert loom.rate_hz == pytest.approx(15) and set(loom.driven.values()) == {1}
+    r = enc.rates(loom)
+    assert r.sum() == pytest.approx(4 * 15)
+    full = CubeEncoder(level(obj("spike", 10)), PATCHES, 10, 150, rate_scaling=True).encode(on_ground(200))
+    assert full.rate_hz == 150  # f = 1: the full rate
+
 def test_nothing_ahead_and_ship_mode():
     enc = encoder(level(obj("spike", 10)))
     assert enc.encode(on_ground(400)).theta_deg == 0  # past everything

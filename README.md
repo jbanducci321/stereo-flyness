@@ -19,6 +19,13 @@ To keep credit honest, the code separates what the fly's circuitry does from wha
 
 All of our design choices live in `src/stereo_flyness/interface/` and are logged in [docs/decisions.md](docs/decisions.md).
 
+### Choices and limits we state
+
+- **What the fly "sees" is our encoding** (D41): the nearest obstacle's angular size drives a growing patch of LC4/LPLC2 neurons. The patch shape and its full size (θ_full) are geometric assumptions, not measured receptive fields.
+- **Only obstacles on a collision course loom.** Ceilings don't, which happens to help the cube, and obstacles below the cube stop looming mid-jump.
+- **Objects the cube lands onto are invisible to the encoding.** The Giant Fiber escape is a takeoff response to things approaching head-on or from the side; landing on something is a different behaviour. So a spike right after an obstacle can't be anticipated. This causes most of the deaths of a fly that jumps exactly at the fly's threshold (D44).
+- **The model's Giant Fiber fires at 100–200 Hz while driven**, against one or two spikes per loom in a real fly. Our jump rule takes the first spike (D42).
+
 ## Plan
 
 0. Setup: environment, data, reproduce a Shiu et al. result, find the target neurons, benchmark.
