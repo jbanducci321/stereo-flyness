@@ -646,6 +646,21 @@ Rule 5's method and settings proposed by Jacob and amended by Shannyn; agreed by
     - If a comparison fails, that comparison **runs on the whole brain** instead.
   - **Fly-driven closed loop** on the same levels (R × f, R = 150) is reported as a description, not judged.
   - **Rule 5 runs use D47's corrected encoding.** A first start on the old encoding was stopped after ~10 min (subcircuit only, no whole-brain runs) and its partial results deleted.
+- **Rule 5 result (2026-11-01, commit `bc2c350`, D47's encoding): pass at every setting.** 50 bot-driven runs (5 levels × 5 settings × 2 networks), none stuck. Report: `scripts/validate_closed_loop.py final` → `results/closed_loop/final/rule5.md` (git-ignored).
+
+  | Setting | Approaches | Neither pressed | Judged | Matched (±1 frame) | Share |
+  |---|---|---|---|---|---|
+  | R × f, 200°, R = 25 | 325 | 92 | 233 | 233 | **100%** |
+  | R × f, 200°, R = 150 (baseline) | 325 | 38 | 287 | 287 | **100%** |
+  | R × f, 200°, R = 200 | 325 | 33 | 292 | 292 | **100%** |
+  | Flat R, 1,082°, R = 150 (comparison 1) | 325 | 50 | 275 | 275 | **100%** |
+  | Every object looms, 200°, R = 150 (comparison 2) | 311 | 68 | 243 | 243 | **100%** |
+
+  - Every matched first press falls on **the same frame** on both networks; no approach had a press on only one network.
+  - So the whole Step 3 range (R = 25–200) stays, and both Step 2 comparisons run on the subcircuit.
+  - **Fly-driven (described, not judged):** on all 5 levels both networks played the same game, with presses never differing: easy-4 and easy-5 died at 25% and 24%, medium-4 at 10%, medium-5 at 59%, hard-2 at 10%. These are training levels, not the held-out suite, and no setting was chosen from them.
+  - **Label error, not a result:** the whole brain's `run.json` files from these runs say "smoke test: … interim network" in `status`, a leftover default in `play_cube.py` (fixed after the runs). Their `network` (`whole_brain`) and `commit` fields are correct. The recorded logs are left as they are.
+- **So the final subcircuit is validated** (D36 rules 1–5, the calibration, the D37 time limit) and is the network for Step 2 and Step 3.
 
 **D47. Visual cells are clipped at the ground (D41 amendment)** (2026-11-01)
 Found by Shannyn in her encoding check (`scripts/inspect_encoding.py cube-easy-0 cube-medium-0 cube-hard-0 --theta-full 200`); agreed by both on 2026-11-01, before the rule 5 runs and the Step 2 baseline.
@@ -678,5 +693,5 @@ Still open:
 - Subcircuit rule: decided in D36 (recipe) and D37 (cascade trials left out, tuning-time limit). The interim neuron list is built in J5; the final one after T4.
 - Brain time, input encoding, output rule and the cube dials: decided in T4 (D40–D43). Ship mode is decided in Step 5.
 - The cube encoding's rates: R × f, adopted in D45 (D41's text is updated after the von Reyn et al. 2017 check). Calibrated on the whole brain: 200° (R × f) and 1,082° (flat R).
-- The final subcircuit: built, rules 1–4, the calibration and speed pass (D46). Rule 5 is next, on the encoding with D47's ground clip.
+- The final subcircuit: built and validated (D46: rules 1–5, the calibration and the time limit pass, on D47's encoding). The Step 2 baseline is next.
 - Closed-loop simulation: resolved for now by D17 (Brian2 runtime with `run_frames`). Our own reimplementation of the same equations (e.g. PyTorch, validated against Brian2) stays an option if subcircuit runs are still too slow, or for the GPU phase.

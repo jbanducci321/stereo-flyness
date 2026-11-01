@@ -50,8 +50,8 @@ def one(name, suite, path_comp, path_con, patches, gf, stuck_ids, args, out, see
         inputs = bot.tick_inputs
         policy = lambda game: inputs[game.ticks] if game.ticks < len(inputs) else False  # noqa: E731
     meta = {"suite": suite, "network": args.network, "seed": seed, "commit": git_commit(),
-            "status": "D43 run" if args.network == "final" else
-            "smoke test: uncalibrated settings, interim network (not the D43 baseline)"}
+            "status": {"final": "D43 run", "whole_brain": "D43 run (whole brain, the reference network)"}.get(
+                args.network, f"smoke test: {args.network} network (not the D43 baseline)")}
     rec = play(Game(level), st, enc, policy=policy, stuck_ids=stuck_ids, meta=meta)
     rec.save(out / rec.driver / name)
     return rec.summary
