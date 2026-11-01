@@ -565,7 +565,7 @@ Shannyn's request, agreed by both. `scripts/ideal_fly.py`, no brain.
   - It isn't smooth. Thresholds of 14–36° complete no level at all, even easy ones. On `cube-easy-0`, 24–36° clears the first spike but lands on a later one. So a small timing shift changes where the cube lands. With the fly's real spread (s.d. ~14°), real runs can do better or worse than the ideal fly on any one level.
   - So "the best any fly with this encoding could do" holds only roughly: ~29/50 for any single fixed threshold.
 - **Step 2:** the ideal fly is run on the 20 held-out levels **together with the baseline**, at 39° only, and reported next to it. The held-out levels aren't looked at before then.
-- **Deaths by obstacle type** in Step 2 use the same (a)/(b) classes.
+- **Deaths by obstacle type** in Step 2 use the same (a)/(b) classes, plus (c) short run-up (D45).
 
 **D45. The cube encoding's rates scale with the patch: R × f** (2026-10-31)
 Shannyn's proposal, after the interim dry run gave θ_full ≈ 1,165°. The whole-brain calibration and the recruitment runs waited for this, since the recruited set depends on the encoding. **Adopted after the check-3 rerun passed (below).**
@@ -584,7 +584,9 @@ Shannyn's proposal, after the interim dry run gave θ_full ≈ 1,165°. The whol
   - Measured (`scripts/measure_run_up.py`): each obstacle's gap when it first becomes the nearest looming object, along the bot's path on the 50 cube training levels.
   - **What counts as a new approach (agreed 2026-10-31):** only a continuation of the same object is left out, i.e. a column touching the previous looming one with the same bottom and top (e.g. the second column of a two-wide block, 800 of 2,462). A touching column with a different top or bottom (a staircase step) is a new approach.
   - **Result: P10 30, median 245, P90 628 units** (n = 1,662). The dry run below used 270, from a first definition that also left out staircase steps (P10 115, median 270, P90 719). Counting every column gives 29 / 138 / 480.
-  - **The P10 can't be a calibration start:** at 30 units a 30-unit spike already subtends ~53°, past the 39° target. The P10 sensitivity check needs another lower point (to agree).
+  - **The P10 can't be a calibration start:** at 30 units a 30-unit spike already subtends ~53°, past the 39° target.
+  - **Agreed (2026-10-31): the official calibration starts at 245 units** (the median, by the agreed rule, so not a choice). **Sensitivity is reported at the P25 (135 units) and the P90 (628 units)**, in place of the P10. The P25 had to be comfortably above the 39° point of a single block (~42 units, so ≥ ~60), and it is.
+  - **Short run-ups:** **10.7%** of approaches start with the object already at or past 39° (after landings and staircase steps), so the fly can't respond "at 39°" there. The Step 2 death analysis adds **(c) short run-up** to D44's (a)/(b). The ideal 39° fly has no (c) deaths on the 50 training levels: it presses at once and clears them. The class matters for the real fly, which responds later.
   - Our earlier 600 is longer than 90% of real run-ups, so the first dry run's θ_full ≈ 1,165° came from an unusually long approach.
 - **Dry run result (2026-10-31; interim subcircuit, R × f, R = 150 Hz, 10 trials per point, θ_full 90–540°, start gaps 270 / 600 / 1,200 / 115 / 719):**
 
@@ -612,5 +614,5 @@ Still open:
 
 - Subcircuit rule: decided in D36 (recipe) and D37 (cascade trials left out, tuning-time limit). The interim neuron list is built in J5; the final one after T4.
 - Brain time, input encoding, output rule and the cube dials: decided in T4 (D40–D43). Ship mode is decided in Step 5.
-- The cube encoding's rates: R × f, adopted in D45 (D41's text is updated after the von Reyn et al. 2017 check). Still to agree: the lower point for the start-gap sensitivity check (the P10, 30 units, is past the target).
+- The cube encoding's rates: R × f, adopted in D45 (D41's text is updated after the von Reyn et al. 2017 check). The whole-brain calibrations (R × f and flat R, start gap 245) are next, then the recruitment runs.
 - Closed-loop simulation: resolved for now by D17 (Brian2 runtime with `run_frames`). Our own reimplementation of the same equations (e.g. PyTorch, validated against Brian2) stays an option if subcircuit runs are still too slow, or for the GPU phase.

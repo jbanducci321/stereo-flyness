@@ -3,8 +3,9 @@
 The ideal fly presses on every tick after one where the nearest looming object's θ reaches a
 fixed threshold (one tick late, as in D40/D42). At the calibration target (39°, D43) it is the
 reference the real runs are read against: what a fly whose Giant Fiber fires exactly at 39°
-would do with this encoding. Each death is classified (a) invisible to the encoding or (b)
-visible, but the threshold is the wrong moment to jump.
+would do with this encoding. Each death is classified (a) invisible to the encoding, (b)
+visible, but the threshold is the wrong moment to jump, or (c) short run-up: the object was
+already past the threshold when it started looming (D45).
 
 `--sweep` also tries other fixed thresholds. That shows whether 39° is a fair ceiling or whether
 another moment would clear more. It's a check, never a way to pick a threshold (D43 fixes 39°).
@@ -27,7 +28,7 @@ import numpy as np
 import pandas as pd
 
 from analyse_pathway_tests import md_table
-from inspect_encoding import INVISIBLE, LEVELS, THRESHOLD_DEG, job, threshold_fly
+from inspect_encoding import INVISIBLE, LEVELS, SHORT_RUN_UP, THRESHOLD_DEG, job, threshold_fly
 from stereo_flyness.game.suites import load_level
 from stereo_flyness.interface.encoding import SIDES, TYPES, CubeEncoder
 
@@ -47,7 +48,7 @@ def run(names, thresholds, modes) -> pd.DataFrame:
                 cause = r["cause"] or ""
                 rows.append({"level": name, "mode": mode, "threshold": th, "completed": r["completed"],
                              "progress": round(r["progress"], 3), "death": r["death"],
-                             "class": None if r["completed"] else ("a" if cause.startswith(INVISIBLE) else "b"),
+                             "class": None if r["completed"] else ("a" if cause.startswith(INVISIBLE) else "c" if cause.startswith(SHORT_RUN_UP) else "b"),
                              "cause": r["cause"]})
     return pd.DataFrame(rows)
 
@@ -89,7 +90,8 @@ def main() -> None:
     for mode in ("collision", "all"):
         dm = deaths[deaths["mode"] == mode]
         lines.append(f"- {mode}: {len(dm)} deaths, (a) invisible {int((dm['class'] == 'a').sum())}, "
-                     f"(b) wrong moment {int((dm['class'] == 'b').sum())}")
+                     f"(b) wrong moment {int((dm['class'] == 'b').sum())}, "
+                     f"(c) short run-up {int((dm['class'] == 'c').sum())}")
     lines += ["", md_table(deaths[["level", "mode", "progress", "cause"]], 2)]
     if args.sweep:
         lines += ["", "## Threshold sweep (check only; 39° is fixed by D43)\n"]

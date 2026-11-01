@@ -16,7 +16,8 @@ Usage:
     uv run python scripts/calibrate_theta_full.py --network interim --trials 5          # dry run
     uv run python scripts/calibrate_theta_full.py --network interim --rate-scaling \\
         --start-gap 600 1200 270 --grid 45 90 180 360 720 1440 --trials 10            # R x f dry run
-    uv run python scripts/calibrate_theta_full.py --network whole_brain --trials 10     # official
+    uv run python scripts/calibrate_theta_full.py --network whole_brain --rate-scaling --trials 10  # official
+    uv run python scripts/calibrate_theta_full.py --network whole_brain --trials 10     # flat R (comparison 1)
 
 Writes results/calibration/<network>/gap<gap>_R<R>[_scaled]/ (git-ignored): one recorded run
 per θ_full x trial, results.csv and report.md, plus checks_R<R>[_scaled].md for several gaps.
@@ -155,8 +156,9 @@ def main() -> None:
     parser.add_argument("--network", default="interim", help="subcircuit name, or whole_brain")
     parser.add_argument("--trials", type=int, default=5)
     parser.add_argument("--rate", type=float, default=150.0)
-    parser.add_argument("--start-gap", type=float, nargs="+", default=[600.0],
-                        help="units from the eye to the spike at the start (several allowed)")
+    parser.add_argument("--start-gap", type=float, nargs="+", default=[245.0],
+                        help="units from the eye to the spike at the start (several allowed); "
+                             "245 = the median run-up of the cube training levels (D45)")
     parser.add_argument("--grid", type=float, nargs="+", default=GRID, help="θ_full values, degrees")
     parser.add_argument("--rate-scaling", action="store_true", help="driven neurons fire at R x f (proposed)")
     parser.add_argument("--first-trial", type=int, default=0,
