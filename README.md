@@ -48,6 +48,13 @@ These are ours, not the fly's, and every result should be read with them in mind
 - Stereo Madness is held out: nothing is tuned on it, and it's played once at the end.
 - Replays show the recorded activity unaltered, say they are replays of a simulation, and show our input separately from the fly's own spikes.
 
+### Choices and limits we state
+
+- **What the fly "sees" is our encoding** (D41): the nearest obstacle's angular size drives a growing patch of LC4/LPLC2 neurons. The patch shape and its full size (θ_full) are geometric assumptions, not measured receptive fields.
+- **Only obstacles on a collision course loom.** Ceilings don't, which happens to help the cube, and obstacles below the cube stop looming mid-jump.
+- **Objects the cube lands onto are invisible to the encoding.** The Giant Fiber escape is a takeoff response to things approaching head-on or from the side; landing on something is a different behaviour. So a spike right after an obstacle can't be anticipated. This causes most of the deaths of a fly that jumps exactly at the fly's threshold (D44).
+- **The model's Giant Fiber fires at 100–200 Hz while driven**, against one or two spikes per loom in a real fly. Our jump rule takes the first spike (D42).
+
 ## Plan
 
 0. Setup: environment, data, reproduce a Shiu et al. result, find the target neurons, benchmark.

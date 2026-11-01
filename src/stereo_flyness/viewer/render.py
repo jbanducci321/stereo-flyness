@@ -101,7 +101,28 @@ def render_frame(surface: pygame.Surface, timeline: Timeline, tick: int) -> Came
         _draw_death(surface, cam, timeline.at_tick(timeline.death_tick))
     else:
         _draw_player(surface, cam, view)
+    draw_driver_label(surface, timeline)
     return cam
+
+
+DRIVER_LABELS = {  # hard rule 10, D19: a replay always says who controlled the cube
+    "fly": "SIMULATION REPLAY: the cube is controlled by the fly brain model",
+    "bot": "BOT-DRIVEN: the bot controls the cube; the brain only watches. Not the fly playing",
+}
+_font = {}
+
+
+def draw_driver_label(surface: pygame.Surface, timeline: Timeline) -> None:
+    """Who controlled the cube, drawn on every frame of a brain run (overlay or not)."""
+    label = DRIVER_LABELS.get(getattr(timeline, "driver", None))
+    if label is None:
+        return
+    if "f" not in _font:
+        pygame.font.init()
+        _font["f"] = pygame.font.SysFont("consolas", 18)
+    colour = COLOURS["death"] if timeline.driver == "bot" else COLOURS["ground_line"]
+    text = _font["f"].render(label, True, colour)
+    surface.blit(text, (16, surface.get_height() - 30))
 
 
 def _visible_boxes(timeline: Timeline, cam: Camera) -> list[Box]:

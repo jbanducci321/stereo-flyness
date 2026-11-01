@@ -1,0 +1,18 @@
+# The final subcircuit (Step 2.7, D36 + D37 + D43): the interim recipe plus every neuron active in
+# the whole-brain, bot-driven recruitment runs of the real encoding (scripts/run_recruitment.py),
+# before any stuck flag. Then every neuron with >= 30 synapses onto a recruited neuron, plus every
+# pathway-test neuron. Probes (P1-P7) never build it; they validate it (D36).
+#
+# Set RECRUITMENT_DIR below once the calibrated theta_full is logged and the batch has run:
+# results/recruitment/whole_brain/theta<calibrated theta_full>
+name = "final"
+description = "D36 + D37 + D43: recruited by game inputs and the real encoding + their >= 30-synapse inputs"
+
+[[include]]
+pathway_tests = true
+
+[[include]]
+active = { experiments = ["E1", "E2", "E3", "E5b", "E5c", "S1", "S2", "S3"], signs = ["original", "corrected"], exclude_cascades = true, recruitment = "RECRUITMENT_DIR" }
+
+[[include]]
+hops = { from_active = { experiments = ["E1", "E2", "E3", "E5b", "E5c", "S1", "S2", "S3"], signs = ["original", "corrected"], exclude_cascades = true, recruitment = "RECRUITMENT_DIR" }, n = 1, direction = "in", min_synapses = 30 }

@@ -17,6 +17,7 @@ given with --level. Replays of Stereo Madness are RobTop-derived and stay in git
 """
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -47,7 +48,9 @@ def main() -> int:
     if level_path is None or not level_path.exists():
         print(f"Can't find the level for '{log.summary.level}'. Pass it with --level.")
         return 1
-    timeline = Timeline(Level.load(level_path), log)
+    run_info = Path(args.run) / "run.json"  # brain runs say who drove the cube (fly_log)
+    driver = json.loads(run_info.read_text(encoding="utf-8")).get("driver") if run_info.exists() else None
+    timeline = Timeline(Level.load(level_path), log, driver=driver)
 
     if args.export:
         out = args.out or ROOT / "results" / "replays" / f"{args.run.name}.mp4"

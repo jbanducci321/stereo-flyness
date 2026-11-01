@@ -140,6 +140,78 @@ def test_run_frames_matches_step_loop(connectome):
     assert float(fast.t) == pytest.approx(float(looped.t))
 
 
+TICK = 1000 / 240 * ms  # one game physics tick (D40)
+
+
+def frame_steps_seen(stepper, n, frame, rates=None, split=None):
+    """Run `n` exact frames; return the time steps each frame lasted and its counts."""
+    ends, counts = [], []
+    rates = rates or [100] * n
+    stepper.set_rate("drive", rates[0] * Hz)
+
+    def on_frame(i, c):
+        ends.append(int(round(float(stepper.neurons.t / (0.1 * ms)))))  # neuron steps run so far
+        counts.append(c)
+        if i + 1 < len(rates):
+            stepper.set_rate("drive", rates[(len(counts)) % len(rates)] * Hz)
+
+    for part in split or [n]:
+        stepper.run_frames(part, frame, on_frame, exact=True)
+    steps = np.diff([0, *ends]).tolist()
+    return steps, counts
+
+
+def test_exact_frames_alternate_42_42_41_without_drift(connectome):
+    """D40: 240 frames of one game tick take exactly 1 s of brain time."""
+    st = make_stepper(connectome)
+    steps, counts = frame_steps_seen(st, 240, TICK)
+    assert len(counts) == 240
+    assert set(steps) == {41, 42} and steps[:6] == [42, 42, 41, 42, 42, 41]
+    assert all(sum(steps[i:i + 3]) == 125 for i in range(0, 240, 3))  # 12.5 ms per 3 ticks
+    assert float(st.t / second) == pytest.approx(1.0)
+
+
+def test_exact_frames_match_a_step_loop(connectome):
+    """Exact frames give the same spikes as step() calls of 42/42/41 steps, rate changes included."""
+    rates = [100, 100, 0, 200, 200, 0, 100, 150, 0, 100]
+    fast = make_stepper(connectome)
+    steps, got = frame_steps_seen(fast, len(rates), TICK, rates=rates)
+
+    looped = make_stepper(connectome)
+    for i, (n, r) in enumerate(zip(steps, rates)):
+        looped.set_rate("drive", r * Hz)
+        e = looped.step(n * 0.1 * ms)
+        for name in WATCH:
+            assert e[name].sum() == got[i][name].sum(), (i, name)
+
+
+def test_exact_frames_can_be_split_across_calls(connectome):
+    """Several run_frames calls continue the same frame grid as one long call."""
+    one_steps, one = frame_steps_seen(make_stepper(connectome), 12, TICK)
+    split_steps, split = frame_steps_seen(make_stepper(connectome), 12, TICK, split=[5, 7])
+    assert split_steps == one_steps
+    assert [total([c], "relay") for c in split] == [total([c], "relay") for c in one]
+
+
+def test_exact_frames_must_start_on_a_frame_boundary(connectome):
+    st = make_stepper(connectome)
+    st.step(1 * ms)  # 10 steps: not a multiple of 41.667
+    with pytest.raises(ValueError, match="frame boundary"):
+        st.run_frames(3, TICK, lambda i, c: None, exact=True)
+
+
+def test_exact_and_rounded_agree_for_whole_step_frames(connectome):
+    ga, gb = [], []
+    a = make_stepper(connectome)  # build and run one at a time: they share Brian2's RNG
+    a.set_rate("drive", 150 * Hz)
+    a.run_frames(6, 20 * ms, lambda i, c: ga.append(c), exact=True)
+    b = make_stepper(connectome)
+    b.set_rate("drive", 150 * Hz)
+    b.run_frames(6, 20 * ms, lambda i, c: gb.append(c))
+    assert [total([c], "relay") for c in ga] == [total([c], "relay") for c in gb]
+    assert float(a.t) == pytest.approx(float(b.t))
+
+
 def test_unknown_ids_raise(connectome):
     with pytest.raises(KeyError, match="999"):
         BrainStepper(*connectome, inputs={"drive": [999]}, watch=WATCH)
