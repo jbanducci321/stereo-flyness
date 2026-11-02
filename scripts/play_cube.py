@@ -11,7 +11,7 @@ Usage:
     uv run python scripts/play_cube.py cube-easy-0 --bot      # bot drives, brain watches (D43)
 
 Writes results/closed_loop/<network>/[<suite>/]<settings>/<driver>/<level>/ (the suite folder only
-for held_out; settings end in `_flat` without `--rate-scaling`), a recorded run (`fly_log`):
+for held_out; settings end in `_flat` without `--rate-scaling`, then any `--tag`), a recorded run (`fly_log`):
 the game's run log (replayable), brain.parquet, spikes.npz and run.json (git-ignored).
 """
 
@@ -69,6 +69,7 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--jobs", type=int, default=1)
     parser.add_argument("--bot", action="store_true", help="the bot drives; the brain only watches (D43)")
+    parser.add_argument("--tag", default="", help="suffix for the settings folder, to keep a set of runs separate")
     args = parser.parse_args()
     sys.stdout.reconfigure(encoding="utf-8")
 
@@ -81,7 +82,7 @@ def main() -> None:
     stuck_ids = load_stuck_state(ROOT / cfg["cascade"]["stuck_state"])  # restricted to the network (D38)
     # Held-out levels reuse training names (cube-easy-0, ...), so they get their own folder.
     base = OUT / args.network if args.suite == "training" else OUT / args.network / args.suite
-    out = base / f"{args.theta_full:g}deg_{args.mode}_R{args.rate:g}{'' if args.rate_scaling else '_flat'}"
+    out = base / f"{args.theta_full:g}deg_{args.mode}_R{args.rate:g}{'' if args.rate_scaling else '_flat'}{args.tag}"
     summaries = Parallel(n_jobs=args.jobs)(
         delayed(one)(n, args.suite, path_comp, con_paths["original"], patches, gf, stuck_ids, args, out, args.seed)
         for n in args.levels)

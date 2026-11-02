@@ -1,0 +1,18 @@
+# Step 3: tuning R on the cube. PROPOSAL (docs/notes/step3_proposal.md), not agreed yet:
+# nothing here is run until it's logged in docs/decisions.md.
+# Run with scripts/step3_grid.py; scored by scripts/step3_report.py.
+#
+# Fly-driven closed loop on all 50 cube training levels, baseline encoding (collision course,
+# R x f, theta_full from configs/recruitment.toml, not revisited: D43). Final subcircuit (D46).
+
+network = "final"
+suite = "training"
+seed = 0
+rates_hz = [25, 50, 75, 100, 150, 200]   # within D43's range, 25-200
+default_rate_hz = 150.0                   # the Step 2 value; ties go to the rate closest to it (log scale)
+tie_margin = 0.01                         # mean progress within 1 percentage point of the best counts as tied
+
+# Open-loop check before the grid (proposal section 2): the calibration loom at each rate.
+check_trials = 10
+check_start_gap = 245.0
+fly_threshold_deg = [25.0, 53.0]          # 39 +/- 14 degrees (von Reyn 2014, D43); flagged, not used to choose

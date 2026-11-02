@@ -57,7 +57,9 @@ The ideal fly does best with a later threshold (45–50° complete 22/50; 20–3
 3. One seed, or extra seeds? With one seed, a single level's outcome can flip on a small timing shift (D44). Options: two seeds on the training grid (600 runs, two nights), or extra held-out seeds for both the tuned and the Step 2 runs (e.g. seeds 1–2, 80 runs, ~2 h) to show how much of the held-out difference is noise. (Suggestion: one seed for the grid, extra held-out seeds for both.)
 4. Is the 1-point tie margin reasonable, and is "closest to 150" the right tie-break (rather than "closest to calibrated 39°" from §2, which should give the same order)?
 
-## 8. Code needed, after this is agreed
+## 8. Code (written, not run)
 
-- A small grid script that runs `play_cube.py` for each R on the 50 levels and a report that scores them by §4 (no new science code; `play_cube.py --rate` already exists).
-- The held-out run reuses `play_cube.py --suite held_out` and `step2_report.py` with the tuned setting added as a column.
+- `configs/step3.toml` holds the settings above; changing an answer to §7 is an edit there.
+- `scripts/step3_grid.py check` runs §2, and `scripts/step3_grid.py grid` runs §3. Both call the existing scripts once per R, into their own `_step3` folders, so the D46 records at R = 150 aren't overwritten.
+- `scripts/step3_report.py` scores the grid by §4 (`stereo_flyness.experiments.tuning.pick_rate`, tested), and picks nothing until every R has all 50 levels.
+- The held-out run reuses `play_cube.py --suite held_out` and `step2_report.py` with the tuned setting added as a column (not written yet).
