@@ -16,7 +16,7 @@ with no sweep: it is run once, together with the Step 2 baseline (D44), and neve
 Usage:
     uv run python scripts/ideal_fly.py                       # the 10 recruitment levels (D43)
     uv run python scripts/ideal_fly.py --all --sweep 20 80 5 # all 50 cube training levels
-    uv run python scripts/ideal_fly.py --suite held_out      # Step 2 only: the 20 held-out levels
+    uv run python scripts/ideal_fly.py --suite held_out --quiet  # Step 2 only: the 20 held-out levels, blind
 
 Writes results/ideal_fly/<name>.csv and .md (git-ignored).
 """
@@ -62,6 +62,7 @@ def main() -> None:
                         help="also try these fixed thresholds (degrees)")
     parser.add_argument("--suite", default="training", choices=["training", "held_out"],
                         help="held_out: Step 2 only, all 20 cube levels at 39° (D44)")
+    parser.add_argument("--quiet", action="store_true", help="blind runs (D48, D33): write the files, show nothing")
     args = parser.parse_args()
     sys.stdout.reconfigure(encoding="utf-8")
     if args.suite == "held_out" and args.sweep:
@@ -111,7 +112,8 @@ def main() -> None:
                      f"{int((best['mode'] == 'collision').sum())}/{len(names)}, all "
                      f"{int((best['mode'] == 'all').sum())}/{len(names)}.")
     (OUT / f"{tag}.md").write_text("\n".join(lines), encoding="utf-8")
-    print("\n".join(lines))
+    print(f"Wrote {(OUT / tag).relative_to(ROOT)}.csv and .md (outcomes not shown: --quiet)" if args.quiet
+          else "\n".join(lines))
 
 
 if __name__ == "__main__":
