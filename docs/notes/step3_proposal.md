@@ -57,6 +57,19 @@ The ideal fly does best with a later threshold (45–50° complete 22/50; 20–3
 3. One seed, or extra seeds? With one seed, a single level's outcome can flip on a small timing shift (D44). Options: two seeds on the training grid (600 runs, two nights), or extra held-out seeds for both the tuned and the Step 2 runs (e.g. seeds 1–2, 80 runs, ~2 h) to show how much of the held-out difference is noise. (Suggestion: one seed for the grid, extra held-out seeds for both.)
 4. Is the 1-point tie margin reasonable, and is "closest to 150" the right tie-break (rather than "closest to calibrated 39°" from §2, which should give the same order)?
 
+### Shannyn's answers (2026-11-02), to go into Step 3's decision entry
+
+1. **Flag only**, agreed. Also report the **share of calibration trials that fire** at each R, and put the winner's open-loop first-spike θ in the **headline result**, not only in a flag.
+2. **One grid**, agreed.
+3. **Seeds:** one seed on the grid; **seeds 0–2 on the held-out levels** for both tuned and untuned (matching Step 2, D48). **The tie margin is measured, not guessed:** run R = 150 at seed 1 on the 50 training levels before the grid (50 runs, ~1.5 h); **tie margin = max(1 point, the seed 0 vs seed 1 difference in mean progress at R = 150).**
+4. **Tie-break, reworded:** the tied R whose **open-loop first-spike θ is closest to 39°** (the actual reason; the same order as "closest to 150" if θ rises steadily as R drops, and flagged if it doesn't).
+   - **An R where fewer than half the calibration trials fire ranks last.** If more than one does, they're ranked by how many trials fire (more is better). Their mean θ from the trials that fired still goes in the report, labelled "n of 10 fired".
+
+Three additions:
+- **Death classes per R on the grid** (D48's classes). R can only change (b), (c) and (d) deaths, never (a), so this shows where any gain comes from.
+- **The held-out check uses Step 2's rule for "better"** (paired sign test, p < 0.05), next to the paired difference.
+- **Framing for the write-up:** if the best R is below 150, the fly is jumping later than real flies do, and partly that would make up for the encoding not making slabs loom (D47). Say so, rather than present it as the fly getting better.
+
 ## 8. Code (written, not run)
 
 - `configs/step3.toml` holds the settings above; changing an answer to §7 is an edit there.
