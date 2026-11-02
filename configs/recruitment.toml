@@ -12,11 +12,12 @@ levels = ["cube-easy-0", "cube-easy-1", "cube-easy-2", "cube-easy-3",
           "cube-medium-0", "cube-medium-1", "cube-medium-2", "cube-medium-3",
           "cube-hard-0", "cube-hard-1"]
 
-# The calibrated theta_full (D43), filled in once the whole-brain calibration is logged.
-# Until then the script refuses to run unless --theta-full is given.
-theta_full_deg = 0.0
+# The calibrated theta_full values (D43, D45): whole brain, R = 150 Hz, start gap 245, 10 trials
+# per value, 2026-10-31 (results/calibration/whole_brain/). Fixed: not revisited in Step 3.
+theta_full_deg = 200.0         # R x f encoding (D45)
+flat_theta_full_deg = 1082.0   # flat-rate encoding, calibrated the same way (comparison 1, pre-D45)
 
 [settings]
-calibrated_rates_hz = [25, 50, 100, 150, 200]   # the Step 3 tuning range, collision-course looming
-uncalibrated_theta_full_deg = 180.0             # comparison 1, at R = 150 Hz
-every_object_looms_rate_hz = 150.0              # comparison 2, calibrated theta_full
+calibrated_rates_hz = [25, 50, 100, 150, 200]   # the Step 3 range (peak per-neuron rate near contact), R x f
+flat_rate_hz = 150.0                            # comparison 1: the pre-D45 encoding (flat R)
+every_object_looms_rate_hz = 150.0              # comparison 2, calibrated theta_full, R x f

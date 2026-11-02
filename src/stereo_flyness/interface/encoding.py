@@ -5,6 +5,8 @@ Every choice here is ours, not the fly's (PROJECT_BRIEF §2):
 - **What it sees is visual cells**, not hitboxes: each object fills the 30 x 30 cell around its
   hitbox centre, so a spike looks 30 units tall. Cells in the same column that touch
   vertically are merged into one object (a two-block wall is one object, 60 units tall).
+  Cells are clipped at the ground (y = 0): the eye can't see below the floor, so a spike sunk
+  into a pit looks only as tall as the part above it (D41 amendment, 2026-11-01).
 - **Which objects loom:** by default only those on a collision course, i.e. overlapping the
   cube's current vertical extent (`mode="collision"`). So ceilings don't loom, and obstacles
   below the cube stop looming mid-jump. `mode="all"` is D43's "every object looms" comparison.
@@ -29,6 +31,7 @@ import numpy as np
 CELL = 30.0  # a grid cell, in level units
 HALF = CELL / 2
 EYE_AHEAD = 15.0  # the cube's front face, from its centre
+GROUND = 0.0  # level y of the floor; visual cells are clipped here
 SIDES = ("right", "left")
 TYPES = ("LC4", "LPLC2")
 _EPS = 1e-6
@@ -44,12 +47,14 @@ class Obstacle:
 
 
 def obstacles(boxes) -> list[Obstacle]:
-    """Visual cells of a level's boxes, with cells in the same column that touch vertically
-    merged. Sorted by front face, then bottom."""
+    """Visual cells of a level's boxes, clipped at the ground (y = 0), with cells in the same
+    column that touch vertically merged. Sorted by front face, then bottom."""
     columns = {}
     for b in boxes:
         cx, cy = (b.x0 + b.x1) / 2, (b.y0 + b.y1) / 2
-        columns.setdefault(round(cx - HALF, 6), []).append((cy - HALF, cy + HALF))
+        if cy + HALF <= GROUND + _EPS:
+            continue  # entirely below the floor: never seen
+        columns.setdefault(round(cx - HALF, 6), []).append((max(cy - HALF, GROUND), cy + HALF))
     out = []
     for x0, cells in columns.items():
         cells.sort()

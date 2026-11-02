@@ -16,7 +16,8 @@ Usage:
     uv run python scripts/calibrate_theta_full.py --network interim --trials 5          # dry run
     uv run python scripts/calibrate_theta_full.py --network interim --rate-scaling \\
         --start-gap 600 1200 270 --grid 45 90 180 360 720 1440 --trials 10            # R x f dry run
-    uv run python scripts/calibrate_theta_full.py --network whole_brain --trials 10     # official
+    uv run python scripts/calibrate_theta_full.py --network whole_brain --rate-scaling --trials 10  # official
+    uv run python scripts/calibrate_theta_full.py --network whole_brain --trials 10     # flat R (comparison 1)
 
 Writes results/calibration/<network>/gap<gap>_R<R>[_scaled]/ (git-ignored): one recorded run
 per θ_full x trial, results.csv and report.md, plus checks_R<R>[_scaled].md for several gaps.
@@ -113,8 +114,11 @@ def checks(results, args) -> None:
     """The bar agreed before the dry run, judged at the first start gap's calibrated θ_full."""
     g0 = args.start_gap[0]
     _, cal, sd = results[g0]
+    if len(args.grid) == 1:  # a check at one fixed θ_full: only the gap shift can be judged
+        cal, sd = args.grid[0], math.nan
     lines = [f"# Encoding checks ({'R x f' if args.rate_scaling else 'flat R'}, network `{args.network}`)\n",
-             f"Judged at the calibrated θ_full from start gap {g0:g}. Bar agreed before the run (2026-10-31).\n"]
+             (f"Judged at the fixed θ_full = {args.grid[0]:g}°." if len(args.grid) == 1 else
+              f"Judged at the calibrated θ_full from start gap {g0:g}.") + " Bar agreed before the run (2026-10-31).\n"]
     if cal is None:
         lines.append("No calibrated θ_full at the first gap: extend the grid.")
     else:
@@ -122,10 +126,14 @@ def checks(results, args) -> None:
         for g, (d, _, _) in results.items():
             per = d.groupby("theta_full")["first_spike_theta"].mean()
             mean_at[g] = at(cal, list(per.index), list(per.values))
-        lines += [f"- θ_full ≈ {cal:,.0f}° (bar ≤ {CHECKS['max_theta_full']:g}°): "
-                  f"**{'pass' if cal <= CHECKS['max_theta_full'] else 'fail'}**",
-                  f"- s.d. at the calibrated value ≈ {sd:.1f}° (bar ≤ {CHECKS['max_sd']:g}°): "
-                  f"**{'needs 2+ trials' if math.isnan(sd) else 'pass' if sd <= CHECKS['max_sd'] else 'fail'}**"]
+        if len(args.grid) == 1:
+            lines.append(f"- gap shift only, at the fixed θ_full = {cal:g}°; trials "
+                         f"{args.first_trial}–{args.first_trial + args.trials - 1} (fresh seeds, judged alone)")
+        else:
+            lines += [f"- θ_full ≈ {cal:,.0f}° (bar ≤ {CHECKS['max_theta_full']:g}°): "
+                      f"**{'pass' if cal <= CHECKS['max_theta_full'] else 'fail'}**",
+                      f"- s.d. at the calibrated value ≈ {sd:.1f}° (bar ≤ {CHECKS['max_sd']:g}°): "
+                      f"**{'needs 2+ trials' if math.isnan(sd) else 'pass' if sd <= CHECKS['max_sd'] else 'fail'}**"]
         a, b = CHECKS["shift_gaps"]
         if a in mean_at and b in mean_at:
             shift = abs(mean_at[a] - mean_at[b])
@@ -138,7 +146,7 @@ def checks(results, args) -> None:
                      + ", ".join(f"{g:g} → {m:.1f}°" for g, m in mean_at.items()))
         for g, (_, c, _) in results.items():
             lines.append(f"- calibrated θ_full from gap {g:g} alone: " + ("none in grid" if c is None else f"{c:,.0f}°"))
-    out = OUT / args.network / f"checks_R{args.rate:g}{'_scaled' if args.rate_scaling else ''}.md"
+    out = OUT / args.network / f"checks_R{args.rate:g}{'_scaled' if args.rate_scaling else ''}{args.tag}.md"
     out.write_text("\n".join(lines), encoding="utf-8")
     print("\n".join(lines))
 
@@ -148,10 +156,14 @@ def main() -> None:
     parser.add_argument("--network", default="interim", help="subcircuit name, or whole_brain")
     parser.add_argument("--trials", type=int, default=5)
     parser.add_argument("--rate", type=float, default=150.0)
-    parser.add_argument("--start-gap", type=float, nargs="+", default=[600.0],
-                        help="units from the eye to the spike at the start (several allowed)")
+    parser.add_argument("--start-gap", type=float, nargs="+", default=[245.0],
+                        help="units from the eye to the spike at the start (several allowed); "
+                             "245 = the median run-up of the cube training levels (D45)")
     parser.add_argument("--grid", type=float, nargs="+", default=GRID, help="θ_full values, degrees")
     parser.add_argument("--rate-scaling", action="store_true", help="driven neurons fire at R x f (proposed)")
+    parser.add_argument("--first-trial", type=int, default=0,
+                        help="number trials from here, for fresh seeds (seed = 1000 x trial + θ_full)")
+    parser.add_argument("--tag", default="", help="suffix for the output folders, to keep a rerun separate")
     parser.add_argument("--jobs", type=int, default=4)
     args = parser.parse_args()
     sys.stdout.reconfigure(encoding="utf-8")
@@ -163,12 +175,12 @@ def main() -> None:
     gf = {"GF_R": cells.ids("DNp01", side="right"), "GF_L": cells.ids("DNp01", side="left")}
     stuck_ids = load_stuck_state(ROOT / cfg["cascade"]["stuck_state"])
     path_comp, con_paths, _ = network(None if args.network == "whole_brain" else args.network)
-    tag = "_scaled" if args.rate_scaling else ""
+    tag = ("_scaled" if args.rate_scaling else "") + args.tag
     outs = {g: OUT / args.network / f"gap{g:g}_R{args.rate:g}{tag}" for g in args.start_gap}
 
     rows = Parallel(n_jobs=args.jobs)(
         delayed(trial)(tf, t, g, path_comp, con_paths["original"], patches, gf, stuck_ids, args, outs[g])
-        for g in args.start_gap for tf in args.grid for t in range(args.trials))
+        for g in args.start_gap for tf in args.grid for t in range(args.first_trial, args.first_trial + args.trials))
     df = pd.DataFrame(rows)
     results = {}
     for g, out in outs.items():

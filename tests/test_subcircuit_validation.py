@@ -99,3 +99,34 @@ def test_paired_cascades():
     sub = {0: 2500, 1: 9000, 2: 2600, 3: 2400}  # the subcircuit runs away in trial 1 instead
     assert paired_cascades(whole, sub, ratio=2, min_extra=5000) == {1, 2}
     assert paired_cascades({0: 5, 1: 5}, {0: 5, 1: 5}, ratio=2, min_extra=5000) == set()
+
+
+def test_approaches_split_on_new_object_and_on_stopping():
+    from stereo_flyness.experiments.subcircuit_validation import approaches
+
+    theta = np.array([0, 5, 10, 20, 8, 12, 0, 0, 3, 4])
+    gap = np.array([np.nan, 30, 20, 10, 40, 30, np.nan, np.nan, 50, 45])  # jump at 4: a new object
+    assert approaches(theta, gap) == [(1, 4), (4, 6), (8, 10)]
+
+
+def test_press_agreement_counts_first_press_per_approach():
+    from stereo_flyness.experiments.subcircuit_validation import press_agreement
+
+    theta = [0, 5, 10, 20, 8, 12, 16, 0, 3, 4, 5, 6]
+    gap = [np.nan, 30, 20, 10, 40, 30, 20, np.nan, 50, 45, 40, 35]
+    # approach 1 (1-4): both press, 1 frame apart; approach 2 (4-7): only the whole brain;
+    # approach 3 (8-12): 3 frames apart. A second press within an approach is ignored.
+    w = pd.DataFrame({"theta_deg": theta, "gap": gap, "fly_press": [0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0]})
+    s = pd.DataFrame({"theta_deg": theta, "gap": gap, "fly_press": [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1]})
+    r = press_agreement(w, s)
+    assert (r["approaches"], r["matched"], r["only_whole"], r["apart"], r["neither"]) == (3, 1, 1, 1, 0)
+    assert r["diffs"] == [1, 3]
+
+
+def test_press_agreement_refuses_different_inputs():
+    from stereo_flyness.experiments.subcircuit_validation import press_agreement
+
+    w = pd.DataFrame({"theta_deg": [0, 5], "gap": [np.nan, 30], "fly_press": [0, 1]})
+    s = pd.DataFrame({"theta_deg": [0, 6], "gap": [np.nan, 30], "fly_press": [0, 1]})
+    with pytest.raises(ValueError):
+        press_agreement(w, s)

@@ -5,15 +5,16 @@ follows the bot's winning path while the brain watches, so every part of each le
 Each run is recorded (`fly_log`) and labelled "bot". Finished runs are skipped, so an
 interrupted batch resumes where it stopped.
 
-The calibrated θ_full (D43) must be logged in the config or passed with --theta-full.
+Both calibrated θ_full values (R x f and the flat-rate comparison; D43, D45) must be logged in
+the config or passed with --theta-full and --flat-theta-full.
 
 Usage:
-    uv run python scripts/run_recruitment.py --dry-run --theta-full 1165     # list runs, estimate time
+    uv run python scripts/run_recruitment.py --dry-run --theta-full 204 --flat-theta-full 1165  # list runs, estimate time
     uv run python scripts/run_recruitment.py --jobs 4                         # the overnight batch
-    uv run python scripts/run_recruitment.py --network interim --theta-full 1165 \\
+    uv run python scripts/run_recruitment.py --network interim --theta-full 204 --flat-theta-full 1165 \\
         --levels cube-easy-0 --max-seconds 3                                  # quick smoke test
 
-Writes results/recruitment/<network>/theta<θ_full>/<setting>/<level>/ and manifest.csv.
+Writes results/recruitment/<network>/theta<θ_full>_flat<θ_full>/<setting>/<level>/ and manifest.csv.
 """
 
 import argparse
@@ -53,7 +54,7 @@ def one(level_name, setting, cfg, path_comp, path_con, patches, gf, stuck_ids, o
     if is_done(folder):
         return {"level": level_name, "setting": setting.name, "skipped": True}
     level, bot = load_level(LEVELS, job(level_name, cfg["suite"]))
-    enc = CubeEncoder(level, patches, setting.theta_full_deg, setting.rate_hz, setting.mode)
+    enc = CubeEncoder(level, patches, setting.theta_full_deg, setting.rate_hz, setting.mode, setting.rate_scaling)
     seed = run_seed(cfg["base_seed"], level_name, setting)
     st = BrainStepper(path_comp, path_con, inputs={"loom": enc.ids}, watch=gf, seed=seed)
     inputs = bot.tick_inputs
@@ -71,7 +72,8 @@ def one(level_name, setting, cfg, path_comp, path_con, patches, gf, stuck_ids, o
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--theta-full", type=float, help="calibrated θ_full (overrides the config)")
+    parser.add_argument("--theta-full", type=float, help="calibrated θ_full, R x f (overrides the config)")
+    parser.add_argument("--flat-theta-full", type=float, help="calibrated θ_full, flat R (overrides the config)")
     parser.add_argument("--network", help="override the config's network (e.g. interim for a smoke test)")
     parser.add_argument("--levels", nargs="+", help="only these levels")
     parser.add_argument("--settings", nargs="+", help="only these settings, by name")
@@ -83,22 +85,24 @@ def main() -> None:
 
     cfg = tomllib.loads(CONFIG.read_text())
     theta = args.theta_full or cfg["theta_full_deg"]
-    sets = settings(cfg, theta)
+    flat = args.flat_theta_full or cfg["flat_theta_full_deg"]
+    sets = settings(cfg, theta, flat)
     if args.settings:
         sets = [s for s in sets if s.name in args.settings]
     levels = args.levels or cfg["levels"]
     net_name = args.network or cfg["network"]
     smoke = args.max_seconds is not None or net_name != cfg["network"]
-    out = OUT / (net_name + ("_smoke" if smoke else "")) / f"theta{theta:g}"
+    out = OUT / (net_name + ("_smoke" if smoke else "")) / f"theta{theta:g}_flat{flat:g}"
     todo = [(lv, s) for s in sets for lv in levels if not is_done(run_dir(out, lv, s))]
 
     x = X_REAL_TIME.get(net_name, 9.0) * (2 if args.jobs > 1 else 1)
     secs = args.max_seconds or 30.0
     est_h = len(todo) * secs * x / max(1, args.jobs) / 3600
     print(f"{len(sets)} settings x {len(levels)} levels; {len(todo)} runs to do on {net_name} "
-          f"(θ_full = {theta:g}°), roughly {est_h:.1f} h with {args.jobs} at once.")
+          f"(θ_full = {theta:g}° R x f, {flat:g}° flat), roughly {est_h:.1f} h with {args.jobs} at once.")
     for s in sets:
-        print(f"  {s.name}: θ_full {s.theta_full_deg:g}°, R {s.rate_hz:g} Hz, {s.mode}")
+        print(f"  {s.name}: θ_full {s.theta_full_deg:g}°, R {s.rate_hz:g} Hz, {s.mode}, "
+              f"{'R x f' if s.rate_scaling else 'flat R'}")
     if args.dry_run or not todo:
         return
 

@@ -3,8 +3,8 @@
 Each run plays one training level bot-driven (the brain only watches) under one encoding
 setting. The neurons that fire in these runs join the final subcircuit's recruited set, so it
 covers every setting Steps 2 and 3 will use. Settings come from configs/recruitment.toml:
-- the calibrated θ_full at each R of the Step 3 tuning range (collision-course looming);
-- θ_full = 180° at R = 150 Hz (comparison 1);
+- the calibrated θ_full at each R of the Step 3 tuning range (collision-course looming, R x f);
+- comparison 1, the pre-D45 encoding: flat R = 150 Hz at its own calibrated θ_full (D45);
 - every object looms, calibrated θ_full, R = 150 Hz (comparison 2).
 
 A run that enters the stuck state contributes only the frames before the D38 flag starts.
@@ -24,19 +24,23 @@ class Setting:
     theta_full_deg: float
     rate_hz: float
     mode: str  # "collision" or "all" (D41)
+    rate_scaling: bool  # driven neurons fire at R x f (D45) or at R (the pre-D45 encoding)
 
 
-def settings(cfg: dict, theta_full_deg: float) -> list[Setting]:
-    """The 7 encoding settings of D43, for a calibrated `theta_full_deg`."""
-    if not theta_full_deg or theta_full_deg <= 0:
-        raise ValueError("The calibrated theta_full is needed (D43): log it in configs/recruitment.toml "
-                         "or pass --theta-full.")
+def settings(cfg: dict, theta_full_deg: float, flat_theta_full_deg: float) -> list[Setting]:
+    """The 7 encoding settings of D43/D45, for the calibrated θ_full of the R x f encoding and of
+    the flat-rate (pre-D45) encoding."""
+    for value, name in ((theta_full_deg, "theta_full"), (flat_theta_full_deg, "flat_theta_full")):
+        if not value or value <= 0:
+            raise ValueError(f"The calibrated {name} is needed (D43, D45): log it in configs/recruitment.toml "
+                             f"or pass --{name.replace('_', '-')}.")
     s = cfg["settings"]
-    out = [Setting(f"calibrated_R{r:g}", theta_full_deg, float(r), "collision") for r in s["calibrated_rates_hz"]]
-    out.append(Setting(f"theta{s['uncalibrated_theta_full_deg']:g}_R150", s["uncalibrated_theta_full_deg"], 150.0,
-                       "collision"))
+    out = [Setting(f"calibrated_R{r:g}", theta_full_deg, float(r), "collision", True)
+           for r in s["calibrated_rates_hz"]]
+    out.append(Setting(f"preD45_flat_R{s['flat_rate_hz']:g}", flat_theta_full_deg, s["flat_rate_hz"], "collision",
+                       False))
     out.append(Setting(f"all_R{s['every_object_looms_rate_hz']:g}", theta_full_deg, s["every_object_looms_rate_hz"],
-                       "all"))
+                       "all", True))
     return out
 
 
