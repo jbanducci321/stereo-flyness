@@ -687,7 +687,7 @@ Found by Shannyn in her encoding check (`scripts/inspect_encoding.py cube-easy-0
 - **Ceilings:** cube levels have no ceiling boundary; ceilings exist only in ship mode, which isn't encoded (nothing looms). Clipping at a ship ceiling is a Step 5 question. Overhead objects in cube mode don't reach below the floor, so the fix doesn't touch them.
 
 **D48. Step 2 analysis plan: what is run and how it's judged, fixed before the held-out runs** (2026-11-02)
-Shannyn's plan (`docs/notes/step2_analysis_plan.md`, PR #24), with the amendments agreed by both on 2026-11-02. **Written before any held-out run; the held-out levels are unseen** (D44). Everything below is fixed: nothing is changed, re-run or dropped after the results are seen.
+Shannyn's plan (`docs/notes/step2_analysis_plan.md`, PR #24), with the amendments agreed by both on 2026-11-02, including her review of the first draft (random-press rate per tick played, the (b) note, the (d) split, "equal" and the noise line). **Written before any held-out run; the held-out levels are unseen** (D44). Everything below is fixed: nothing is changed, re-run or dropped after the results are seen.
 - **What is run** on the 20 held-out cube levels (easy 8, medium 8, hard 4), on the final subcircuit (D46), with D47's encoding:
 
   | Run | Settings | Seeds | Runs |
@@ -697,7 +697,7 @@ Shannyn's plan (`docs/notes/step2_analysis_plan.md`, PR #24), with the amendment
   | Comparison 2 (every object looms) | R × f, θ_full = 200°, R = 150 Hz | 0 | 20 |
   | Ideal 39° fly (D44) | No brain; presses one tick after θ ≥ 39° (collision course, and every object looms) | – | 20 + 20 |
   | **Never press** (the floor) | No brain, no presses | – | 20 |
-  | **Random presses** (chance) | No brain. Each tick is a press with probability p, where p is the baseline's presses per tick on that level (its 3 seeds pooled) | draws 0–9 | 200 |
+  | **Random presses** (chance) | No brain. Each tick is a press with probability p = the baseline's **presses ÷ ticks played** on that level, its 3 seeds pooled (ticks played, because the fly stops pressing when it dies). A level where the baseline never presses gives p = 0, the same as the floor | draws 0–9 | 200 |
 
   - **Why three seeds:** the input is Poisson, so a frozen fly is a distribution, not one outcome. How often a level gives the same outcome is itself a result (how reliable the fly is). "No reruns" still holds, because the seeds are fixed here.
   - The no-brain references are deterministic and cheap. Without them we can't say the fly's timing beats not trying, or chance.
@@ -712,16 +712,26 @@ Shannyn's plan (`docs/notes/step2_analysis_plan.md`, PR #24), with the amendment
   | **(s) stuck** | The brain was in the stuck state (D38) | The stuck flag was on at the time of death |
   | **(a) invisible** | The killing object never loomed before contact | As in D44 (landed onto, or below the cube) |
   | **(c) short run-up** | It was already too big when it appeared | Its θ was ≥ 39° when it first became the nearest looming object (D45) |
-  | **(b) the encoding's limit** | Visible, but jumping at 39° doesn't clear it either | **Replay:** from the tick the killing object first became the nearest looming one, the run's own presses up to then and the ideal 39° policy after. If the ideal fly also dies before passing the object's far edge, it's (b) |
-  | **(d) the fly's timing** | The ideal fly would have survived; this fly didn't | Everything else, split by the fly's first press in that approach against the ideal fly's in the replay: **(d1)** earlier, **(d2)** later, **(d3)** no press |
+  | **(b) the encoding's limit** | Visible, but jumping at 39° doesn't clear it either | **Replay:** from the tick the killing object first became the nearest looming one, the run's own presses up to then and the ideal 39° policy after. If the ideal fly also dies before passing the object's far edge (the merged column's far edge, for tall objects), it's (b) |
+  | **(d) the fly's timing** | The ideal fly would have survived; this fly didn't | Everything else, split by the first difference in jumps (below): **(d1)** earlier, **(d2)** later, **(d3)** no jump |
 
   - The replay is exact: the game is deterministic, so the run's own presses rebuild the state, and the ideal policy needs no brain.
+  - **(b) records what killed the ideal fly in the replay.** It can die on a different, invisible object before the far edge (e.g. landing on a ground spike). That is still (b), since the encoding can't save it either, but the report notes it, so "39° is the wrong moment for this object" can be told apart from "39° jumps into something else".
+  - **How (d) is split** (Shannyn, 2026-11-02; replaces "the first press"). The Giant Fiber fires in bursts and the cube only jumps from the ground, so the first press isn't always the one that matters: the fly and the ideal fly can press on the same first tick and the fly still die. So only **effective presses** are compared: presses made while grounded, i.e. ones that start a jump. Going tick by tick from the replay start, find the **first tick where the fly's and the ideal fly's jumps differ**:
+    - **(d1) earlier:** the fly jumps there and the ideal fly doesn't;
+    - **(d2) later:** the ideal fly jumps there and the fly doesn't, but the fly jumps later in the approach;
+    - **(d3) no jump:** the fly never jumps in that approach.
+
+    The game is deterministic and the outcomes differ, so there is always a first difference, and every (d) death gets exactly one class.
   - **(d) is the class that's about the brain.** (a), (c) and (b) are limits of the encoding or of the 39° target, the same for any fly.
 - **Timing, per obstacle approach** (D46's definition):
   - **θ at the first Giant Fiber spike**, as a distribution against the calibration (39°, model s.d. 8.5°) and the real fly (39° ± 14°). Closed loop should match the open-loop calibration; if it doesn't, that's a finding.
   - **Press timing against the press window** where it's known (single spikes: gap 1–73 units).
   - **Presses with nothing looming** are counted (should be ~0: no input gives no spikes, D30).
-- **Comparisons are paired by level** (against the baseline at seed 0): better, worse or the same progress. **A setting is only called "better" if a two-sided sign test across levels gives p < 0.05** (equal levels left out); otherwise "no clear difference". With 20 levels, small differences won't be distinguishable, and that's said plainly.
+- **Comparisons are paired by level** (against the baseline at seed 0): better, worse or equal. **A setting is only called "better" if a two-sided sign test across levels gives p < 0.05** (equal levels left out); otherwise "no clear difference". With 20 levels, small differences won't be distinguishable, and that's said plainly.
+  - **"Equal" means both runs died on the same killing object, or both completed** (Shannyn, 2026-11-02). Otherwise the one that got further is better. So better or worse means getting past a different number of obstacles, not dying on the same obstacle a few ticks apart.
+  - **Noise line (reported only, changes no rule):** the same sign test for baseline seed 1 vs seed 0 and seed 2 vs seed 0. It shows how many level differences one change of seed makes by itself, as context for the comparisons.
+  - The two comparisons are tested separately, with no correction for testing two; the write-up says so.
   - Comparison 1 is read as "does rate scaling change how the fly plays?", not as tuning. Comparison 2 is read for its effect on (a) and (b) deaths.
 - **Stuck runs (D38):** counted in the main results as they played out; also reported with stuck runs left out; plus the **stuck rate per simulated second**. θ at the first spike is compared between stuck and normal stretches.
 - **Blind running (D33):** nobody looks at a held-out result until the whole batch has finished **and** the analysis code is ready and checked.
@@ -729,7 +739,7 @@ Shannyn's plan (`docs/notes/step2_analysis_plan.md`, PR #24), with the amendment
   - **The analysis is checked on training runs that don't count** (the rule 5 fly-driven runs and other fly-driven training runs) before the held-out results are opened. Plan question 4 (the dry run) was answered by the check on the rule 5 training runs; the new pieces (replay classes, timing, references, sign tests, stuck reporting) get the same check.
 - **Replays for the write-up are picked by rule, not by eye:** the lowest-seed level that is completed, and the lowest-seed death of each class, each with the brain panel (R3).
 - **Prediction, recorded now:** the ideal fly completes 21/50 training levels (easy 20/20, medium 1/20, hard 0/10; D47), so **~8–9 of the 20 held-out levels**, nearly all easy. We expect the baseline at or below that: most easy levels completed, almost no medium or hard. On training levels the ideal fly's deaths were 19 (b) and 10 (a), so we expect (a) and (b) to dominate, and anything beyond them to show up as (d).
-- **Carried into Step 3** (its decision entry, after Step 2): the held-out check uses the same three seeds and the same sign test.
+- **Carried into Step 3** (its decision entry, after Step 2): the held-out check uses the same three seeds, the same sign test and the same "equal".
 
 ## Open
 

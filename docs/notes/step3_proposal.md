@@ -70,6 +70,10 @@ Three additions:
 - **The held-out check uses Step 2's rule for "better"** (paired sign test, p < 0.05), next to the paired difference.
 - **Framing for the write-up:** if the best R is below 150, the fly is jumping later than real flies do, and partly that would make up for the encoding not making slabs loom (D47). Say so, rather than present it as the fly getting better.
 
+For when D49 is written (Shannyn, 2026-11-02):
+- **These answers override §4 and §5's text,** which still say a fixed 1-point tie margin and "held-out run once, seed 0".
+- **Pairing three seeds per level** on the held-out check: compare the tuned and untuned **median progress across seeds 0–2** on each level, with "equal" defined as in D48 (same killing object, or both completed), then D48's sign test.
+
 ## 8. Code (written, not run)
 
 - `configs/step3.toml` holds the settings above; changing an answer to §7 is an edit there.
