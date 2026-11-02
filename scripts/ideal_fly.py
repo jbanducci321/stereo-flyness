@@ -10,11 +10,13 @@ already past the threshold when it started looming (D45).
 `--sweep` also tries other fixed thresholds. That shows whether 39° is a fair ceiling or whether
 another moment would clear more. It's a check, never a way to pick a threshold (D43 fixes 39°).
 
-Training levels only: the held-out suite is never used before the Step 2 baseline.
+Training levels by default. `--suite held_out` runs the 20 held-out cube levels, at 39° only and
+with no sweep: it is run once, together with the Step 2 baseline (D44), and never before.
 
 Usage:
     uv run python scripts/ideal_fly.py                       # the 10 recruitment levels (D43)
     uv run python scripts/ideal_fly.py --all --sweep 20 80 5 # all 50 cube training levels
+    uv run python scripts/ideal_fly.py --suite held_out      # Step 2 only: the 20 held-out levels
 
 Writes results/ideal_fly/<name>.csv and .md (git-ignored).
 """
@@ -37,10 +39,10 @@ OUT = ROOT / "results" / "ideal_fly"
 NO_PATCHES = {s: {t: [] for t in TYPES} for s in SIDES}  # θ doesn't depend on the patches
 
 
-def run(names, thresholds, modes) -> pd.DataFrame:
+def run(names, thresholds, modes, suite="training") -> pd.DataFrame:
     rows = []
     for name in names:
-        level, _ = load_level(LEVELS, job(name, "training"))
+        level, _ = load_level(LEVELS, job(name, suite))
         for mode in modes:
             enc = CubeEncoder(level, NO_PATCHES, 180.0, 150.0, mode)
             for th in thresholds:
@@ -58,25 +60,32 @@ def main() -> None:
     parser.add_argument("--all", action="store_true", help="all 50 cube training levels, not just the 10")
     parser.add_argument("--sweep", type=float, nargs=3, metavar=("FROM", "TO", "STEP"),
                         help="also try these fixed thresholds (degrees)")
+    parser.add_argument("--suite", default="training", choices=["training", "held_out"],
+                        help="held_out: Step 2 only, all 20 cube levels at 39° (D44)")
     args = parser.parse_args()
     sys.stdout.reconfigure(encoding="utf-8")
+    if args.suite == "held_out" and args.sweep:
+        sys.exit("No threshold sweep on the held-out suite: it's run at 39 degrees only, with the Step 2 baseline (D44).")
 
-    if args.all:
-        names = sorted(p.stem for p in (LEVELS / "training").glob("cube-*.json") if not p.stem.endswith(".meta"))
+    if args.all or args.suite == "held_out":
+        names = sorted(p.stem for p in (LEVELS / args.suite).glob("cube-*.json") if not p.stem.endswith(".meta"))
     else:
         names = tomllib.loads((ROOT / "configs" / "recruitment.toml").read_text())["levels"]
     thresholds = [THRESHOLD_DEG]
     if args.sweep:
         a, b, step = args.sweep
         thresholds = sorted(set(thresholds) | set(np.round(np.arange(a, b + step / 2, step), 3)))
-    df = run(names, thresholds, ["collision", "all"])
-    tag = ("all50" if args.all else "recruitment10") + ("_sweep" if args.sweep else "")
+    df = run(names, thresholds, ["collision", "all"], args.suite)
+    if args.suite == "held_out":
+        tag = f"held_out{len(names)}"
+    else:
+        tag = ("all50" if args.all else "recruitment10") + ("_sweep" if args.sweep else "")
     OUT.mkdir(parents=True, exist_ok=True)
     df.to_csv(OUT / f"{tag}.csv", index=False)
 
     df["difficulty"] = df["level"].str.split("-").str[1]
     at = df[df["threshold"] == THRESHOLD_DEG]
-    lines = [f"# Ideal {THRESHOLD_DEG:g}° fly: reference ceiling ({len(names)} cube training levels)\n",
+    lines = [f"# Ideal {THRESHOLD_DEG:g}° fly: reference ceiling ({len(names)} cube {args.suite.replace('_', '-')} levels)\n",
              f"No brain: presses whenever θ ≥ {THRESHOLD_DEG:g}°, one tick late. Not a model result.\n",
              "## Levels completed\n"]
     done = at.pivot_table(index="difficulty", columns="mode", values="completed", aggfunc="sum")
