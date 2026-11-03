@@ -3,9 +3,10 @@
 A recorded fly-driven run is replayed exactly from its logged presses (the game is
 deterministic), so every tick's state, nearest looming object and θ are rebuilt. From that:
 
-- **Death classes, in D48's order:** (s) stuck, (a) invisible, (c) short run-up, (b) the ideal
-  39° policy, taking over from the tick the killing object first loomed, dies before passing it
-  too, (d) everything else, split at the first tick where the fly's and the ideal fly's
+- **Death classes:** (s) stuck; then from the deciding approach (the last one in which the cube
+  was on the ground): (c) short run-up; the ideal 39° policy, taking over there, dies before
+  passing the killing object too: (a) if that object never loomed, (b) if it did; (d) everything
+  else, split at the first tick where the fly's and the ideal fly's
   **effective presses** (jumps) differ: (d1) the fly jumps there and the ideal fly doesn't, (d2)
   the ideal fly jumps there and the fly only jumps later, (d3) the fly never jumps.
 - **Timing per approach** (D46's approaches): θ at the first Giant Fiber spike, the gap at the
@@ -22,7 +23,6 @@ from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 
-from stereo_flyness.experiments.subcircuit_validation import approaches
 from stereo_flyness.game.engine import Game
 from stereo_flyness.game.physics import HALF_PLAYER
 from stereo_flyness.interface.encoding import CELL, CubeEncoder
@@ -131,8 +131,42 @@ def ideal_from(rep: Replay, start: int, far_edge: float) -> tuple[bool, object]:
     return game.finished, game.death
 
 
+def approach_spans(rep: Replay) -> list[tuple[int, int]]:
+    """Obstacle approaches (D46) as [start, end) ticks: from when an object becomes the nearest
+    looming one until it stops being it. Uses the replay's object identity, so a switch to a
+    nearer object (e.g. on landing) starts a new approach. As in D46, a touching next column
+    with the same bottom and top (the second column of a two-wide block) continues the approach."""
+    out, start, last = [], None, None
+    for k, o in enumerate(rep.obstacle):
+        same = last is not None and o is not None and (o == last or (
+            abs(o.x0 - last.x1) < 1e-6 and abs(o.bottom - last.bottom) < 1e-6 and abs(o.top - last.top) < 1e-6))
+        if start is not None and not same:
+            out.append((start, k))
+            start = None
+        if o is not None and start is None:
+            start = k
+        last = o
+    if start is not None:
+        out.append((start, len(rep.obstacle)))
+    return out
+
+
+def deciding_approach(rep: Replay) -> int | None:
+    """The start of the last approach in which the cube was on the ground at some tick: its
+    last chance to act before it died. None if there was none."""
+    last = None
+    for a, b in approach_spans(rep):
+        if any(rep.players[k].on_ground for k in range(a, b)):
+            last = a
+    return last
+
+
 def classify_death(rep: Replay, stuck_at_death: bool) -> dict:
-    """D48's death class for a run that died, with a short description of why."""
+    """D48's death class for a run that died, with a short description of why.
+
+    The replay starts at the deciding approach (`deciding_approach`), not at the killing
+    object: a cube that jumps early off the first spike of a row and lands on the second, which
+    the first hid, decided its death on the first spike (proposed amendment to D48, 2026-11-02)."""
     game, level = rep.game, rep.level
     out = {"class": None, "killer": None, "killer_kind": None, "approach_start": None, "first_diff": None,
            "ideal_killer": None, "why": ""}
@@ -143,33 +177,35 @@ def classify_death(rep: Replay, stuck_at_death: bool) -> dict:
         out["killer"], out["killer_kind"] = object_of(rep.encoder, box), box.kind
     if stuck_at_death:
         return {**out, "class": "s", "why": "the stuck flag was on when it died"}
-    column = None if box is None else column_of(rep.encoder, box)
     end = len(rep.held)
-    window = range(max(0, end - LOOK_BACK_TICKS), end)
-    seen = [k for k in window if column is not None and rep.obstacle[k] == column]
-    if not seen:
-        return {**out, "class": "a", "why": "never loomed before contact"}
-    s = seen[0]
+    s = deciding_approach(rep)
+    if box is None or s is None:
+        return {**out, "class": "a", "why": "no matching object" if box is None else "nothing loomed while it could jump"}
     out["approach_start"] = s
+    column = column_of(rep.encoder, box)
+    window = range(max(0, end - LOOK_BACK_TICKS), end)
+    loomed = column is not None and any(rep.obstacle[k] == column for k in window)
     if rep.theta[s] >= THRESHOLD_DEG:
         return {**out, "class": "c", "why": f"already {rep.theta[s]:.0f}° when it first loomed"}
-    passed, death = ideal_from(rep, s, column.x1)
+    passed, death = ideal_from(rep, s, box.x1 if column is None else column.x1)
     if not passed:
         ideal_box = None if death is None else killing_box(level, death)
         ideal_killer = None if ideal_box is None else object_of(rep.encoder, ideal_box)
         same = ideal_killer == out["killer"]
-        return {**out, "class": "b", "ideal_killer": ideal_killer,
-                "why": "the ideal fly dies on it too" if same else "the ideal fly dies first on another object ("
-                       + describe(None if ideal_box is None else ideal_box.kind, ideal_killer) + ")"}
+        why = "the ideal fly dies on it too" if same else "the ideal fly dies first on another object ("             + describe(None if ideal_box is None else ideal_box.kind, ideal_killer) + ")"
+        if not loomed:
+            return {**out, "class": "a", "ideal_killer": ideal_killer, "why": f"never loomed before contact; {why}"}
+        return {**out, "class": "b", "ideal_killer": ideal_killer, "why": why}
+    on = "" if rep.obstacle[s] == column else f" (decided on the object at x {rep.obstacle[s].x0:.0f}, before it)"
     for k in range(s, end):
         ideal_jump = rep.players[k].on_ground and ideal_press(rep.encoder, rep.players[k])
         if bool(rep.jumped[k]) != bool(ideal_jump):
             out["first_diff"] = k
             if rep.jumped[k]:
-                return {**out, "class": "d1", "why": f"jumped {k - s} ticks into the approach, before the ideal fly"}
+                return {**out, "class": "d1", "why": f"jumped at θ {rep.theta[k]:.0f}°, before the ideal fly{on}"}
             if rep.jumped[k + 1:end].any():
-                return {**out, "class": "d2", "why": "jumped later than the ideal fly"}
-            return {**out, "class": "d3", "why": "never jumped in the approach"}
+                return {**out, "class": "d2", "why": f"jumped later than the ideal fly{on}"}
+            return {**out, "class": "d3", "why": f"never jumped in the approach{on}"}
     raise ValueError("the ideal fly passes but never jumps differently from the fly; the replay is wrong")
 
 
@@ -194,13 +230,13 @@ def isolated_ground_spike(level, encoder: CubeEncoder, obstacle) -> bool:
 
 
 def approach_timing(rep: Replay, brain: pd.DataFrame) -> pd.DataFrame:
-    """One row per obstacle approach (D46): θ at the first Giant Fiber spike in it, the gap at
+    """One row per obstacle approach (D46, `approach_spans`): θ at the first Giant Fiber spike in it, the gap at
     the first jump, and whether that jump is inside the single-spike window where it applies."""
     gf = (brain["spikes_GF_R"] + brain["spikes_GF_L"]).to_numpy() > 0
     gap = brain["gap"].to_numpy(float)
     stuck = brain["stuck_flag"].to_numpy(bool)
     rows = []
-    for a, b in approaches(rep.theta, np.nan_to_num(gap, nan=0.0)):
+    for a, b in approach_spans(rep):
         spikes = np.flatnonzero(gf[a:b])
         jumps = np.flatnonzero(rep.jumped[a:b])
         lone = isolated_ground_spike(rep.level, rep.encoder, rep.obstacle[a])

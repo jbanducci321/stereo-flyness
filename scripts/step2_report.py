@@ -184,7 +184,7 @@ def per_level(df, refs) -> str:
         g = refs[refs["setting"] == name]
         if len(g):
             table[short] = pd.Series({r["level"]: pct(r["progress"]) + ("" if r["completed"] else
-                                      f" ({r['class']})" if r["class"] else "") for r in g.to_dict("records")})
+                                      f" ({r['class']})" if isinstance(r["class"], str) else "") for r in g.to_dict("records")})
     rnd = refs[refs["setting"] == "random presses"]
     if len(rnd):
         table["random presses"] = rnd.groupby("level").apply(

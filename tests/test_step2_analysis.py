@@ -69,6 +69,19 @@ def test_jumping_too_late_is_d2():
     assert out["class"] == "d2" and out["first_diff"] == k
 
 
+def test_landing_on_a_hidden_second_spike_after_an_early_jump_is_d1():
+    # Two spikes in a row: the second never looms (the first hides it), but the death was
+    # decided on the first one, where the ideal fly would have jumped later and cleared both.
+    level = Level("two_spikes", "test", 900, [Box("spike", *hitbox("spike", x, 15.0)) for x in (600.0, 630.0)])
+    k = ideal_tick(level)
+    assert replay(level, play(level, {k}), "collision").game.finished
+    early = [t for t in range(k - 20, k) if (g := replay(level, play(level, {t}), "collision").game).death is not None
+             and g.death.x > 600]
+    rep = replay(level, play(level, {early[-1]}), "collision")
+    out = classify_death(rep, stuck_at_death=False)
+    assert out["killer"][0] == 615.0 and out["class"] == "d1"
+
+
 def test_a_wall_too_tall_to_jump_is_b():
     level = wall_level()
     out = classify_death(replay(level, play(level), "collision"), stuck_at_death=False)
