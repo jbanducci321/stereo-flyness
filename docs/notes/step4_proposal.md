@@ -1,6 +1,6 @@
 # Step 4 proposal: controls and lesions on the cube
 
-*Jacob, 2026-11-04. Revision 2, with Shannyn's answers of 2026-11-04 (she leads the lesion design and interpretation). For her review before it's logged as D51. No Step 4 run exists yet; nothing here has been run on a control network or a lesion. Once logged, nothing is changed, re-run or dropped after the results are seen (as D48, D49).*
+*Jacob, 2026-11-04. Revision 3, with Shannyn's answers and her review of 2026-11-04 (she leads the lesion design and interpretation). **Logged as D51 on 2026-11-04; the log is canonical.** No Step 4 run exists yet; nothing here has been run on a control network or a lesion. Once logged, nothing is changed, re-run or dropped after the results are seen (as D48, D49).*
 
 **The question (PROJECT_BRIEF Step 4):** does the fly's play depend on the real wiring? It matters most because of caveat 1. LC4 and LPLC2 synapse directly onto the Giant Fiber (293 connections, 1,885 synapses: 19.9% of the Giant Fibers' input in v783), so in cube mode the fly could be little more than a one-hop relay plus a threshold.
 
@@ -74,16 +74,33 @@ Whole cell types are silenced, on both sides, with Shiu's `silence()` (D5), exac
 - per level, each setting's median run across its 3 seeds or instances;
 - D48's "equal" (same killing object, or both completed);
 - the two-sided sign test, with equal levels left out;
-- "better" or "worse" only at p < 0.05. As in D48, each comparison is tested on its own; the report also says which results survive a Holm correction for the number of comparisons.
+- "better" or "worse" only at p < 0.05. As in D48, each comparison is tested on its own; the report also says which results survive a Holm correction over the family named below.
 
 **"Depends on the wiring" (a, d)** = worse than intact at p < 0.05.
 
-**"It's a relay" (b, Shannyn's stronger test).** "No clear difference" from intact is *not* evidence of sameness, so the relay reading needs all three of these:
-1. progress: no clear difference from intact (sign test);
-2. **first-spike θ:** the median first-spike θ without carry-over (D48 amendment) is within the intact brain's seed-to-seed range (the largest difference between any two of its 3 seeds);
-3. **death-class mix:** the share of (d1) deaths is within the intact brain's seed-to-seed range. The full class mix is shown beside it.
+**"It's a relay" (b and c; Shannyn's stronger test).** "No clear difference" from intact is *not* evidence of sameness, so the relay reading needs all three of these:
+1. **Progress:** no clear difference from intact (sign test, as above).
+2. **First-spike θ.**
+   - Take the condition's median first-spike θ without carry-over (D48 amendment), over every approach of all 3 instances pooled, and the intact brain's, over its 3 seeds pooled.
+   - **Pass if the difference is no bigger than the largest difference between the medians of any two intact seeds.**
+   - A condition whose Giant Fiber never fires has no θ, so it fails this bar.
+3. **(d1) share.**
+   - Take the share of deaths that are (d1), the same way: the condition's 3 instances pooled against the intact brain's 3 seeds pooled.
+   - **Pass if the difference is no bigger than the largest difference between any two intact seeds' shares.**
+   - A condition with no deaths has a share of 0. The full class mix is shown beside it.
 
-If (1) holds but (2) or (3) doesn't, it's reported as "plays about as far, but not the same way", not as a relay.
+**These bars are strict.** A range from 3 seeds is small and noisy, so it makes "relay" harder to claim, not easier, which is the safe direction.
+
+**Reading (b) and (c):**
+- If all three hold, it's reported as a relay. For (c), the relay-only network, that's the strongest form of caveat 1: the direct connections alone reproduce the fly's play.
+- If (1) holds but (2) or (3) doesn't, it's "plays about as far, but not the same way": the rest of the brain shapes the timing.
+- If (1) fails, it plays differently from intact, and the sign test says in which direction.
+
+**Holm family, named now** (so the correction can't depend on which comparisons are included later). These 10 sign tests, and only these:
+- against the intact whole brain: (a) shuffle, (b) looming-kept shuffle, (c) relay-only, (d) random network, E5b, E5c, E5b's random lesion, E5c's random lesion (8);
+- against their own random-lesion controls: E5b and E5c (2).
+
+The relay bars (2) and (3) aren't tests, so they aren't in the family. The LC4/LPLC2 code check isn't a comparison.
 
 **"It's those neurons" (E5b, E5c).** A lesion's effect is specific only if:
 - the lesion differs from intact at p < 0.05, **and**

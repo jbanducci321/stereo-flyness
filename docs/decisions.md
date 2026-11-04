@@ -815,6 +815,48 @@ Jacob's proposal after Step 3 (D49), with Shannyn's addition; agreed by both on 
 - **Step 4 runs at 150 Hz only.** 50 Hz isn't part of the controls.
 - **Ship mode (Step 5)** has its own dials and isn't covered here.
 
+**D51. Step 4: controls and lesions on the cube, fixed before any run** (2026-11-04)
+Jacob's proposal (`docs/notes/step4_proposal.md`, revision 3) with Shannyn's answers and review of 2026-11-04; she leads the lesion design and interpretation. **Written before any Step 4 run: no level has been played on a control network or with a lesion.** Everything below is fixed: nothing is changed, re-run or dropped after the results are seen. The proposal has the full detail; this entry is the binding summary.
+- **Question:** does the fly's play depend on the real wiring? Caveat 1: 293 direct LC4/LPLC2 → Giant Fiber connections carry 19.9% of the Giant Fibers' input, so the fly could be little more than a relay plus a threshold.
+- **Setup:**
+  - Whole brain (D36), R = 150 Hz (D50), the Step 2 baseline's encoding, original signs. No recalibration for any control or lesion.
+  - The 20 held-out cube levels, seeds 0–2, 60 runs per condition. Reference: the intact whole brain on the same levels and seeds.
+  - Every ID checked against v783. Every run records its connectivity file, SHA-256 and lesion.
+- **Not run:**
+  - **Giant Fiber silenced.** `silence()` leaves it spiking and our output reads its spikes, so it would only test our output rule. Write-up: "In real flies, Giant Fiber–silenced flies still escape through the long-mode pathway (von Reyn et al. 2014), which our output can't see."
+  - **LC4 only / LPLC2 only.** With both types calibrated together, it acts like lowering R (Step 3), and it doesn't test the von Reyn 2017 split.
+- **Code check, not a result:** LC4/LPLC2 silenced on 2 held-out levels at seed 0 must give exactly 0 Giant Fiber spikes and 0 presses, or nothing runs until it's fixed.
+- **Control networks** (instance *k* at Poisson seed *k*):
+  - **(a)** degree-preserving shuffle ×3;
+  - **(b)** shuffle keeping the 293 looming → Giant Fiber connections ×3. They're held out of the pool, every neuron's degree is still preserved, and no new looming → Giant Fiber connection is allowed;
+  - **(c)** relay-only network: only those 293 connections, 3 seeds;
+  - **(d)** random network ×3: same neurons and connection count, signs kept per neuron, synapse counts from the real distribution.
+- **Lesions** (whole cell types, both sides, D5):
+  - **E5b**, the inhibitory partners: 22 neurons;
+  - **E5c**, the excitatory partners: 12 neurons;
+  - **a random-lesion control for each:** 3 draws, each lesioned neuron matched by a random one of the same sign with total output within ±10%, never a Giant Fiber, LC4/LPLC2 or lesion-set neuron.
+- **Predictions:**
+  - (a), (d): worse than intact, playing like never press (or always press if they run away).
+  - (b) (Shannyn): earlier jumps, more (d1), progress the same or lower.
+  - (c): no confident prediction.
+  - E5b (Shannyn): earlier first spike (below ~37°), more (d1), lower progress.
+  - E5c (Shannyn): later first spike, fewer (d1), more (d2), progress the same or higher. **If higher, it's read as Step 3's late-threshold effect, not as the lesion improving the fly.**
+  - Random lesions: no clear difference.
+- **Judging:**
+  - **Every comparison:** per level, the median run across seeds or instances; D48's "equal"; the two-sided sign test, with "better" or "worse" only at p < 0.05.
+  - **"Depends on the wiring" (a, d):** worse than intact at p < 0.05.
+  - **"It's a relay" (b, c):** all three bars must pass:
+    1. progress shows no clear difference;
+    2. the pooled median first-spike θ without carry-over differs from the intact brain's (3 seeds pooled) by no more than the largest difference between any two intact seeds;
+    3. the (d1) share of deaths passes the same bar.
+
+    A Giant Fiber that never fires fails (2). These bars are strict, since a 3-seed range is small and noisy, which is the safe direction. If (1) holds but (2) or (3) fails: "plays about as far, but not the same way".
+  - **"It's those neurons" (E5b, E5c):** differs from intact **and** from its own random-lesion control at p < 0.05, in the same direction.
+  - **Holm family (10 sign tests, named now):** (a), (b), (c), (d), E5b, E5c and the two random-lesion controls against intact (8), plus E5b and E5c against their own controls (2). Each is also reported on its own.
+- **Described beside them:** progress, completions by difficulty, death classes, stuck runs, presses per second, first-spike θ with and without carry-over, approaches with no Giant Fiber spike, and an open-loop calibration-loom check of every network and lesion before the runs. References: never press, random presses, always press.
+- **Runs:** night 1 is intact, E5b and E5c (180 runs). Night 2 is the random lesions and (a)–(d) (360 runs). Blind (D33): nothing is opened before the whole batch is done.
+- Stereo Madness isn't touched (D7).
+
 ## Open
 
 Still open:
@@ -825,7 +867,7 @@ Still open:
 - The final subcircuit: built and validated (D46: rules 1–5, the calibration and the time limit pass, on D47's encoding). Step 2 is done: runs, analysis and result in D48 (write-up: `docs/notes/step2_report.md`).
 - Step 3 (tuning R): done, result in D49 (write-up: `docs/notes/step3_report.md`).
 - Which R goes forward: decided in D50 (150 Hz of record; 50 Hz as a labelled variant on Stereo Madness, always reported second).
-- Step 4 (controls and lesions): draft plan in `docs/notes/step4_proposal.md`, being revised with Shannyn's answers of 2026-11-04; logged as a decision before any run.
+- Step 4 (controls and lesions): fixed in D51; next, the code, then two nights of runs.
 - **Stereo Madness run N times, not once (changes D7; agreed in principle 2026-11-02, written up at Step 6).** A frozen fly with Poisson input is a distribution, not a single outcome, so one run can't tell luck from typical. Conditions:
   - N and the seeds are fixed before any Stereo Madness run, and nothing changes between or after the runs (D7 still holds: no tuning on it);
   - the headline is the full count and median progress (e.g. "3 of 10, median X%"), never the best run;
