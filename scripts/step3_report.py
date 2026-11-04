@@ -28,7 +28,7 @@ import pandas as pd
 
 from inspect_encoding import LEVELS, job
 from run_pathway_tests import ROOT
-from step2_report import read_run
+from step2_report import CARRY_OVER_MS, read_run
 from step3_grid import TAG, config, levels
 from stereo_flyness.experiments.step2_analysis import CLASSES, compare, sign_test
 from stereo_flyness.experiments.tuning import OpenLoop, pick_rate, tie_margin
@@ -57,8 +57,12 @@ def collect(cfg, runs, suite="training", tag=TAG) -> pd.DataFrame:
             if json.loads((d / "run.json").read_text(encoding="utf-8")).get("seed") != seed:
                 raise ValueError(f"{d} isn't a seed-{seed} run")
             level, _ = load_level(LEVELS, job(name, suite))
-            row, _ = read_run(d, level, "collision")
-            rows.append({"rate": rate, "seed": seed, "level": name, "difficulty": name.split("-")[1], **row})
+            row, appr = read_run(d, level, "collision")
+            spiked = appr[appr["first_spike_theta"].notna()]
+            carry = spiked["since_gf_ms"] < CARRY_OVER_MS  # a burst carrying over (D48 amendment)
+            rows.append({"rate": rate, "seed": seed, "level": name, "difficulty": name.split("-")[1], **row,
+                         "spiked": len(spiked), "carry_over": int(carry.sum()),
+                         "fresh_theta_sum": float(spiked[~carry]["first_spike_theta"].sum())})
     return pd.DataFrame(rows)
 
 
@@ -85,6 +89,15 @@ def open_loop_text(cfg, o: OpenLoop | None) -> tuple[str, str]:
     return text, "**yes**" if not lo <= o.mean_theta <= hi else "no"
 
 
+def carry_text(g) -> str:
+    """Share of approaches whose first Giant Fiber spike is a burst carried over from the previous
+    object, and the mean first-spike θ without them (D48 amendment; D49 framing)."""
+    spiked, carry = g["spiked"].sum(), g["carry_over"].sum()
+    fresh = spiked - carry
+    share = f"{carry / spiked:.0%} of {int(spiked)}" if spiked else "–"
+    return f"{share} | " + (f"{g['fresh_theta_sum'].sum() / fresh:.1f}°" if fresh else "–")
+
+
 def report(df, margin_runs, cfg) -> str:
     n_levels = len(levels(cfg["suite"]))
     lo, hi = cfg["fly_threshold_deg"]
@@ -96,9 +109,9 @@ def report(df, margin_runs, cfg) -> str:
              "open-loop first Giant Fiber spike is closest to 39°; a rate where fewer than half the trials fire "
              "ranks last. Fixed before the runs.\n",
              "| R (Hz) | Levels run | " + " | ".join(DIFFICULTIES) + " | Completed | **Mean progress** | Deaths "
-             + " / ".join(f"({c})" for c in CLASSES) + " | Stuck runs | Open loop: first-spike θ (trials fired) | "
+             + " / ".join(f"({c})" for c in CLASSES) + " | Stuck runs | Carry-over | First-spike θ without carry-over | Open loop: first-spike θ (trials fired) | "
              f"Outside {lo:g}–{hi:g}°? |",
-             "|---|---|" + "---|" * len(DIFFICULTIES) + "---|---|---|---|---|---|"]
+             "|---|---|" + "---|" * len(DIFFICULTIES) + "---|---|---|---|---|---|---|---|"]
     scores, ol, complete = {}, {}, True
     for rate in cfg["rates_hz"]:
         g = grid[grid["rate"] == rate] if len(grid) else grid
@@ -109,7 +122,7 @@ def report(df, margin_runs, cfg) -> str:
         if g.empty:
             complete = False
             lines.append(f"| {rate:g} | 0/{n_levels} | " + " | ".join("–" for _ in DIFFICULTIES)
-                         + f" | – | – | – | – | {theta} | {flag} |")
+                         + f" | – | – | – | – | – | – | {theta} | {flag} |")
             continue
         complete &= len(g) == n_levels
         cells = [f"{int(gd['completed'].sum())}/{len(gd)}" for d in DIFFICULTIES for gd in [g[g["difficulty"] == d]]]
@@ -117,11 +130,13 @@ def report(df, margin_runs, cfg) -> str:
         classes = " / ".join(str(int((dead["class"] == c).sum())) for c in CLASSES)
         scores[rate] = g["progress"].mean()
         lines.append(f"| {rate:g} | {len(g)}/{n_levels} | " + " | ".join(cells) + f" | {int(g['completed'].sum())} | "
-                     f"**{100 * scores[rate]:.1f}%** | {classes} | {int(g['stuck'].sum())} | {theta} | {flag} |")
+                     f"**{100 * scores[rate]:.1f}%** | {classes} | {int(g['stuck'].sum())} | {carry_text(g)} | {theta} | {flag} |")
     lines += ["", "(s) stuck; from the last approach where the cube could still jump: (c) short run-up; the ideal 39° "
               "fly dies there too, (a) on something that never loomed in its game, (b) on something that did; or the "
               "fly's timing: (d1) jumped earlier than the ideal fly, (d2) later, (d3) not at all; (u) unclassified (D48). "
-              "(a), (b) and (c) are limits of the encoding; R works through (d).", ""]
+              "(a), (b) and (c) are limits of the encoding; R works through (d). Carry-over: approaches whose first "
+              f"Giant Fiber spike came < {CARRY_OVER_MS} ms after the previous one (a burst carrying over from the "
+              "previous object), with first-spike θ given without them (D48 amendment).", ""]
 
     m = margin_runs
     if len(m) == n_levels and default in scores and len(grid[grid["rate"] == default]) == n_levels:
