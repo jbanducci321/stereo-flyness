@@ -12,23 +12,14 @@ Usage:
 """
 
 import argparse
-import hashlib
 import sys
 
 import pandas as pd
 
 from find_target_neurons import DATA_DIR
-from stereo_flyness.brain.controls import check_shuffle, degree_preserving_shuffle
+from stereo_flyness.brain.controls import check_shuffle, control_path, degree_preserving_shuffle, file_sha256
 
 ORIGINAL = DATA_DIR / "Connectivity_783.parquet"
-
-
-def sha256(path) -> str:
-    h = hashlib.sha256()
-    with open(path, "rb") as f:
-        for block in iter(lambda: f.read(1 << 20), b""):
-            h.update(block)
-    return h.hexdigest()
 
 
 def main() -> None:
@@ -44,11 +35,11 @@ def main() -> None:
     if fails:
         sys.exit("Shuffle check failed: " + "; ".join(fails))
 
-    out = DATA_DIR / f"Connectivity_783_shuffle_s{args.seed}.parquet"
+    out = control_path(DATA_DIR, f"shuffle_s{args.seed}")
     shuffled.to_parquet(out, index=False)
     print(f"Wrote {out.name}: {report.connections:,} connections, {report.shuffled:,} shuffled, "
           f"{report.rounds} swap rounds, {report.unchanged:,} unchanged by chance. Checks pass.")
-    print(f"sha256 {sha256(out)}")
+    print(f"sha256 {file_sha256(out)}")
 
 
 if __name__ == "__main__":

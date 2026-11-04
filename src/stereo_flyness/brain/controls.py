@@ -14,12 +14,28 @@ swapping targets with random other connections until none are left (the original
 proposal's section 3c); only the others are shuffled among themselves.
 """
 
+import hashlib
 from dataclasses import dataclass
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
 POST_COLUMNS = ("Postsynaptic_ID", "Postsynaptic_Index")
+
+
+def control_path(data_dir, name: str) -> Path:
+    """Where control `name` (e.g. "shuffle_s0") lives: data/Connectivity_783_<name>.parquet."""
+    return Path(data_dir) / f"Connectivity_783_{name}.parquet"
+
+
+def file_sha256(path) -> str:
+    """The file's SHA-256, recorded with every run so it says exactly which connectome it used."""
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for block in iter(lambda: f.read(1 << 20), b""):
+            h.update(block)
+    return h.hexdigest()
 
 
 @dataclass

@@ -10,10 +10,17 @@ Usage:
     uv run python scripts/play_cube.py cube-easy-0 cube-easy-1 --suite training --jobs 2
     uv run python scripts/play_cube.py cube-easy-0 --bot      # bot drives, brain watches (D43)
     uv run python scripts/play_cube.py cube-easy-0 --seed 1 --quiet   # blind: progress and stuck flags only (D48)
+    uv run python scripts/play_cube.py cube-easy-0 --network whole_brain --control shuffle_s0   # Step 4 control
+    uv run python scripts/play_cube.py cube-easy-0 --network whole_brain --silence DNp70,PVLP151  # Step 4 lesion
+
+Step 4 (draft plan, docs/notes/step4_proposal.md, not agreed yet): `--control NAME` swaps in
+data/Connectivity_783_<NAME>.parquet (scripts/make_control_connectivity.py; whole brain only, D36),
+and `--silence` lesions every neuron of the listed cell types, both sides, with Shiu's silence()
+(D5). Every run records its connectivity file and SHA-256, and what was silenced, in run.json.
 
 Writes results/closed_loop/<network>/[<suite>/]<settings>/<driver>/<level>/ (the suite folder only
-for held_out; settings end in `_flat` without `--rate-scaling`, then `_seed<n>` for seeds other than 0,
-then any `--tag`), a recorded run (`fly_log`):
+for held_out; settings end in `_flat` without `--rate-scaling`, then `_<control>` and
+`_silence-<types>` if set, then `_seed<n>` for seeds other than 0, then any `--tag`), a recorded run (`fly_log`):
 the game's run log (replayable), brain.parquet, spikes.npz and run.json (git-ignored).
 """
 
@@ -25,11 +32,12 @@ from pathlib import Path
 import pandas as pd
 from joblib import Parallel, delayed
 
-from find_target_neurons import fetch_annotations
+from find_target_neurons import DATA_DIR, fetch_annotations
 from inspect_encoding import LEVELS, job
 from reproduce_sugar import PATH_COMP, PATH_CON
 from run_pathway_tests import CONFIG, git_commit, network
 from stereo_flyness.brain.celltypes import CellTypes
+from stereo_flyness.brain.controls import control_path, file_sha256
 from stereo_flyness.experiments.pathway_tests import loom_patches
 from stereo_flyness.game.engine import Game
 from stereo_flyness.game.suites import load_level
@@ -41,19 +49,19 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "results" / "closed_loop"
 
 
-def one(name, suite, path_comp, path_con, patches, gf, stuck_ids, args, out, seed):
+def one(name, suite, path_comp, path_con, patches, gf, stuck_ids, args, out, seed, silence=(), extra=None):
     from stereo_flyness.brain.stepper import BrainStepper
 
     level, bot = load_level(LEVELS, job(name, suite))
     enc = CubeEncoder(level, patches, args.theta_full, args.rate, args.mode, args.rate_scaling)
-    st = BrainStepper(path_comp, path_con, inputs={"loom": enc.ids}, watch=gf, seed=seed)
+    st = BrainStepper(path_comp, path_con, inputs={"loom": enc.ids}, watch=gf, seed=seed, silence=silence)
     policy = None
     if args.bot:
         inputs = bot.tick_inputs
         policy = lambda game: inputs[game.ticks] if game.ticks < len(inputs) else False  # noqa: E731
     meta = {"suite": suite, "network": args.network, "seed": seed, "commit": git_commit(),
             "status": {"final": "D43 run", "whole_brain": "D43 run (whole brain, the reference network)"}.get(
-                args.network, f"smoke test: {args.network} network (not the D43 baseline)")}
+                args.network, f"smoke test: {args.network} network (not the D43 baseline)"), **(extra or {})}
     rec = play(Game(level), st, enc, policy=policy, stuck_ids=stuck_ids, meta=meta)
     rec.save(out / rec.driver / name)
     return rec.summary
@@ -72,6 +80,8 @@ def main() -> None:
     parser.add_argument("--jobs", type=int, default=1)
     parser.add_argument("--bot", action="store_true", help="the bot drives; the brain only watches (D43)")
     parser.add_argument("--tag", default="", help="suffix for the settings folder, to keep a set of runs separate")
+    parser.add_argument("--control", help="Step 4: play on data/Connectivity_783_<CONTROL>.parquet (whole brain only)")
+    parser.add_argument("--silence", help="Step 4: comma-separated cell types to silence, both sides (D5)")
     parser.add_argument("--quiet", action="store_true",
                         help="blind runs (D48, D33): show only progress and stuck flags, never outcomes")
     args = parser.parse_args()
@@ -83,13 +93,36 @@ def main() -> None:
     patches = loom_patches(con, cells, cfg["probes"]["p5"]["seed"])  # P5's patch order (D41)
     gf = {"GF_R": cells.ids("DNp01", side="right"), "GF_L": cells.ids("DNp01", side="left")}
     path_comp, con_paths, _ = network(None if args.network == "whole_brain" else args.network)
+    path_con, step4 = con_paths["original"], []
+    if args.control:
+        if args.network != "whole_brain":
+            sys.exit("Controls run on the whole brain (D36): add --network whole_brain.")
+        path_con = control_path(DATA_DIR, args.control)
+        if not path_con.exists():
+            sys.exit(f"No control connectome at {path_con}. Build it with scripts/make_control_connectivity.py.")
+        step4.append(f"control {args.control}")
+    types = [t.strip() for t in args.silence.split(",")] if args.silence else []
+    silence = []
+    for t in types:
+        ids = cells.ids(t)
+        if not ids:
+            sys.exit(f"No v783 neurons of type {t} to silence.")
+        silence += ids
+    if types:
+        step4.append(f"silenced {'+'.join(types)} ({len(silence)} neurons)")
+    extra = {"connectome": {"file": Path(path_con).name, "sha256": file_sha256(path_con)},
+             "silenced": {"types": types, "ids": silence}}
+    if step4:
+        extra["status"] = f"Step 4 control (plan not agreed yet): {'; '.join(step4)}"
     stuck_ids = load_stuck_state(ROOT / cfg["cascade"]["stuck_state"])  # restricted to the network (D38)
     # Held-out levels reuse training names (cube-easy-0, ...), so they get their own folder.
     base = OUT / args.network if args.suite == "training" else OUT / args.network / args.suite
     seed = "" if args.seed == 0 else f"_seed{args.seed}"  # seed 0 keeps the folders runs already use
-    out = base / f"{args.theta_full:g}deg_{args.mode}_R{args.rate:g}{'' if args.rate_scaling else '_flat'}{seed}{args.tag}"
+    step4_name = (f"_{args.control}" if args.control else "") + (f"_silence-{'+'.join(types)}" if types else "")
+    out = base / (f"{args.theta_full:g}deg_{args.mode}_R{args.rate:g}{'' if args.rate_scaling else '_flat'}"
+                  f"{step4_name}{seed}{args.tag}")
     runs = Parallel(n_jobs=args.jobs, return_as="generator_unordered")(
-        delayed(one)(n, args.suite, path_comp, con_paths["original"], patches, gf, stuck_ids, args, out, args.seed)
+        delayed(one)(n, args.suite, path_comp, path_con, patches, gf, stuck_ids, args, out, args.seed, silence, extra)
         for n in args.levels)
     summaries = []
     for i, s in enumerate(runs, 1):

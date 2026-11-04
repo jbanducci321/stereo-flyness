@@ -85,3 +85,38 @@ def test_check_catches_broken_shuffles():
 def test_keep_must_match_the_table():
     with pytest.raises(ValueError):
         degree_preserving_shuffle(table(), seed=0, keep=[True, False])
+
+
+def test_control_path_and_checksum(tmp_path):
+    from stereo_flyness.brain.controls import control_path, file_sha256
+
+    con = table()
+    out, _ = degree_preserving_shuffle(con, seed=0)
+    path = control_path(tmp_path, "shuffle_s0")
+    assert path.name == "Connectivity_783_shuffle_s0.parquet"
+    con.to_parquet(tmp_path / "original.parquet", index=False)
+    out.to_parquet(path, index=False)
+    assert file_sha256(path) == file_sha256(path)
+    assert file_sha256(path) != file_sha256(tmp_path / "original.parquet")
+
+
+def test_brain_runs_on_a_shuffled_connectome(tmp_path):
+    """The stepper reads a shuffled file like the original: same neurons, different wiring."""
+    from brian2 import Hz, ms
+
+    from stereo_flyness.brain.stepper import BrainStepper
+
+    con = table(n_neurons=30, n_edges=200)
+    ids = 720575940000000000 + np.arange(30) * 7
+    pd.DataFrame({"Completed": True}, index=pd.Index(ids)).to_csv(tmp_path / "comp.csv")
+    out, _ = degree_preserving_shuffle(con, seed=0)
+    con.to_parquet(tmp_path / "con.parquet", index=False)
+    out.to_parquet(tmp_path / "shuffled.parquet", index=False)
+    counts = {}
+    for name in ("con", "shuffled"):
+        st = BrainStepper(tmp_path / "comp.csv", tmp_path / f"{name}.parquet",
+                          inputs={"drive": [int(ids[0])]}, watch={"all": [int(i) for i in ids]}, seed=1)
+        st.set_rate("drive", 200 * Hz)
+        counts[name] = st.step(200 * ms)["all"]
+    assert counts["con"].shape == counts["shuffled"].shape == (30,)
+    assert counts["con"][0] > 0 and counts["shuffled"][0] > 0  # the driven neuron fires in both
