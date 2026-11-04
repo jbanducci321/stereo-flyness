@@ -1,0 +1,24 @@
+# Step 3: tuning R on the cube, as fixed in D49 (docs/decisions.md, 2026-11-03).
+# Changing anything here changes a logged decision: ask both people first.
+# Run with scripts/step3_grid.py; scored by scripts/step3_report.py.
+#
+# Fly-driven closed loop on all 50 cube training levels, baseline encoding (collision course,
+# R x f, theta_full from configs/recruitment.toml, not revisited: D43). Final subcircuit (D46).
+
+network = "final"
+suite = "training"
+seed = 0
+rates_hz = [25, 50, 75, 100, 150, 200]   # within D43's range, 25-200
+default_rate_hz = 150.0                   # the Step 2 value
+tie_margin_floor = 0.01                   # tie margin = max(1 point, seed 0 vs margin_seed at the default rate)
+margin_seed = 1                           # the pre-run that measures the tie margin (50 runs at the default rate)
+
+# Open-loop check before the grid (proposal section 2): the calibration loom at each rate.
+# Ties go to the first-spike theta closest to 39 degrees; fewer than half the trials firing ranks last.
+check_trials = 10
+check_start_gap = 245.0
+fly_threshold_deg = [25.0, 53.0]          # 39 +/- 14 degrees (von Reyn 2014, D43); flagged, not used to choose
+
+# The held-out check at the chosen rate: the 20 held-out cube levels at these seeds, paired with
+# the Step 2 baseline (R = 150) at the same seeds by each level's median run (D48's "equal", sign test).
+held_out_seeds = [0, 1, 2]

@@ -157,18 +157,24 @@ def approaches(theta_deg: np.ndarray, gap: np.ndarray) -> list[tuple[int, int]]:
     return out
 
 
-def press_agreement(whole: pd.DataFrame, sub: pd.DataFrame, max_frames: int = 1) -> dict:
+def press_agreement(whole: pd.DataFrame, sub: pd.DataFrame, max_frames: int = 1, spans=None) -> dict:
     """D36 rule 5 as amended by D46, on one bot-driven level run on both networks (same seed):
     the first press of each approach is compared. Matched if both press within `max_frames` of
     each other; a miss if only one presses or they're further apart. Approaches where neither
-    presses are counted apart and aren't in the share."""
+    presses are counted apart and aren't in the share. `spans` overrides the approaches, e.g.
+    split by object identity from a replay (D48 amendment); by default, `approaches` on θ and gap."""
     n = min(len(whole), len(sub))
     w, s = whole.iloc[:n], sub.iloc[:n]
     if not np.allclose(w["theta_deg"], s["theta_deg"]):
         raise ValueError("the two runs didn't see the same input; rule 5 needs bot-driven runs")
     out = {"approaches": 0, "neither": 0, "matched": 0, "only_whole": 0, "only_sub": 0, "apart": 0, "diffs": []}
     pw, ps = w["fly_press"].to_numpy(bool), s["fly_press"].to_numpy(bool)
-    for a, b in approaches(w["theta_deg"].to_numpy(), w["gap"].to_numpy()):
+    if spans is None:
+        spans = approaches(w["theta_deg"].to_numpy(), w["gap"].to_numpy())
+    for a, b in spans:
+        b = min(b, n)
+        if a >= n:
+            continue
         out["approaches"] += 1
         fw, fs = np.flatnonzero(pw[a:b]), np.flatnonzero(ps[a:b])
         if not len(fw) and not len(fs):

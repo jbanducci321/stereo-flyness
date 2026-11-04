@@ -9,9 +9,11 @@ Usage:
     uv run python scripts/play_cube.py cube-easy-0 --network interim --theta-full 180
     uv run python scripts/play_cube.py cube-easy-0 cube-easy-1 --suite training --jobs 2
     uv run python scripts/play_cube.py cube-easy-0 --bot      # bot drives, brain watches (D43)
+    uv run python scripts/play_cube.py cube-easy-0 --seed 1 --quiet   # blind: progress and stuck flags only (D48)
 
-Writes results/closed_loop/<network>/<settings>/<driver>/<level>/ (settings end in `_flat` without
-`--rate-scaling`), a recorded run (`fly_log`):
+Writes results/closed_loop/<network>/[<suite>/]<settings>/<driver>/<level>/ (the suite folder only
+for held_out; settings end in `_flat` without `--rate-scaling`, then `_seed<n>` for seeds other than 0,
+then any `--tag`), a recorded run (`fly_log`):
 the game's run log (replayable), brain.parquet, spikes.npz and run.json (git-ignored).
 """
 
@@ -69,6 +71,9 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--jobs", type=int, default=1)
     parser.add_argument("--bot", action="store_true", help="the bot drives; the brain only watches (D43)")
+    parser.add_argument("--tag", default="", help="suffix for the settings folder, to keep a set of runs separate")
+    parser.add_argument("--quiet", action="store_true",
+                        help="blind runs (D48, D33): show only progress and stuck flags, never outcomes")
     args = parser.parse_args()
     sys.stdout.reconfigure(encoding="utf-8")
 
@@ -79,11 +84,23 @@ def main() -> None:
     gf = {"GF_R": cells.ids("DNp01", side="right"), "GF_L": cells.ids("DNp01", side="left")}
     path_comp, con_paths, _ = network(None if args.network == "whole_brain" else args.network)
     stuck_ids = load_stuck_state(ROOT / cfg["cascade"]["stuck_state"])  # restricted to the network (D38)
-    out = OUT / args.network / f"{args.theta_full:g}deg_{args.mode}_R{args.rate:g}{'' if args.rate_scaling else '_flat'}"
-    summaries = Parallel(n_jobs=args.jobs)(
+    # Held-out levels reuse training names (cube-easy-0, ...), so they get their own folder.
+    base = OUT / args.network if args.suite == "training" else OUT / args.network / args.suite
+    seed = "" if args.seed == 0 else f"_seed{args.seed}"  # seed 0 keeps the folders runs already use
+    out = base / f"{args.theta_full:g}deg_{args.mode}_R{args.rate:g}{'' if args.rate_scaling else '_flat'}{seed}{args.tag}"
+    runs = Parallel(n_jobs=args.jobs, return_as="generator_unordered")(
         delayed(one)(n, args.suite, path_comp, con_paths["original"], patches, gf, stuck_ids, args, out, args.seed)
         for n in args.levels)
-    for s in summaries:
+    summaries = []
+    for i, s in enumerate(runs, 1):
+        summaries.append(s)
+        if args.quiet:  # the stuck flag is the one live check allowed (D48)
+            flag = "" if s["stuck_from_frame"] is None else f"; STUCK from frame {s['stuck_from_frame']}"
+            print(f"run {i}/{len(args.levels)} done{flag}", flush=True)
+    if args.quiet:
+        print(f"Wrote {out.relative_to(ROOT)} (outcomes not shown: --quiet)")
+        return
+    for s in sorted(summaries, key=lambda s: args.levels.index(s["level"])):
         end = "completed" if s["completed"] else f"died at {100 * s['progress']:.0f}% ({s['death_kind']} at x {s['death_x']:.0f})"
         stuck = "" if s["stuck_from_frame"] is None else f"; STUCK from frame {s['stuck_from_frame']}"
         print(f"{s['level']} [{s['driver']}-driven]: {end}; {s['jumps']} jumps, {s['presses']} presses in "
