@@ -25,7 +25,7 @@ import numpy as np
 import pandas as pd
 
 from stereo_flyness.game.engine import Game
-from stereo_flyness.game.physics import HALF_PLAYER
+from stereo_flyness.game.physics import HALF_PLAYER, TICKS_PER_SECOND
 from stereo_flyness.interface.encoding import CELL, CubeEncoder
 
 THRESHOLD_DEG = 39.0  # the ideal fly's threshold (D43, D44)
@@ -243,22 +243,34 @@ def isolated_ground_spike(level, encoder: CubeEncoder, obstacle) -> bool:
 
 
 def approach_timing(rep: Replay, brain: pd.DataFrame) -> pd.DataFrame:
-    """One row per obstacle approach (D46, `approach_spans`): θ at the first Giant Fiber spike in it, the gap at
-    the first jump, and whether that jump is inside the single-spike window where it applies."""
+    """One row per obstacle approach (D46, `approach_spans`): θ at the first Giant Fiber spike in
+    it, the gap at the first jump, and whether that jump is inside the single-spike window where
+    it applies. For the leftover-activity check (Shannyn, 2026-11-03): how long since the
+    previous approach ended, how long the input was off just before it (0 if something loomed
+    right up to it), and since the Giant Fiber last fired
+    (ms, None if never before), and how many ticks into the approach the first spike came."""
     gf = (brain["spikes_GF_R"] + brain["spikes_GF_L"]).to_numpy() > 0
     gap = brain["gap"].to_numpy(float)
     stuck = brain["stuck_flag"].to_numpy(bool)
-    rows = []
+    ms = 1000 / TICKS_PER_SECOND
+    rows, prev_end = [], None
     for a, b in approach_spans(rep):
         spikes = np.flatnonzero(gf[a:b])
         jumps = np.flatnonzero(rep.jumped[a:b])
         lone = isolated_ground_spike(rep.level, rep.encoder, rep.obstacle[a])
         jump_gap = gap[a + jumps[0]] if len(jumps) else None
+        looming_before = np.flatnonzero(rep.theta[:a] > 0)
+        gf_before = np.flatnonzero(gf[:a])
         rows.append({"start": a, "ticks": b - a, "theta_start": rep.theta[a], "stuck": bool(stuck[a]),
                      "first_spike_theta": rep.theta[a + spikes[0]] if len(spikes) else None,
+                     "first_spike_tick": int(spikes[0]) if len(spikes) else None,
+                     "since_prev_ms": None if prev_end is None else (a - prev_end) * ms,
+                     "input_off_ms": None if not len(looming_before) else (a - looming_before[-1] - 1) * ms,
+                     "since_gf_ms": (a - gf_before[-1]) * ms if len(gf_before) else None,
                      "jump_gap": jump_gap, "lone_spike": lone,
                      "in_window": None if not lone or jump_gap is None else
                      bool(SPIKE_WINDOW[0] <= jump_gap <= SPIKE_WINDOW[1])})
+        prev_end = b
     return pd.DataFrame(rows)
 
 

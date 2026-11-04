@@ -273,6 +273,78 @@ def replays(df) -> list[str]:
     return lines
 
 
+CARRY_OVER_MS = 150  # descriptive split for the leftover-activity check, chosen on training runs; decides nothing
+
+
+def leftover(appr, svg_name) -> list[str]:
+    """Shannyn's leftover-activity check (2026-11-03, exploratory): is the first spike earlier when
+    the Giant Fiber fired recently? The model has no adaptation, so activity from the previous
+    object could carry into the next approach. Baseline runs only."""
+    a = appr[(appr["setting"] == BASELINE) & appr["first_spike_theta"].notna()]
+    if a.empty:
+        return ["No baseline approach with a Giant Fiber spike."]
+    bins = [(None, "never fired before"), ((0, CARRY_OVER_MS), f"< {CARRY_OVER_MS} ms"), ((CARRY_OVER_MS, 300), f"{CARRY_OVER_MS}–300 ms"),
+            ((300, 450), "300–450 ms"), ((450, np.inf), "≥ 450 ms")]
+    lines = ["| Giant Fiber last fired before the approach | Approaches | First-spike θ, mean ± s.d. | Median | "
+             "First spike, median ticks into the approach | Start θ, median |", "|---|---|---|---|---|---|"]
+    for rng, label in bins:
+        g = a[a["since_gf_ms"].isna()] if rng is None else a[(a["since_gf_ms"] >= rng[0]) & (a["since_gf_ms"] < rng[1])]
+        if len(g):
+            th = g["first_spike_theta"]
+            lines.append(f"| {label} | {len(g)} | {th.mean():.1f} ± {th.std():.1f}° | {th.median():.1f}° | "
+                         f"{g['first_spike_tick'].median():g} | {g['theta_start'].median():.1f}° |")
+    carry = a["since_gf_ms"] < CARRY_OVER_MS
+    fresh = a[~carry]["first_spike_theta"]
+    quiet = a[~carry & a["since_gf_ms"].notna()]
+    rho = quiet["since_gf_ms"].rank().corr(quiet["first_spike_theta"].rank()) if len(quiet) > 2 else float("nan")
+    rho_start = quiet["theta_start"].rank().corr(quiet["first_spike_theta"].rank()) if len(quiet) > 2 else float("nan")
+    prev = a.dropna(subset=["since_prev_ms"])
+    back_to_back = prev[prev["since_prev_ms"] == 0]["first_spike_theta"]
+    gap_before = prev[prev["since_prev_ms"] > 0]["first_spike_theta"]
+    lines += ["",
+              f"- **Carry-over:** {int(carry.sum())} of {len(a)} approaches ({carry.mean():.0%}) start while the Giant Fiber "
+              f"is still firing from the previous object (last spike < {CARRY_OVER_MS} ms before). Their first spike comes "
+              "in the first few ticks, at whatever θ the new object has then: a burst carrying over, not a response to it.",
+              f"- **Without them:** first-spike θ {fresh.mean():.1f} ± {fresh.std():.1f}° (n {len(fresh)}), against the "
+              f"open-loop calibration's 38.0 ± 6.3° at 150 Hz (D49 draft) and {a['first_spike_theta'].mean():.1f}° with them.",
+              f"- **No graded effect beyond that:** rank correlation of first-spike θ with time since the last spike "
+              f"{rho:+.2f} (n {len(quiet)}), and with the θ the approach starts at {rho_start:+.2f}.",
+              f"- By time since the previous approach ended: back to back (0 ms) {back_to_back.mean():.1f}° (n {len(back_to_back)}), "
+              f"after a gap {gap_before.mean():.1f}° (n {len(gap_before)}).",
+              f"- The {CARRY_OVER_MS} ms split is descriptive, chosen on training runs; it decides nothing. "
+              f"Plot: `{svg_name}` (first-spike θ against time since the Giant Fiber last fired)."]
+    return lines
+
+
+def leftover_svg(appr) -> str:
+    """A small scatter plot, no plotting library: first-spike θ against time since the Giant Fiber
+    last fired (log scale), coloured by the θ the approach started at."""
+    a = appr[(appr["setting"] == BASELINE) & appr["first_spike_theta"].notna() & appr["since_gf_ms"].notna()]
+    w, h, left, bottom, top, right = 640, 360, 60, 40, 20, 20
+    x0, x1, y1 = np.log10(4), np.log10(2000), 90
+    sx = lambda v: left + (np.log10(max(v, 4)) - x0) / (x1 - x0) * (w - left - right)  # noqa: E731
+    sy = lambda v: h - bottom - min(v, y1) / y1 * (h - top - bottom)  # noqa: E731
+    out = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" font-family="sans-serif" font-size="11">',
+           f'<rect width="{w}" height="{h}" fill="white"/>']
+    for ms in (10, 30, 100, 300, 1000):
+        out.append(f'<line x1="{sx(ms):.1f}" y1="{top}" x2="{sx(ms):.1f}" y2="{h - bottom}" stroke="#ddd"/>'
+                   f'<text x="{sx(ms):.1f}" y="{h - bottom + 14}" text-anchor="middle">{ms}</text>')
+    for deg in (0, 20, 39, 60, 80):
+        out.append(f'<line x1="{left}" y1="{sy(deg):.1f}" x2="{w - right}" y2="{sy(deg):.1f}" '
+                   f'stroke="{"#999" if deg == 39 else "#eee"}"{" stroke-dasharray=\"4 3\"" if deg == 39 else ""}/>'
+                   f'<text x="{left - 6}" y="{sy(deg) + 4:.1f}" text-anchor="end">{deg}°</text>')
+    sx_c = lambda v: sx(v) if not pd.isna(v) else left  # noqa: E731
+    for r in a.itertuples():
+        colour = "#1f77b4" if r.theta_start < 8 else "#d62728"
+        out.append(f'<circle cx="{sx_c(r.since_gf_ms):.1f}" cy="{sy(r.first_spike_theta):.1f}" r="2.5" fill="{colour}" fill-opacity="0.6"/>')
+    out += [f'<line x1="{sx(CARRY_OVER_MS):.1f}" y1="{top}" x2="{sx(CARRY_OVER_MS):.1f}" y2="{h - bottom}" stroke="#555" stroke-dasharray="2 3"/>',
+            f'<text x="{(left + w - right) / 2}" y="{h - 8}" text-anchor="middle">time since the Giant Fiber last fired (ms, log scale)</text>',
+            f'<text x="14" y="{(top + h - bottom) / 2}" text-anchor="middle" transform="rotate(-90 14 {(top + h - bottom) / 2})">first-spike θ</text>',
+            f'<text x="{w - right}" y="{top + 12}" text-anchor="end"><tspan fill="#1f77b4">● starts below 8°</tspan>  '
+            '<tspan fill="#d62728">● starts at 8° or more</tspan>  dashed: 39° and the 150 ms split</text>', "</svg>"]
+    return "\n".join(out)
+
+
 def report(df, appr, refs, network, suite, expected) -> str:
     lines = [f"# Step 2: the untuned fly on {suite.replace('_', '-')} cube levels (`{network}`)\n",
              "Fly-driven closed loop, no tuning (D43). The baseline of record is θ_full = 200°, collision-course "
@@ -289,7 +361,8 @@ def report(df, appr, refs, network, suite, expected) -> str:
     lines.append("- Every run replayed exactly from its logged presses.\n")
     lines += ["## Results\n", *results_table(df, refs), "", "## Per level (progress; death class)\n", per_level(df, refs),
               "", "## Comparisons\n", *comparisons(df), "", "## Timing per approach\n", *timing(df, appr),
-              "", "## Stuck runs\n", *stuck_section(df), "", "## Replays for the write-up (picked by rule)\n", *replays(df),
+              "", "## Leftover activity (exploratory check, added before the held-out results were opened)\n",
+              *leftover(appr, f"{network}_{suite}_leftover.svg"), "", "## Stuck runs\n", *stuck_section(df), "", "## Replays for the write-up (picked by rule)\n", *replays(df),
               "", "## Deaths\n"]
     dead = df[~df["completed"].astype(bool)].copy()
     dead["progress"] = dead["progress"].map(pct)
@@ -312,6 +385,7 @@ def main() -> None:
     stem = OUT / f"{args.network}_{args.suite}"
     df.to_csv(f"{stem}_runs.csv", index=False)
     appr.to_csv(f"{stem}_approaches.csv", index=False)
+    (OUT / f"{stem.name}_leftover.svg").write_text(leftover_svg(appr), encoding="utf-8")
     (OUT / f"{stem.name}.md").write_text(text + "\n", encoding="utf-8")
     if args.suite == "held_out":  # blind (D33): opened together, after the training check
         print(f"Wrote {stem.relative_to(ROOT)}.md, _runs.csv and _approaches.csv (outcomes not shown)")
