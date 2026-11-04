@@ -12,11 +12,11 @@ Usage:
     uv run python scripts/play_cube.py cube-easy-0 --seed 1 --quiet   # blind: progress and stuck flags only (D48)
     uv run python scripts/play_cube.py cube-easy-0 --network whole_brain --control shuffle_s0   # Step 4 control
     uv run python scripts/play_cube.py cube-easy-0 --network whole_brain --silence DNp70,PVLP151  # Step 4 lesion
+    uv run python scripts/play_cube.py cube-easy-0 --network whole_brain --random-lesion DNp70,PVLP151 --draw 0
 
-Step 4 (draft plan, docs/notes/step4_proposal.md, not agreed yet): `--control NAME` swaps in
-data/Connectivity_783_<NAME>.parquet (scripts/make_control_connectivity.py; whole brain only, D36),
-and `--silence` lesions every neuron of the listed cell types, both sides, with Shiu's silence()
-(D5). Every run records its connectivity file and SHA-256, and what was silenced, in run.json.
+Step 4 (D51): `--control`, `--silence`, `--random-lesion --draw` and `--lesion-name` choose a
+control connectome or a lesion (scripts/step4_options.py). Every run records its connectivity file
+and SHA-256, and exactly which neurons were silenced, in run.json.
 
 Writes results/closed_loop/<network>/[<suite>/]<settings>/<driver>/<level>/ (the suite folder only
 for held_out; settings end in `_flat` without `--rate-scaling`, then `_<control>` and
@@ -32,12 +32,12 @@ from pathlib import Path
 import pandas as pd
 from joblib import Parallel, delayed
 
-from find_target_neurons import DATA_DIR, fetch_annotations
+from find_target_neurons import fetch_annotations
 from inspect_encoding import LEVELS, job
 from reproduce_sugar import PATH_COMP, PATH_CON
 from run_pathway_tests import CONFIG, git_commit, network
+from step4_options import add_args as add_step4_args, resolve as resolve_step4
 from stereo_flyness.brain.celltypes import CellTypes
-from stereo_flyness.brain.controls import control_path, file_sha256
 from stereo_flyness.experiments.pathway_tests import loom_patches
 from stereo_flyness.game.engine import Game
 from stereo_flyness.game.suites import load_level
@@ -80,8 +80,7 @@ def main() -> None:
     parser.add_argument("--jobs", type=int, default=1)
     parser.add_argument("--bot", action="store_true", help="the bot drives; the brain only watches (D43)")
     parser.add_argument("--tag", default="", help="suffix for the settings folder, to keep a set of runs separate")
-    parser.add_argument("--control", help="Step 4: play on data/Connectivity_783_<CONTROL>.parquet (whole brain only)")
-    parser.add_argument("--silence", help="Step 4: comma-separated cell types to silence, both sides (D5)")
+    add_step4_args(parser)
     parser.add_argument("--quiet", action="store_true",
                         help="blind runs (D48, D33): show only progress and stuck flags, never outcomes")
     args = parser.parse_args()
@@ -93,36 +92,16 @@ def main() -> None:
     patches = loom_patches(con, cells, cfg["probes"]["p5"]["seed"])  # P5's patch order (D41)
     gf = {"GF_R": cells.ids("DNp01", side="right"), "GF_L": cells.ids("DNp01", side="left")}
     path_comp, con_paths, _ = network(None if args.network == "whole_brain" else args.network)
-    path_con, step4 = con_paths["original"], []
-    if args.control:
-        if args.network != "whole_brain":
-            sys.exit("Controls run on the whole brain (D36): add --network whole_brain.")
-        path_con = control_path(DATA_DIR, args.control)
-        if not path_con.exists():
-            sys.exit(f"No control connectome at {path_con}. Build it with scripts/make_control_connectivity.py.")
-        step4.append(f"control {args.control}")
-    types = [t.strip() for t in args.silence.split(",")] if args.silence else []
-    silence = []
-    for t in types:
-        ids = cells.ids(t)
-        if not ids:
-            sys.exit(f"No v783 neurons of type {t} to silence.")
-        silence += ids
-    if types:
-        step4.append(f"silenced {'+'.join(types)} ({len(silence)} neurons)")
-    extra = {"connectome": {"file": Path(path_con).name, "sha256": file_sha256(path_con)},
-             "silenced": {"types": types, "ids": silence}}
-    if step4:
-        extra["status"] = f"Step 4 control (plan not agreed yet): {'; '.join(step4)}"
+    step4 = resolve_step4(args, cells, con_paths["original"])
     stuck_ids = load_stuck_state(ROOT / cfg["cascade"]["stuck_state"])  # restricted to the network (D38)
     # Held-out levels reuse training names (cube-easy-0, ...), so they get their own folder.
     base = OUT / args.network if args.suite == "training" else OUT / args.network / args.suite
     seed = "" if args.seed == 0 else f"_seed{args.seed}"  # seed 0 keeps the folders runs already use
-    step4_name = (f"_{args.control}" if args.control else "") + (f"_silence-{'+'.join(types)}" if types else "")
     out = base / (f"{args.theta_full:g}deg_{args.mode}_R{args.rate:g}{'' if args.rate_scaling else '_flat'}"
-                  f"{step4_name}{seed}{args.tag}")
+                  f"{step4.suffix}{seed}{args.tag}")
     runs = Parallel(n_jobs=args.jobs, return_as="generator_unordered")(
-        delayed(one)(n, args.suite, path_comp, path_con, patches, gf, stuck_ids, args, out, args.seed, silence, extra)
+        delayed(one)(n, args.suite, path_comp, step4.path_con, patches, gf, stuck_ids, args, out, args.seed,
+                     step4.silence, step4.meta)
         for n in args.levels)
     summaries = []
     for i, s in enumerate(runs, 1):
