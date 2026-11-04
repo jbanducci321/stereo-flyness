@@ -4,7 +4,7 @@
 
 **Last updated:** 2026-10-22. Written by Jacob's Claude Code session, which did the planning and setup with Jacob.
 
-**Status at time of writing:** Step 0 (feasibility) is underway. Setup is done; the frame-stepping brain runner is built and is being validated on branch `jb-frame-stepping`.
+**Status (2026-11-04):** Steps 0–3 are done. The untuned fly plays the cube held-out levels (Step 2, D48, `docs/notes/step2_report.md`), and tuning R was checked on held-out levels (Step 3, D49, `docs/notes/step3_report.md`). Next: which R goes forward (open), then Step 4, controls and lesions.
 
 > **To the Claude session reading this:** treat everything under "Decisions" and "Hard rules" as settled. Don't re-litigate, override or "improve" them without the human explicitly asking. If a task seems to need a change to a decision, stop and ask your human first. Shannyn and Jacob decide together, and every change gets logged in `docs/decisions.md`.
 
@@ -96,11 +96,19 @@ The canonical, up-to-date log is **`docs/decisions.md`**. Read it first. Summary
 | D41 | **Cube input encoding:** the nearest object on a collision course (visual cells, stacked cells merged); θ from its real top and bottom; a growing patch of LC4 + LPLC2 on both sides covering θ/θ_full, in P5's patch order, at rate R; logged every tick. The LC4-speed / LPLC2-size split is a later option. |
 | D42 | **Output rule:** any spike from either Giant Fiber → a one-tick press on the next tick. No count, threshold or refractory window. |
 | D43 | **Cube dials and Step 2 plan:** R is the only cube dial (150 Hz, range 25–200). θ_full is calibrated on the whole brain to the fly's threshold (39° ± 14°, von Reyn 2014 Fig. 5b), not tuned. Baseline of record: calibrated, collision course, R = 150 Hz; comparisons at 180° and "every object looms". Order: code → calibration → bot-driven whole-brain recruitment (10 training levels) → final subcircuit → baseline. |
+| D44 | **Reference ceiling:** the ideal 39° fly (no brain) presses on the tick after the nearest looming object reaches 39°. Logged before any Step 2 result; real results are read against it. |
+| D45 | **Cube encoding rates scale with the patch (R × f).** θ_full recalibrated on the whole brain: 200° (R × f), against 1,082° with flat R. |
+| D46 | **The final subcircuit:** built from whole-brain recruitment runs after T4, and validated (rules 1–5, the calibration and the time limit pass). |
+| D47 | **Visual cells are clipped at the ground** (D41 amendment). Raised slabs still don't loom from the ground, a known limit of the encoding. |
+| D48 | **Step 2 plan and result.** On the 20 held-out cube levels, the untuned fly (R = 150 Hz) completes 6 of 60 runs, all easy, mean progress 29%. Most deaths are early jumps (d1); most of the rest are the encoding's limits. Write-up: `docs/notes/step2_report.md`. |
+| D49 | **Step 3 plan and result.** R tuned on 50 training levels picks 50 Hz, outside the real fly's range (open-loop θ ~84°). On held-out levels: 11 better, 4 worse, 5 equal, p = 0.118, no clear difference (23 against 6 runs completed, described only). Write-up: `docs/notes/step3_report.md`. |
 | D19 | End deliverable: a **record-and-replay viewer**. Closed-loop runs log every frame (game state, inputs, watched spikes) from the `run_frames` callback, and a viewer replays at real 60 fps with a brain-activity panel. It must visibly separate our input encoding from the fly's spikes, say it's a replay of a simulation, and never smooth or alter recorded activity. Live mode is optional, for small subcircuits only. |
 
 ### Open decisions (not yet made; don't decide these unilaterally)
 - **Subcircuit rule:** decided in **D36** (recruited neurons + their ≥ 30-synapse inputs; interim build for T3, final rebuild after T4) and **D37** (cascade trials left out; tuning-time limit; 30 s practice levels).
 - **Brain time, input encoding, output rule, cube dials:** decided in T4 (**D40–D43**). Ship mode is decided in Step 5.
+- **Which R goes forward** to Step 4 and Stereo Madness: not fixed by D49. Jacob's proposal (150 Hz of record, 50 Hz as a labelled variant) is in `docs/decisions.md`, "Open".
+- **Stereo Madness run N times, not once:** agreed in principle (2026-11-02); N and the seeds are fixed at Step 6, before any run (`docs/decisions.md`, "Open").
 - **Closed-loop simulation approach:** resolved for now by D17 (Brian2 with `run_frames`). Our own reimplementation (e.g. PyTorch, validated against Brian2) stays an option for speed or for the GPU phase.
 - **Code LICENSE.**
 
@@ -282,12 +290,12 @@ Each `step()` call costs ~100–250 ms of Brian2 overhead regardless of network 
 | Step | What |
 |---|---|
 | 0 | Feasibility: **complete, GO (D39)** |
-| 1 | Build the game, including a viewer that can replay a recorded run log |
-| 2 | (next, after T4) Cube baseline with **default, untuned** values. Record this before any tuning; it's a key result. Closed-loop runs log every frame from here on (R1), and the first brain panel appears in the viewer (R2). |
-| 3 | Tune at most 2–3 dials on generated levels, evaluate on held-out generated levels |
-| 4 | Controls and lesions: degree-preserving shuffled connectome; random network of the same size; LC4/LPLC2 silenced; Giant Fiber silenced. Does performance depend on the real wiring? |
+| 1 | Build the game, including a viewer that can replay a recorded run log: **complete** |
+| 2 | Cube baseline with **default, untuned** values. Record this before any tuning; it's a key result. Closed-loop runs log every frame from here on (R1), and the first brain panel appears in the viewer (R2): **complete (D48)** |
+| 3 | Tune at most 2–3 dials on generated levels, evaluate on held-out generated levels: **complete (D49)** |
+| 4 | (next) Controls and lesions: degree-preserving shuffled connectome; random network of the same size; LC4/LPLC2 silenced; Giant Fiber silenced. Does performance depend on the real wiring? |
 | 5 | Ship pathway: repeat Steps 2–4 |
-| 6 | Mixed levels, then Stereo Madness **once**, with everything frozen. That run is recorded and becomes the showcase replay. |
+| 6 | Mixed levels, then Stereo Madness with everything frozen. Run N times, not once (agreed in principle; see Open decisions), with the replay picked by rule as the showcase. |
 | 7 | Whole brain on a free GPU (Kaggle or Lightning AI), compared with the subcircuit |
 | 8 | Write-up: honest README, figures, reproducibility, and the replay viewer showcase (Stereo Madness replay plus an exported video) |
 
