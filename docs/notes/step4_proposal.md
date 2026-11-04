@@ -1,87 +1,125 @@
 # Step 4 proposal: controls and lesions on the cube
 
-*Jacob, 2026-11-04. Draft for discussion: no code, no runs. Shannyn leads the lesion design and interpretation (PROJECT_BRIEF §8); the lesion parts here are questions and engineering facts, not choices. Once agreed, it's logged as a decision before any Step 4 run, like D48 and D49.*
+*Jacob, 2026-11-04. Revision 2, with Shannyn's answers of 2026-11-04 (she leads the lesion design and interpretation). For her review before it's logged as D51. No Step 4 run exists yet; nothing here has been run on a control network or a lesion. Once logged, nothing is changed, re-run or dropped after the results are seen (as D48, D49).*
 
-**The question (PROJECT_BRIEF Step 4):** does the fly's play depend on the real wiring? This matters most because of caveat 1: LC4 and LPLC2 synapse directly onto the Giant Fiber, so in cube mode the fly could be little more than a one-hop relay plus a threshold.
+**The question (PROJECT_BRIEF Step 4):** does the fly's play depend on the real wiring? It matters most because of caveat 1. LC4 and LPLC2 synapse directly onto the Giant Fiber (293 connections, 1,885 synapses: 19.9% of the Giant Fibers' input in v783), so in cube mode the fly could be little more than a one-hop relay plus a threshold.
 
-## 1. Two engineering facts that change the plan
+## 1. Fixed setup
+- **Whole brain** (D36), **R = 150 Hz** (D50), R × f, θ_full = 200°, collision course, D47's encoding: everything as in the Step 2 baseline of record.
+  - The encoding is ours, so it doesn't change with the network. **No recalibration for any control or lesion.**
+- **Levels and seeds:** the 20 held-out cube levels, seeds 0, 1, 2 (60 runs per condition). Nothing here is tuned, so reusing them is fine.
+- **Reference: the intact whole brain**, same levels and seeds (agreed: like with like). It also gives a first closed-loop look at the subcircuit against the whole brain, for Step 7.
+- **Original signs only** (D27's corrected copy isn't used).
+- **Every ID checked against v783** (hard rule 4). Every run records its connectivity file, the file's SHA-256 and what was silenced (`play_cube.py`, already built).
 
-**a. The "Giant Fiber silenced" lesion would change nothing as planned.**
-- Shiu's `silence()`, the lesion method D5 allows, zeroes a neuron's **outgoing** synapses only. The silenced neuron still spikes when driven (`stepper.py`, `silence`).
-- Our output rule reads the Giant Fiber's **own spikes** (D42). Silenced this way, it keeps spiking, and the fly presses exactly as before.
-- Making it not spike would need its incoming synapses zeroed, a different kind of lesion from D5's. Even then the result is known in advance: no Giant Fiber spikes means no presses, so it plays like "never press". Our output *is* the Giant Fiber, so in this game a Giant Fiber lesion only tests our own output rule.
-- In the real fly, Giant Fiber–silenced flies still escape through the long-mode pathway (von Reyn 2014; `docs/notes/giant_fiber_escape.md`). Our output doesn't read that pathway, so we can't reproduce that.
-- **Proposal:** drop it, or keep it only as a pipeline check with its outcome stated in advance. **Question for Shannyn.**
+## 2. What's not run, and why
+- **Giant Fiber silenced: dropped.** Shiu's `silence()` zeroes outgoing synapses only, so a "silenced" Giant Fiber still spikes, and our output reads its spikes (D42). Any lesion that stops it only tests our output rule.
+  - **For the write-up (Shannyn):** "In real flies, Giant Fiber–silenced flies still escape through the long-mode pathway (von Reyn et al. 2014), which our output can't see."
+- **LC4/LPLC2 silenced: a code check, not a result.**
+  - Our input goes only to LC4/LPLC2. Cutting their outputs means nothing in the brain receives the input at all, so "never press" is guaranteed, and it says nothing about other routes.
+  - Run on 2 held-out levels at seed 0. It must give **exactly 0 Giant Fiber spikes and 0 presses**; anything else is a bug, and nothing else runs until it's fixed.
+- **LC4 only / LPLC2 only: dropped (Shannyn).**
+  - θ_full is calibrated on both types together, so halving the input mostly works like lowering R, which Step 3 already covers.
+  - It doesn't test the von Reyn 2017 split (LC4 = speed, size from a separate population) either, because our encoding drives both types with size.
 
-**b. "LC4/LPLC2 silenced" is circular (as `docs/pathway_tests.md` already says for E5).**
-- Our input drives LC4/LPLC2 directly. Silenced, they still spike, but nothing reaches the Giant Fiber, so the fly never presses.
-- That outcome is known in advance, so at most it's a pipeline check (it also confirms nothing else in the brain carries the looming input to the Giant Fiber).
-- **Proposal:** keep it as a cheap check with its prediction written down, not as a result. **Question for Shannyn.**
+## 3. The control networks
+Each is a connectivity file written into git-ignored `data/` from a fixed seed (`scripts/make_control_connectivity.py`). The original file is only read; `shiu_model.py` isn't touched. Instance *k* (k = 0, 1, 2) plays at Poisson seed *k*, so 3 instances give 60 runs.
 
-**So the informative tests are the wiring controls.** Below I also suggest one lesion that targets caveat 1 directly (§3c), and the E5 partner lesions as candidates (§4).
+**a. Degree-preserving shuffle** (3 instances).
+- Every connection keeps its presynaptic neuron, synapse count and sign; the postsynaptic neurons are permuted across connections, with no self-connections or duplicate pairs.
+- Every neuron keeps its in- and out-degree, its total output weight and its sign. Who connects to whom is randomized. Built and checked on the real connectome: 15.1M connections in ~35 s.
 
-## 2. Where it runs
-- **On the whole brain**, as D36 fixed. D36 also says a shuffled control on the subcircuit would need the whole D36 pipeline (pathway tests, recruitment, build, validation: days). Running on the whole brain avoids that entirely, and the controls aren't tuned, so the subcircuit's speed isn't needed.
-- **Intact reference: the whole brain at the same R, on the same levels and seeds** (60 runs). Rule 5 showed the subcircuit presses on the same frame as the whole brain, so the Step 2 subcircuit runs would very likely give the same result. But comparing like with like (whole brain against whole brain) leaves nothing to argue about, at ~1–1.5 h. It's also a first data point for Step 7.
-- **R:** whatever we agree goes forward (my proposal: 150 Hz, `docs/decisions.md`, "Open"). If we agree 50 Hz as a variant, the controls run at the R of record only.
-- **Encoding fixed:** θ_full = 200° and everything in D41/D45/D47 stay as they are. **No recalibration for a control network.** Recalibrating would tune the control to behave like the fly, which defeats it.
+**b. Shuffle keeping the looming → Giant Fiber connections** (3 instances; "the most informative control", Shannyn).
+- The 293 direct LC4/LPLC2 → Giant Fiber connections stay in place and **out of the shuffle pool**. They're never moved, and no shuffled connection takes their slots. Everything else is shuffled as in (a). So every neuron's degree is still preserved (Shannyn's condition).
+- **Added: no new looming → Giant Fiber connections.** A shuffled connection that would land as a new LC4/LPLC2 → Giant Fiber connection is swapped away, so the direct pathway is exactly the original: no more, no less. (Only 21 of the 314 LC4/LPLC2 neurons don't already connect to a Giant Fiber, so this is rare, but it should be zero.)
 
-## 3. The controls (my side: networks and runs)
-Each control network is a new connectivity file written into git-ignored `data/`, like D27's sign-corrected copy (`scripts/make_corrected_connectivity.py`). The original file is only read; `shiu_model.py` isn't touched; `BrainStepper` already takes the connectivity path. Each file is built from a fixed seed, so it can be rebuilt anywhere, and its checksum is recorded with the runs.
+**c. Relay-only network** (1 network; Shannyn's optional, cheap addition).
+- Only the 293 LC4/LPLC2 → Giant Fiber connections; nothing else. The cleanest version of caveat 1.
+- It shows whether the Giant Fiber reaches threshold from those connections alone, and so what the other ~80% of its input adds.
+- One network, so its 60 runs are 3 Poisson seeds.
 
-**a. Degree-preserving shuffle (main control).**
-- **How:** keep every connection's presynaptic neuron, synapse count and sign, and randomly permute the postsynaptic neurons across all connections. Then fix self-connections and duplicate pairs with a few swap passes.
-- **What it keeps:** each neuron's number of inputs and outputs, its total output weight, and its sign (signs belong to the presynaptic neuron's transmitter).
-- **What it destroys:** *who* connects to whom, including LC4/LPLC2 → Giant Fiber.
-- **Instances:** 3 shuffles, each played at one Poisson seed (shuffle *k* at seed *k*, k = 0, 1, 2). That gives 60 runs, matching the baseline's 3 seeds, so between-shuffle spread is part of the result.
-
-**b. Random network of the same size (as planned).**
-- Same neurons, the same number of connections and the same mix of synapse counts and signs. Connections are placed uniformly at random, so degrees aren't kept either.
+**d. Random network** (3 instances; kept: reviewers expect it).
+- Same neurons and number of connections. Connections are placed uniformly at random, with no self-connections or duplicates.
+- Each neuron keeps its sign (Dale's law, as in the model), and synapse counts are drawn from the real distribution.
 - Our input still goes to the LC4/LPLC2 indices, and the Giant Fiber indices are still read.
-- 3 instances, as in (a). It's weaker than (a), so it adds little scientifically, but it's in the plan and costs one more night-slot. **Keep or drop?**
 
-**c. Suggested addition: shuffle everything except the looming → Giant Fiber connections.**
-- Same as (a), but the direct LC4/LPLC2 → Giant Fiber connections stay in place. That's ~20% of the Giant Fiber's input; its other ~80% and the rest of the brain are shuffled.
-- **This is the test of caveat 1.**
-  - If the fly plays as well as intact, its play is essentially the one-hop relay plus a threshold, and we say so.
-  - If it plays worse (or better), the rest of the wiring shapes the jump, for example through the feed-forward inhibition E5b found.
-- I think this is the most informative control we can run. It's your area, though, as it's really a lesion-style question. **Question for Shannyn.**
+## 4. Lesions (closed loop, whole brain, against the intact whole brain)
+Whole cell types are silenced, on both sides, with Shiu's `silence()` (D5), exactly as in the pathway tests' E5 (`configs/pathway_tests.toml`).
 
-**What I expect, written down before anything runs** (to be fixed in the decision):
-- (a) and (b) mostly never fire the Giant Fiber, so they play like "never press" (~6%).
-- The other possibility is runaway activity: a shuffled brain may cascade (the stuck state, D38), and the Giant Fiber would then fire nonstop. A fly that presses all the time jumps every time it lands, which could get further than never pressing. So we need a reference for it (§5).
-- (c): no confident prediction. That's why it's worth running.
+- **E5b: the Giant Fiber's inhibitory partners silenced.** CB3707, SAD014, CL038, PVLP010, LHAD1g1, CB0010 and CB0563: 22 neurons, all inhibitory.
+- **E5c: its excitatory partners silenced.** DNp70, PVLP122b, PVLP062 and PVLP151: 12 neurons, all excitatory.
+- **Random-lesion control for each (Shannyn)**, 3 draws with fixed seeds, draw *k* at Poisson seed *k*:
+  - the same number of randomly chosen neurons, each matched to one lesioned neuron;
+  - **same sign** and **total output synapses within ±10%**;
+  - never a Giant Fiber, an LC4/LPLC2 neuron or one of the lesion set.
+  - **Why the sign is matched (added):** silencing random inhibitory neurons and silencing random excitatory ones push the brain in opposite directions, so an unmatched control would muddle the comparison. Every lesioned neuron has at least 61 candidates (median ~600–1,200), so the matching is never forced.
 
-## 4. Lesions (Shannyn's lead: options only)
-Candidates that use D5's method and aren't circular, all from the pathway tests (`docs/pathway_results.md`, E5):
-- **E5b in closed loop: the Giant Fiber's inhibitory partners silenced** (CB3707, SAD014, CL038, PVLP010, LHAD1g1, CB0010, CB0563). Open loop, this raised the right Giant Fiber's rate by ~13%. In the game it should move the jump earlier, so we'd predict more (d1) deaths: a direct, sign-specific test of whether recruited inhibition shapes the jump timing.
-- **E5c in closed loop: the excitatory partners silenced** (DNp70, PVLP122b, PVLP062, PVLP151). Open loop, the left Giant Fiber went silent and the right fell ~10%. Our rule presses on either Giant Fiber, so the prediction is little change, with slightly later jumps.
-- **LC4 only / LPLC2 only** (E5a, dropped before because it was uninformative open loop): with half the input, the threshold θ should move later. It might be more telling in closed loop, but θ_full was calibrated on both types together.
-- Every ID gets checked against v783 (hard rule 4), as in the pathway tests.
+## 5. Predictions, written before any run
+- **(a) Shuffle and (d) random network (Jacob):**
+  - The Giant Fiber mostly never fires, so they play like never press (~6%).
+  - The alternative is runaway activity: the Giant Fiber fires nonstop and they play like always press. Either way, **worse than intact**.
+- **(b) Looming kept (Shannyn):**
+  - A pure relay loses the recruited inhibition (E5b), so it jumps **earlier**: first-spike θ below intact, more (d1) deaths, progress the same or lower.
+- **(c) Relay-only:** no confident prediction.
+  - It loses the recruited inhibition (earlier) and the recruited excitation (later).
+  - Open loop, E5c silenced the left Giant Fiber entirely. So the right one probably still reaches threshold and the left one may not.
+- **E5b (Shannyn):** the Giant Fiber fires earlier: first-spike θ below intact (~37°), more (d1) deaths, lower progress.
+- **E5c (Shannyn):** first-spike θ later, fewer (d1), more (d2), progress the same or **higher**.
+  - **Fixed reading:** if it does better than intact, that isn't "the lesion improved the fly". It's the same late-threshold effect as Step 3 (D49), and it's written up that way.
+- **Random lesions:** no clear difference from intact.
+- **LC4/LPLC2 code check:** exactly 0 Giant Fiber spikes and 0 presses.
 
-## 5. How it's judged (to fix before the runs)
-- **Levels:** the 20 held-out cube levels (unseen by the controls; the Step 2 and 3 results on them are already known, which is fine because nothing here is tuned). Seeds 0, 1, 2.
-- **Score:** mean progress, levels completed by difficulty, D48's death classes, stuck runs (D38), and presses per second (to show "never fires" or "always fires").
-- **Comparison:** each control against the intact whole brain, per level, using each setting's median run across the three seeds or instances. D48's "equal", then the two-sided sign test (p < 0.05), as in Step 3. **"Depends on the wiring" = the control is worse at p < 0.05.**
-- **References:** never press and random presses (from Step 2), plus **a new one: always press** (no brain, holds every tick), so that a runaway control network can be read correctly.
-- **Open-loop check per control network:** the calibration loom (10 trials), giving the first-spike θ and trials fired. It's described only and explains the closed-loop result without changing anything.
-- **Replays:** one per control, picked by rule (seed 0, the first held-out level), so the viewer can show what a shuffled brain does.
+## 6. How it's judged
+**Per condition against the intact whole brain:**
+- per level, each setting's median run across its 3 seeds or instances;
+- D48's "equal" (same killing object, or both completed);
+- the two-sided sign test, with equal levels left out;
+- "better" or "worse" only at p < 0.05. As in D48, each comparison is tested on its own; the report also says which results survive a Holm correction for the number of comparisons.
 
-## 6. Cost and timeline
+**"Depends on the wiring" (a, d)** = worse than intact at p < 0.05.
 
-| Task | Who | Time |
-|---|---|---|
-| Agree this plan (incl. §1, §3c, §4) and log it | Both | her review + ~30 min |
-| Code: shuffle and random-network builders with tests, the always-press reference, a Step 4 runner and report (reusing Step 2's analysis) | Jacob | ~half a day |
-| Open-loop check of each control network | runs | ~30 min |
-| Runs: intact whole brain + 3 shuffles + 3 random + (c) × 3 + any lesions, 60 runs each | runs | one night (whole brain is ~3× slower than the subcircuit, but control networks that never fire die at the first object, so they're quick) |
-| Report and write-up, opened together | Both | ~2 h |
+**"It's a relay" (b, Shannyn's stronger test).** "No clear difference" from intact is *not* evidence of sameness, so the relay reading needs all three of these:
+1. progress: no clear difference from intact (sign test);
+2. **first-spike θ:** the median first-spike θ without carry-over (D48 amendment) is within the intact brain's seed-to-seed range (the largest difference between any two of its 3 seeds);
+3. **death-class mix:** the share of (d1) deaths is within the intact brain's seed-to-seed range. The full class mix is shown beside it.
 
-## 7. Questions to settle
-1. **Giant Fiber silenced:** drop, or keep as a pipeline check with a stated outcome? (§1a)
-2. **LC4/LPLC2 silenced:** keep as a pipeline check? (§1b)
-3. **Add the "everything but looming → Giant Fiber" shuffle?** (§3c)
-4. **Random network: keep or drop?** (§3b)
-5. **Which lesions in closed loop?** (§4)
-6. **Intact whole-brain reference:** agree to run it rather than reuse the subcircuit runs? (§2)
-7. **R for Step 4:** follows the "which R goes forward" decision.
+If (1) holds but (2) or (3) doesn't, it's reported as "plays about as far, but not the same way", not as a relay.
+
+**"It's those neurons" (E5b, E5c).** A lesion's effect is specific only if:
+- the lesion differs from intact at p < 0.05, **and**
+- it differs from its own random-lesion control at p < 0.05, in the same direction.
+
+**Reported beside every condition (described only):**
+- mean progress; completions by difficulty;
+- D48's death classes; stuck runs (D38);
+- presses per second;
+- first-spike θ with and without carry-over;
+- approaches with no Giant Fiber spike.
+
+**References:** never press and random presses (Step 2), and always press (built).
+
+**Open-loop check of every network and lesion before the runs**, recorded with the plan but read only as a description:
+- the calibration loom, 10 trials;
+- first-spike θ and trials fired.
+
+**Replays:** one per condition, picked by rule: seed 0 (instance 0), the first held-out level alphabetically.
+
+## 7. Runs and time
+
+| | Conditions | Runs | Time |
+|---|---|---|---|
+| Code check | LC4/LPLC2 silenced, 2 levels | 2 | minutes |
+| **Night 1** (full-length runs) | intact; E5b; E5c | 180 | ~6 h |
+| **Night 2** | E5b and E5c random lesions; shuffle ×3; looming-kept shuffle ×3; relay-only; random network ×3 | 360 | ~6–8 h |
+
+Control networks that never fire die at the first object, so they're quick. Runaway networks would be slower. If night 2 runs over, it finishes the next day; nothing is opened before the whole batch is done (D33).
+
+## 8. Code (after this is logged)
+Already built and tested:
+- the degree-preserving shuffle, with kept connections;
+- the always-press reference;
+- `play_cube.py --control / --silence`, recording the connectome file, its SHA-256 and the lesion.
+
+Still to build:
+- the forbidden-pairs rule for (b), the relay-only network, the random network and the random-lesion matcher, with tests;
+- the Step 4 batch script (blind) and report.
