@@ -1,5 +1,5 @@
-# Step 3: tuning R on the cube. PROPOSAL (docs/notes/step3_proposal.md, with Shannyn's answers of
-# 2026-11-02), not logged yet: nothing here counts until it's in docs/decisions.md (D49).
+# Step 3: tuning R on the cube, as fixed in D49 (docs/decisions.md, 2026-11-03).
+# Changing anything here changes a logged decision: ask both people first.
 # Run with scripts/step3_grid.py; scored by scripts/step3_report.py.
 #
 # Fly-driven closed loop on all 50 cube training levels, baseline encoding (collision course,

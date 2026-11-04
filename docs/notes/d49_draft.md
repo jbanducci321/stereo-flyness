@@ -1,5 +1,7 @@
 # D49 draft: Step 3, tuning R on the cube
 
+*Logged as D49 in `docs/decisions.md` on 2026-11-03; the log is the canonical version, this is the draft history.*
+
 *Jacob, 2026-11-03. Draft for Shannyn. Goes into `docs/decisions.md` as D49 once she agrees, after Step 2 is done (D48). Built from `docs/notes/step3_proposal.md` and her answers of 2026-11-02. Written before the grid; no grid run exists yet.*
 
 **D49. Step 3: tuning R on the cube, fixed before the grid** (date logged)

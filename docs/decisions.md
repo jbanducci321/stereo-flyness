@@ -757,6 +757,43 @@ Shannyn's plan (`docs/notes/step2_analysis_plan.md`, PR #24), with the amendment
   - **Carry-over split:** the < 150 ms cutoff, defined on training runs, is applied **unchanged** on held-out and labelled so. First-spike θ is reported three ways: all approaches, carry-over only, and the rest.
   - **Death classes:** no story is pre-written. If (d1) dominates, "jumps a little early, from the normal spread" may be used; if something else dominates, we describe what we see and don't reach for the Step 3 story.
   - Also agreed: floor and chance are described only (any test added is labelled post-hoc); comparisons are read next to the noise line; Step 3 doesn't change whatever the held-out results show; anything surprising is checked in its replay and log before it's believed.
+- **Result (opened together 2026-11-03; full write-up in `docs/notes/step2_report.md`).** All checks passed (100 runs, commit `5d9de12`, every replay exact, files unmodified, references complete, 0 (u), 0 stuck).
+  - **Prediction: both hits.** Ideal fly 8/20, all easy. Baseline seed 0 1/20 (easy).
+  - **The untuned fly completes 6 of 60 runs, all easy** (1, 2, 3 by seed; cube-easy-1000004 every time), mean progress 29%. It gets further than random pressing on 18 of 20 levels (described only); on the other 2 everything dies at the first object, a raised slab.
+  - **Deaths (54): (d1) 33, (b) 14 (9 of them raised slabs, D47), (a) 5, (d2) 2.** Mostly early jumps onto spike rows; the rest mostly limits of the encoding.
+  - **Timing:** first-spike θ without carry-over 37.1 ± 7.3°, matching the open-loop calibration. Carry-over 15% of approaches (split defined on training, applied unchanged); the 75 presses with nothing looming are all carry-over in mid-air and started no jump. Lone-spike jumps in the press window: 158/162.
+  - **Comparisons:** pre-D45 flat R is **worse** (3 better, 15 worse, 2 equal; p = 0.008; it fires earlier, median first-spike θ 26°). Every object looms: **no clear difference** (19 of 20 equal). Noise line: seed 1 9/3/8 (p = 0.15), seed 2 8/5/7 (p = 0.58).
+  - **Nothing here changes Step 3** (D49).
+
+**D49. Step 3: tuning R on the cube, fixed before the grid** (2026-11-03)
+From `docs/notes/step3_proposal.md` with Shannyn's answers of 2026-11-02 and her review of 2026-11-03. Drafted before the Step 2 held-out results were opened and logged after Step 2 (D48), unchanged by them. Written before the grid; no grid run exists yet.
+- **What's tuned:** R only, the peak per-neuron rate of the driven LC4/LPLC2 neurons (D45), within D43's range of 25–200 Hz. Nothing else changes: the encoding (D41, D45, D47), θ_full = 200° (D43), the output rule (D42), the final subcircuit (D46).
+- **Plainly:** θ_full was calibrated at R = 150 so that the Giant Fiber first fires at ~39°. Changing R moves that point, so tuning R is in effect tuning the fly's jump threshold away from the calibrated one. The write-up says so.
+- **Open-loop check, recorded before the grid** (calibration loom, start gap 245, R × f, θ_full = 200°, 10 trials, final subcircuit; `results/calibration/final/gap245_R*_scaled_step3/`):
+
+  | R (Hz) | First Giant Fiber spike θ, mean ± s.d. | Trials fired | Outside the fly's 25–53°? |
+  |---|---|---|---|
+  | 25 | 111.2 ± 28.3° | 10/10 | **yes** |
+  | 50 | 83.7 ± 22.0° | 10/10 | **yes** |
+  | 75 | 56.4 ± 11.9° | 10/10 | **yes** |
+  | 100 | 50.1 ± 10.1° | 10/10 | no |
+  | 150 | 38.0 ± 6.3° | 10/10 | no |
+  | 200 | 33.2 ± 5.1° | 10/10 | no |
+
+  - θ rises steadily as R drops, so "closest to 39°" gives the same order as "closest to 150 Hz on a log scale": 150, 200, 100, 75, 50, 25.
+  - Every R fires in all 10 trials, so the "fewer than half fire" rule doesn't come into play.
+  - **Flag only, no restriction** (Shannyn): 25, 50 and 75 Hz are outside the fly's 1 s.d. band.
+- **The grid:** R = **25, 50, 75, 100, 150, 200 Hz** × **all 50 cube training levels**, fly-driven closed loop, baseline encoding, **seed 0**: 300 runs, one night (≤ ~8 h). Every frame logged (hard rule 10); stuck runs kept and counted (D38). The two Step 2 comparisons aren't tuned.
+- **Score: mean progress over the 50 levels.** Levels completed by difficulty, D48's death classes (as amended) per R, stuck runs, and the carry-over share and first-spike θ without carry-over per R are reported beside it. (a), (b) and (c) are limits of the encoding; R works through (d), so the classes show where any gain comes from.
+- **Tie margin, measured:** max(1 point, |mean progress at seed 0 − at seed 1|, both at 150 Hz on the 50 training levels). The seed-1 run is done (50 runs, commit `7115b8b`); the seed-0 run is the grid's own 150 Hz run, so the margin is computed when the grid finishes, by this rule.
+- **Tie-break:** among rates within the margin of the best, the one whose **open-loop first-spike θ is closest to 39°** (the table above). A rate where fewer than half the trials fire ranks last, then by trials fired; any remaining tie goes to the rate closest to 150 Hz on a log scale.
+- **Headline:** the picked R, its mean progress, and its open-loop first-spike θ with trials fired. **The first thing the write-up says about Step 3 is where the tuned fly sits against the real fly's range** (39 ± 14°, so 25–53°): if the pick is 75 Hz or lower (open-loop θ 56° or more), "the tuned fly jumps outside the range measured in real flies"; at 100 Hz (50°), "near the late edge of it" (Shannyn). Not a footnote.
+- **If 150 Hz wins,** tuning didn't help; that's the Step 3 result and the held-out run isn't repeated. **At an edge (25 or 200),** it's reported as at the edge; the range isn't widened (D43). **No second, finer grid.**
+- **Held-out check** at the picked R: the 20 held-out cube levels at **seeds 0, 1 and 2** (60 runs, blind, D33), against the Step 2 baseline at the same seeds. Per level, each setting's **median run across the three seeds** is compared with D48's "equal" (same killing object, or both completed), then D48's two-sided sign test (p < 0.05). Also reported: the paired difference in median progress, runs completed, and the picked R's training score next to its held-out score, so any overfitting shows. No pass/fail bar: both outcomes are results. Opened together, as in Step 2.
+- **Framing for the write-up** (Shannyn): "Carry-over from the previous object (~20% of approaches) is a property of the model, but not the main cause of early jumps: the early (d1) jumps come from the low half of the normal spread. We therefore expect a lower R to shift the whole spread later. If it wins, the tuned fly jumps later than real flies do, partly making up for slabs not looming (D47), and the write-up says so." The shift is a prediction until the grid runs; the grid report gives the carry-over share and first-spike θ without it at each R, so it can be checked. Say so, rather than present a win as the fly getting better.
+- **Prediction, recorded before the grid:** the ideal fly does best with a later threshold (45–50°, D47), and on the training check nearly all the fly's deaths are early jumps, (d1): its first Giant Fiber spike, without carry-over, comes at 37.2 ± 6.5°, so more than half its first spikes come before 39°, which spike rows punish (D48 amendment). **So we expect the best R below 150, probably 75–100 Hz** (open-loop θ 50–56°). If lower rates miss too many obstacles, the middle wins. A prediction to check against, not a rule. (Written before the Step 2 held-out results were opened; left unchanged after.)
+- **Code:** `configs/step3.toml`, `scripts/step3_grid.py` (`check`, `margin`, `grid`, `held-out --rate R`), `scripts/step3_report.py` (and `--held-out R`), `stereo_flyness.experiments.tuning` (tested).
+- Stereo Madness isn't touched (D7).
 
 ## Open
 
@@ -765,8 +802,8 @@ Still open:
 - Subcircuit rule: decided in D36 (recipe) and D37 (cascade trials left out, tuning-time limit). The interim neuron list is built in J5; the final one after T4.
 - Brain time, input encoding, output rule and the cube dials: decided in T4 (D40–D43). Ship mode is decided in Step 5.
 - The cube encoding's rates: R × f, adopted in D45 (D41's text is updated after the von Reyn et al. 2017 check). Calibrated on the whole brain: 200° (R × f) and 1,082° (flat R).
-- The final subcircuit: built and validated (D46: rules 1–5, the calibration and the time limit pass, on D47's encoding). The Step 2 runs and analysis are fixed in D48.
-- Step 3 (tuning R): proposal in `docs/notes/step3_proposal.md`, with Shannyn's answers. Logged as a decision entry after Step 2.
+- The final subcircuit: built and validated (D46: rules 1–5, the calibration and the time limit pass, on D47's encoding). Step 2 is done: runs, analysis and result in D48 (write-up: `docs/notes/step2_report.md`).
+- Step 3 (tuning R): fixed in D49; next, the grid.
 - **Stereo Madness run N times, not once (changes D7; agreed in principle 2026-11-02, written up at Step 6).** A frozen fly with Poisson input is a distribution, not a single outcome, so one run can't tell luck from typical. Conditions:
   - N and the seeds are fixed before any Stereo Madness run, and nothing changes between or after the runs (D7 still holds: no tuning on it);
   - the headline is the full count and median progress (e.g. "3 of 10, median X%"), never the best run;
