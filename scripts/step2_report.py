@@ -233,7 +233,8 @@ def timing(df, appr) -> list[str]:
                      + f" | {len(lone)} | {int(lone['in_window'].sum())}/{len(lone)} | {nothing} |")
     lines += ["", f"Calibration (open loop): 39°, model s.d. {MODEL_SD_DEG:g}°; the real fly: 39 ± {FLY_SD_DEG:g}°. "
               "Closed loop should match the calibration; if it doesn't, that's a finding. θ is read per tick "
-              "(4.2 ms), as in the calibration. Lone spikes: a one-cell ground spike with nothing from one cell "
+              "(4.2 ms), as in the calibration. First-spike θ here includes bursts carrying over from the previous object; "
+              "see the leftover-activity section for it without them. Lone spikes: a one-cell ground spike with nothing from one cell "
               "before to four after, where the press window (gap 1–73 at the jump) is known."]
     stuck = appr[appr["stuck"]]["first_spike_theta"].dropna()
     normal = appr[~appr["stuck"]]["first_spike_theta"].dropna()
