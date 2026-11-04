@@ -4,7 +4,7 @@
 
 **Last updated:** 2026-10-22. Written by Jacob's Claude Code session, which did the planning and setup with Jacob.
 
-**Status (2026-11-04):** Steps 0–3 are done. The untuned fly plays the cube held-out levels (Step 2, D48, `docs/notes/step2_report.md`), and tuning R was checked on held-out levels (Step 3, D49, `docs/notes/step3_report.md`). Next: which R goes forward (open), then Step 4, controls and lesions.
+**Status (2026-11-04):** Steps 0–3 are done. The untuned fly plays the cube held-out levels (Step 2, D48, `docs/notes/step2_report.md`), and tuning R was checked on held-out levels (Step 3, D49, `docs/notes/step3_report.md`). 150 Hz goes forward (D50). Next: Step 4, controls and lesions.
 
 > **To the Claude session reading this:** treat everything under "Decisions" and "Hard rules" as settled. Don't re-litigate, override or "improve" them without the human explicitly asking. If a task seems to need a change to a decision, stop and ask your human first. Shannyn and Jacob decide together, and every change gets logged in `docs/decisions.md`.
 
@@ -102,12 +102,12 @@ The canonical, up-to-date log is **`docs/decisions.md`**. Read it first. Summary
 | D47 | **Visual cells are clipped at the ground** (D41 amendment). Raised slabs still don't loom from the ground, a known limit of the encoding. |
 | D48 | **Step 2 plan and result.** On the 20 held-out cube levels, the untuned fly (R = 150 Hz) completes 6 of 60 runs, all easy, mean progress 29%. Most deaths are early jumps (d1); most of the rest are the encoding's limits. Write-up: `docs/notes/step2_report.md`. |
 | D49 | **Step 3 plan and result.** R tuned on 50 training levels picks 50 Hz, outside the real fly's range (open-loop θ ~84°). On held-out levels: 11 better, 4 worse, 5 equal, p = 0.118, no clear difference (23 against 6 runs completed, described only). Write-up: `docs/notes/step3_report.md`. |
+| D50 | **Which R goes forward:** 150 Hz is the fly of record (Step 4, Stereo Madness). 50 Hz runs beside it on Stereo Madness as a labelled "tuned" variant, same N and seeds. The headline is 150 Hz whichever does better; 50 Hz is always reported second, "outside the range measured in real flies". |
 | D19 | End deliverable: a **record-and-replay viewer**. Closed-loop runs log every frame (game state, inputs, watched spikes) from the `run_frames` callback, and a viewer replays at real 60 fps with a brain-activity panel. It must visibly separate our input encoding from the fly's spikes, say it's a replay of a simulation, and never smooth or alter recorded activity. Live mode is optional, for small subcircuits only. |
 
 ### Open decisions (not yet made; don't decide these unilaterally)
 - **Subcircuit rule:** decided in **D36** (recruited neurons + their ≥ 30-synapse inputs; interim build for T3, final rebuild after T4) and **D37** (cascade trials left out; tuning-time limit; 30 s practice levels).
 - **Brain time, input encoding, output rule, cube dials:** decided in T4 (**D40–D43**). Ship mode is decided in Step 5.
-- **Which R goes forward** to Step 4 and Stereo Madness: not fixed by D49. Jacob's proposal (150 Hz of record, 50 Hz as a labelled variant) is in `docs/decisions.md`, "Open".
 - **Stereo Madness run N times, not once:** agreed in principle (2026-11-02); N and the seeds are fixed at Step 6, before any run (`docs/decisions.md`, "Open").
 - **Closed-loop simulation approach:** resolved for now by D17 (Brian2 with `run_frames`). Our own reimplementation (e.g. PyTorch, validated against Brian2) stays an option for speed or for the GPU phase.
 - **Code LICENSE.**

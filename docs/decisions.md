@@ -803,6 +803,18 @@ From `docs/notes/step3_proposal.md` with Shannyn's answers of 2026-11-02 and her
   - (d1) deaths fall from 33 to 1 and (d2) deaths rise from 2 to 13: tuning trades early jumps for late ones.
   - After opening, `step3_report.py --held-out` got a fix and additions. The overfitting sentence was hard-coded; it now depends on the scores. It now also describes completions by difficulty and seed and death classes, and writes `held_out.csv`. The test and its numbers are unchanged.
 
+**D50. Which R goes forward: 150 Hz of record, 50 Hz as a labelled variant** (2026-11-04)
+Jacob's proposal after Step 3 (D49), with Shannyn's addition; agreed by both on 2026-11-04, before any Step 4 or Stereo Madness run.
+- **R = 150 Hz is the fly of record** for every later step: the Step 4 controls and lesions, and Stereo Madness.
+  - **Why:** it's calibrated to the real fly's threshold (first spike ~38°, inside 39 ± 14°), and the held-out test fixed in D49 showed no clear gain from tuning (p = 0.118).
+- **R = 50 Hz runs beside it on Stereo Madness as a labelled "tuned" variant**, at the same N and seeds. Both settings, N and the seeds are fixed before any Stereo Madness run (D7).
+- **Fixed now, whichever does better (Shannyn):**
+  - **The Stereo Madness headline is 150 Hz.**
+  - **50 Hz is always reported second**, with "outside the range measured in real flies" (its open-loop first spike is at ~84°).
+  - So neither setting can be picked after the results are seen. The showcase replay is also a 150 Hz run, picked by the rule fixed at Step 6.
+- **Step 4 runs at 150 Hz only.** 50 Hz isn't part of the controls.
+- **Ship mode (Step 5)** has its own dials and isn't covered here.
+
 ## Open
 
 Still open:
@@ -812,10 +824,8 @@ Still open:
 - The cube encoding's rates: R × f, adopted in D45 (D41's text is updated after the von Reyn et al. 2017 check). Calibrated on the whole brain: 200° (R × f) and 1,082° (flat R).
 - The final subcircuit: built and validated (D46: rules 1–5, the calibration and the time limit pass, on D47's encoding). Step 2 is done: runs, analysis and result in D48 (write-up: `docs/notes/step2_report.md`).
 - Step 3 (tuning R): done, result in D49 (write-up: `docs/notes/step3_report.md`).
-- **Which R goes forward (Step 4 controls, Stereo Madness): to decide together; D49 doesn't fix it.** Jacob's proposal, not agreed yet:
-  - **R = 150 Hz stays the fly of record.** It's calibrated to the real fly's threshold, and the held-out test fixed beforehand showed no clear gain from tuning.
-  - **R = 50 Hz runs beside it as a labelled "tuned" variant**, at the same N and seeds, with both fixed before any Stereo Madness run (D7). Its descriptive gain is large, so it's worth reporting, always with "outside the range measured in real flies".
-  - The Step 4 controls (shuffled connectome, lesions) run at 150 Hz, the setting of record.
+- Which R goes forward: decided in D50 (150 Hz of record; 50 Hz as a labelled variant on Stereo Madness, always reported second).
+- Step 4 (controls and lesions): draft plan in `docs/notes/step4_proposal.md`, being revised with Shannyn's answers of 2026-11-04; logged as a decision before any run.
 - **Stereo Madness run N times, not once (changes D7; agreed in principle 2026-11-02, written up at Step 6).** A frozen fly with Poisson input is a distribution, not a single outcome, so one run can't tell luck from typical. Conditions:
   - N and the seeds are fixed before any Stereo Madness run, and nothing changes between or after the runs (D7 still holds: no tuning on it);
   - the headline is the full count and median progress (e.g. "3 of 10, median X%"), never the best run;
