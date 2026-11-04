@@ -2,7 +2,7 @@
 
 A simulated fruit fly brain, built from the real wiring diagram of the *Drosophila* brain (the FlyWire connectome), playing a minimal Geometry Dash-style game. The final test is a recreation of the first level, Stereo Madness.
 
-**Status:** Step 0, setup and feasibility. Nothing plays yet.
+**Status:** Step 4, controls and lesions on the cube (shuffled wiring, silenced neurons). Steps 0–3 are done. Untuned, the fly completes 6 of 60 runs on unseen cube levels, all easy, and gets further than random pressing on 18 of 20 levels. Tuning its one input dial lets it go further, but only by jumping well outside the range measured in real flies, and the test fixed in advance showed no clear gain, so the calibrated fly stays the fly of record. Ship mode (Step 5) and Stereo Madness (Step 6) come next.
 
 ## What this is (and isn't)
 
