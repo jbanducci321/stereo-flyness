@@ -5,10 +5,11 @@ deterministic), so every tick's state, nearest looming object and θ are rebuilt
 
 - **Death classes:** (s) stuck; then from the deciding approach (the last one in which the cube
   was on the ground): (c) short run-up; the ideal 39° policy, taking over there, dies before
-  passing the killing object too: (a) if that object never loomed, (b) if it did; (d) everything
-  else, split at the first tick where the fly's and the ideal fly's
+  passing the killing object too: (a) if what killed the ideal fly never loomed in its game, (b)
+  if it did; (d) everything else, split at the first tick where the fly's and the ideal fly's
   **effective presses** (jumps) differ: (d1) the fly jumps there and the ideal fly doesn't, (d2)
   the ideal fly jumps there and the fly only jumps later, (d3) the fly never jumps.
+  A death that fits no class is (u), unclassified, and counted.
 - **Timing per approach** (D46's approaches): θ at the first Giant Fiber spike, the gap at the
   first jump (against the single-spike press window, gap 1-73), presses with nothing looming.
 - **Paired comparisons:** per level better, worse or equal ("equal" = same killing object, or
@@ -31,7 +32,7 @@ THRESHOLD_DEG = 39.0  # the ideal fly's threshold (D43, D44)
 MODEL_SD_DEG = 8.5  # s.d. of the calibrated model's first-spike θ (D43, D46)
 LOOK_BACK_TICKS = 480  # (a) and (c) look at the last 2 s before death, as D44's death_cause
 SPIKE_WINDOW = (1.0, 73.0)  # the single-spike press window, as the gap at the jump (docs/game_physics.md §3)
-CLASSES = ("s", "a", "c", "b", "d1", "d2", "d3")
+CLASSES = ("s", "a", "c", "b", "d1", "d2", "d3", "u")  # u: unclassified (counted, never forced)
 
 
 def killing_box(level, death):
@@ -119,16 +120,19 @@ def ideal_press(encoder: CubeEncoder, player) -> bool:
     return player.mode == "cube" and math.degrees(encoder.nearest(player)[1]) >= THRESHOLD_DEG
 
 
-def ideal_from(rep: Replay, start: int, far_edge: float) -> tuple[bool, object]:
-    """From state `start`, the ideal 39° policy plays on. Returns (passed, death): passed is
-    True if the cube's back edge gets past `far_edge` (or the level ends) before it dies."""
-    game = Game(rep.level)
+def ideal_from(rep: Replay, start: int, far_edge: float) -> tuple[bool, object, list]:
+    """From state `start`, the ideal 39° policy plays on. Returns (passed, death, seen): passed
+    is True if the cube's back edge gets past `far_edge` (or the level ends) before it dies;
+    seen is the nearest looming object before each of the ideal fly's ticks."""
+    game, seen = Game(rep.level), []
     game.restore(rep.snapshots[start])
     while not game.over:
         if game.player.x - HALF_PLAYER > far_edge:
-            return True, None
+            return True, None, seen
+        o, _ = rep.encoder.nearest(game.player)
+        seen.append(o)
         game.tick(ideal_press(rep.encoder, game.player))
-    return game.finished, game.death
+    return game.finished, game.death, seen
 
 
 def approach_spans(rep: Replay) -> list[tuple[int, int]]:
@@ -164,9 +168,12 @@ def deciding_approach(rep: Replay) -> int | None:
 def classify_death(rep: Replay, stuck_at_death: bool) -> dict:
     """D48's death class for a run that died, with a short description of why.
 
-    The replay starts at the deciding approach (`deciding_approach`), not at the killing
-    object: a cube that jumps early off the first spike of a row and lands on the second, which
-    the first hid, decided its death on the first spike (proposed amendment to D48, 2026-11-02)."""
+    As amended after the training check (2026-11-03): the replay starts at the deciding
+    approach (`deciding_approach`), not at the killing object, since a cube that jumps early off
+    the first spike of a row and lands on the second, which the first hid, decided its death on
+    the first. If the ideal fly dies there too, its own game decides the class: (a) if what
+    killed it never loomed in its game, (b) if it did. A death that fits no class is "u"
+    (unclassified) and counted, never forced into a class."""
     game, level = rep.game, rep.level
     out = {"class": None, "killer": None, "killer_kind": None, "approach_start": None, "first_diff": None,
            "ideal_killer": None, "why": ""}
@@ -177,26 +184,32 @@ def classify_death(rep: Replay, stuck_at_death: bool) -> dict:
         out["killer"], out["killer_kind"] = object_of(rep.encoder, box), box.kind
     if stuck_at_death:
         return {**out, "class": "s", "why": "the stuck flag was on when it died"}
-    end = len(rep.held)
+    if box is None:
+        return {**out, "class": "u", "why": "no object matches where it died"}
     s = deciding_approach(rep)
-    if box is None or s is None:
-        return {**out, "class": "a", "why": "no matching object" if box is None else "nothing loomed while it could jump"}
+    if s is None:
+        return {**out, "class": "u", "why": "nothing loomed while the cube was on the ground"}
     out["approach_start"] = s
-    column = column_of(rep.encoder, box)
-    window = range(max(0, end - LOOK_BACK_TICKS), end)
-    loomed = column is not None and any(rep.obstacle[k] == column for k in window)
     if rep.theta[s] >= THRESHOLD_DEG:
         return {**out, "class": "c", "why": f"already {rep.theta[s]:.0f}° when it first loomed"}
-    passed, death = ideal_from(rep, s, box.x1 if column is None else column.x1)
+    column = column_of(rep.encoder, box)
+    passed, death, seen = ideal_from(rep, s, box.x1 if column is None else column.x1)
     if not passed:
         ideal_box = None if death is None else killing_box(level, death)
-        ideal_killer = None if ideal_box is None else object_of(rep.encoder, ideal_box)
-        same = ideal_killer == out["killer"]
-        why = "the ideal fly dies on it too" if same else "the ideal fly dies first on another object ("             + describe(None if ideal_box is None else ideal_box.kind, ideal_killer) + ")"
+        if ideal_box is None:
+            return {**out, "class": "u", "why": "the ideal fly dies too, but no object matches where"}
+        ideal_killer = object_of(rep.encoder, ideal_box)
+        # The ideal fly's game: the run's own ticks up to the deciding approach, then its own.
+        history = (list(rep.obstacle[:s]) + seen)[-LOOK_BACK_TICKS:]
+        ideal_column = column_of(rep.encoder, ideal_box)
+        loomed = ideal_column is not None and any(o == ideal_column for o in history)
+        what = "on the same object" if ideal_killer == out["killer"] else             "on another object (" + describe(ideal_box.kind, ideal_killer) + ")"
         if not loomed:
-            return {**out, "class": "a", "ideal_killer": ideal_killer, "why": f"never loomed before contact; {why}"}
-        return {**out, "class": "b", "ideal_killer": ideal_killer, "why": why}
+            return {**out, "class": "a", "ideal_killer": ideal_killer,
+                    "why": f"the ideal fly dies too, {what}, which never loomed in its game"}
+        return {**out, "class": "b", "ideal_killer": ideal_killer, "why": f"the ideal fly dies too, {what}"}
     on = "" if rep.obstacle[s] == column else f" (decided on the object at x {rep.obstacle[s].x0:.0f}, before it)"
+    end = len(rep.held)
     for k in range(s, end):
         ideal_jump = rep.players[k].on_ground and ideal_press(rep.encoder, rep.players[k])
         if bool(rep.jumped[k]) != bool(ideal_jump):
@@ -206,7 +219,7 @@ def classify_death(rep: Replay, stuck_at_death: bool) -> dict:
             if rep.jumped[k + 1:end].any():
                 return {**out, "class": "d2", "why": f"jumped later than the ideal fly{on}"}
             return {**out, "class": "d3", "why": f"never jumped in the approach{on}"}
-    raise ValueError("the ideal fly passes but never jumps differently from the fly; the replay is wrong")
+    return {**out, "class": "u", "why": "the ideal fly survives, but no jump differs from the fly's"}
 
 
 def describe(kind, obj) -> str:

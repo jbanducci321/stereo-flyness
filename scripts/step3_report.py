@@ -118,8 +118,10 @@ def report(df, margin_runs, cfg) -> str:
         scores[rate] = g["progress"].mean()
         lines.append(f"| {rate:g} | {len(g)}/{n_levels} | " + " | ".join(cells) + f" | {int(g['completed'].sum())} | "
                      f"**{100 * scores[rate]:.1f}%** | {classes} | {int(g['stuck'].sum())} | {theta} | {flag} |")
-    lines += ["", "(s) stuck, (a) invisible, (c) short run-up, (b) the ideal fly dies there too, (d1) jumped earlier "
-              "than the ideal fly, (d2) later, (d3) not at all (D48). R can change (b), (c) and (d) deaths, not (a).", ""]
+    lines += ["", "(s) stuck; from the last approach where the cube could still jump: (c) short run-up; the ideal 39° "
+              "fly dies there too, (a) on something that never loomed in its game, (b) on something that did; or the "
+              "fly's timing: (d1) jumped earlier than the ideal fly, (d2) later, (d3) not at all; (u) unclassified (D48). "
+              "(a), (b) and (c) are limits of the encoding; R works through (d).", ""]
 
     m = margin_runs
     if len(m) == n_levels and default in scores and len(grid[grid["rate"] == default]) == n_levels:

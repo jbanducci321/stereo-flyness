@@ -5,8 +5,9 @@ at seed 0), the ideal fly from scripts/ideal_fly.py and the no-brain references 
 scripts/reference_flies.py. Every run is first replayed from its logged presses and must rebuild
 the recording exactly (else the report stops). Then, all as fixed in D48:
 - **Results:** runs completed (of 60, per level of 3, and seed 0 alone), mean progress, by difficulty.
-- **Death classes:** (s) stuck, (a) invisible, (c) short run-up, (b) the ideal fly dies there too,
-  (d1/d2/d3) the fly's timing: jumped earlier / later / not at all
+- **Death classes,** from the last approach where the cube could still jump: (s) stuck, (c) short
+  run-up, (a)/(b) the ideal fly dies there too (on something that never loomed / that did),
+  (d1/d2/d3) the fly's timing: jumped earlier / later / not at all, (u) unclassified
   (`stereo_flyness.experiments.step2_analysis`).
 - **Timing per approach:** θ at the first Giant Fiber spike, jumps against the single-spike
   window, presses with nothing looming.
@@ -165,8 +166,10 @@ def results_table(df, refs) -> list[str]:
     if len(rnd):
         row(f"random presses (chance), mean of {rnd['draw'].nunique()} draws", rnd.assign(stuck=False),
             draws=rnd["draw"].nunique(), classes=False, stuck=False)
-    note = ("(s) stuck, (a) invisible, (c) short run-up, (b) the ideal fly dies there too, (d1) jumped earlier "
-            "than the ideal fly, (d2) later, (d3) not at all. The ideal fly's own deaths have (a)/(b)/(c) only.")
+    note = ("(s) stuck; from the last approach where the cube could still jump: (c) short run-up; the ideal 39° fly "
+            "dies there too, (a) on something that never loomed in its game, (b) on something that did; or the "
+            "fly's timing: (d1) jumped earlier than the ideal fly, (d2) later, (d3) not at all; (u) unclassified (D48). "
+            "The ideal fly's own rows use D44's (a)/(b)/(c).")
     return head + lines + ["", note]
 
 

@@ -82,6 +82,19 @@ def test_landing_on_a_hidden_second_spike_after_an_early_jump_is_d1():
     assert out["killer"][0] == 615.0 and out["class"] == "d1"
 
 
+def test_the_ideal_flys_own_killer_decides_a():
+    # A row of spikes nobody can clear. The fly jumps later than the ideal fly and gets one spike
+    # further; the ideal fly dies earlier, landing onto a spike that never loomed in its game: (a),
+    # on a different object from the fly's killer (Shannyn, 2026-11-03).
+    level = Level("row", "test", 1500, [Box("spike", *hitbox("spike", 600.0 + 30 * i, 15.0)) for i in range(12)])
+    k = ideal_tick(level)
+    for t in range(k, k + 40):
+        out = classify_death(replay(level, play(level, {t}), "collision"), stuck_at_death=False)
+        if out["killer"] != out["ideal_killer"]:
+            break
+    assert out["class"] == "a" and out["ideal_killer"] is not None and out["ideal_killer"] != out["killer"]
+
+
 def test_a_wall_too_tall_to_jump_is_b():
     level = wall_level()
     out = classify_death(replay(level, play(level), "collision"), stuck_at_death=False)
