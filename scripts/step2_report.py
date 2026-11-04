@@ -29,7 +29,9 @@ Writes results/step2/<network>_<suite>.md, _runs.csv and _approaches.csv (git-ig
 import argparse
 import json
 import sys
+import time
 import tomllib
+from datetime import datetime
 
 import numpy as np
 import pandas as pd
@@ -274,7 +276,10 @@ def replays(df) -> list[str]:
     return lines
 
 
-CARRY_OVER_MS = 150  # descriptive split for the leftover-activity check, chosen on training runs; decides nothing
+CARRY_OVER_MS = 150  # the leftover-activity split, defined on training runs and applied unchanged (D48 amendment)
+# The prediction recorded in D48, made checkable before the held-out results were opened (2026-11-03):
+IDEAL_PREDICTED = (7, 10)  # "~8-9 of the 20 held-out levels", read as 8-9 plus or minus one
+NEARLY_ALL_EASY = 1  # "nearly all easy": at most one completion on a medium or hard level
 
 
 def leftover(appr, svg_name) -> list[str]:
@@ -296,6 +301,11 @@ def leftover(appr, svg_name) -> list[str]:
                          f"{g['first_spike_tick'].median():g} | {g['theta_start'].median():.1f}° |")
     carry = a["since_gf_ms"] < CARRY_OVER_MS
     fresh = a[~carry]["first_spike_theta"]
+    lines += ["", f"| First-spike θ (split at {CARRY_OVER_MS} ms, defined on training runs) | Approaches | Mean ± s.d. | Median |",
+              "|---|---|---|---|"]
+    for label, th in (("all approaches", a["first_spike_theta"]), ("carry-over only", a[carry]["first_spike_theta"]),
+                      ("the rest", fresh)):
+        lines.append(f"| {label} | {len(th)} | " + (f"{th.mean():.1f} ± {th.std():.1f}° | {th.median():.1f}° |" if len(th) else "– | – |"))
     quiet = a[~carry & a["since_gf_ms"].notna()]
     rho = quiet["since_gf_ms"].rank().corr(quiet["first_spike_theta"].rank()) if len(quiet) > 2 else float("nan")
     rho_start = quiet["theta_start"].rank().corr(quiet["first_spike_theta"].rank()) if len(quiet) > 2 else float("nan")
@@ -312,7 +322,7 @@ def leftover(appr, svg_name) -> list[str]:
               f"{rho:+.2f} (n {len(quiet)}), and with the θ the approach starts at {rho_start:+.2f}.",
               f"- By time since the previous approach ended: back to back (0 ms) {back_to_back.mean():.1f}° (n {len(back_to_back)}), "
               f"after a gap {gap_before.mean():.1f}° (n {len(gap_before)}).",
-              f"- The {CARRY_OVER_MS} ms split is descriptive, chosen on training runs; it decides nothing. "
+              f"- The {CARRY_OVER_MS} ms split was defined on training runs and is applied unchanged; it decides nothing. "
               f"Plot: `{svg_name}` (first-spike θ against time since the Giant Fiber last fired)."]
     return lines
 
@@ -346,7 +356,49 @@ def leftover_svg(appr) -> str:
     return "\n".join(out)
 
 
-def report(df, appr, refs, network, suite, expected) -> str:
+def run_files(network, suite) -> list:
+    base = RUNS / network if suite == "training" else RUNS / network / suite
+    return [f for folder, _, seeds in settings().values() for seed in seeds
+            for f in (base / f"{folder}{'' if seed == 0 else f'_seed{seed}'}" / "fly").rglob("*") if f.is_file()]
+
+
+def sanity(df, refs, network, suite, n_levels, started) -> list[str]:
+    """Checks before reading any result (D48 amendment, Shannyn 2026-11-03)."""
+    stamp = lambda t: datetime.fromtimestamp(t).strftime("%Y-%m-%d %H:%M")  # noqa: E731
+    times = [f.stat().st_mtime for f in run_files(network, suite)]
+    later = sum(t >= started for t in times)
+    lines = [f"- **Run files last modified** {stamp(max(times))} (earliest {stamp(min(times))}; {len(times)} files); this "
+             f"report started {stamp(started)}. " + ("None was modified after that." if not later else
+                                                     f"**{later} were modified after the report started.**"),
+             "  (Timestamps show modification only; reads aren't recorded reliably on Windows, so reads are logged by hand in D48.)"]
+    want = {"never press": n_levels, "random presses": 10 * n_levels,
+            "ideal fly (collision course)": n_levels, "ideal fly (every object looms)": n_levels}
+    got = {k: int((refs["setting"] == k).sum()) for k in want}
+    lines.append("- **References:** " + ", ".join(f"{k} {got[k]}/{v}" for k, v in want.items())
+                 + ("." if got == want else ". **Incomplete.**"))
+    u = int((df["class"] == "u").sum())
+    lines.append(f"- **Unclassified (u) deaths:** {u}" + ("." if not u else ": each is looked at by hand before reading on."))
+    return lines
+
+
+def prediction(df, refs) -> list[str]:
+    """Hit or miss against D48's prediction, as made checkable before opening (Shannyn, 2026-11-03)."""
+    ideal = refs[refs["setting"] == "ideal fly (collision course)"]
+    base0 = df[(df["setting"] == BASELINE) & (df["seed"] == 0)]
+    off_easy = lambda g: int((g["completed"].astype(bool) & (g["difficulty"] != "easy")).sum())  # noqa: E731
+    n_ideal, n_base = int(ideal["completed"].astype(bool).sum()), int(base0["completed"].astype(bool).sum())
+    lo, hi = IDEAL_PREDICTED
+    ideal_hit = lo <= n_ideal <= hi and off_easy(ideal) <= NEARLY_ALL_EASY
+    base_hit = n_base <= n_ideal and off_easy(base0) <= NEARLY_ALL_EASY
+    word = lambda hit: "**HIT**" if hit else "**MISS**"  # noqa: E731
+    return [f"- Ideal fly: {n_ideal}/{len(ideal)} completed, {off_easy(ideal)} of them off easy levels. Predicted ~8–9 "
+            f"(read as {lo}–{hi}), nearly all easy (at most {NEARLY_ALL_EASY} off easy): {word(ideal_hit)}.",
+            f"- Baseline, seed 0: {n_base}/{len(base0)} completed, {off_easy(base0)} of them off easy levels. Predicted at "
+            f"or below the ideal fly's held-out count ({n_ideal}), nearly all easy: {word(base_hit)}.",
+            "- Both definitions were fixed before the held-out results were opened (D48 amendment, 2026-11-03)."]
+
+
+def report(df, appr, refs, network, suite, expected, started) -> str:
     lines = [f"# Step 2: the untuned fly on {suite.replace('_', '-')} cube levels (`{network}`)\n",
              "Fly-driven closed loop, no tuning (D43). The baseline of record is θ_full = 200°, collision-course "
              "looming, R × f at R = 150 Hz, at seeds 0, 1 and 2; the comparisons (seed 0) sit beside it and never "
@@ -359,7 +411,11 @@ def report(df, appr, refs, network, suite, expected) -> str:
         lines.append(f"- {name}, seed {seed}: {len(g)} runs" + (f"; **missing {len(missing)}: {', '.join(missing)}**" if missing else ""))
     commits = sorted(set(df["commit"]))
     lines.append(f"- Commits: {', '.join(commits)}" + ("  **(uncommitted changes)**" if any(c.endswith("-dirty") for c in commits) else ""))
-    lines.append("- Every run replayed exactly from its logged presses.\n")
+    lines.append("- Every run replayed exactly from its logged presses.")
+    lines += [*sanity(df, refs, network, suite, len(expected) if suite == "held_out" else df["level"].nunique(), started), "",
+              "## Against the prediction\n", *prediction(df, refs),
+              *([] if suite == "held_out" else ["- *Training check: the prediction is about the 20 held-out levels; "
+                                                "here this only checks the code.*"]), ""]
     lines += ["## Results\n", *results_table(df, refs), "", "## Per level (progress; death class)\n", per_level(df, refs),
               "", "## Comparisons\n", *comparisons(df), "", "## Timing per approach\n", *timing(df, appr),
               "", "## Leftover activity (exploratory check, added before the held-out results were opened)\n",
@@ -379,9 +435,10 @@ def main() -> None:
     args = parser.parse_args()
     sys.stdout.reconfigure(encoding="utf-8")
 
+    started = time.time()
     df, appr = collect(args.network, args.suite)
     refs = references(args.network, args.suite, set(df["level"]))
-    text = report(df, appr, refs, args.network, args.suite, suite_levels(args.suite))
+    text = report(df, appr, refs, args.network, args.suite, suite_levels(args.suite), started)
     OUT.mkdir(parents=True, exist_ok=True)
     stem = OUT / f"{args.network}_{args.suite}"
     df.to_csv(f"{stem}_runs.csv", index=False)
