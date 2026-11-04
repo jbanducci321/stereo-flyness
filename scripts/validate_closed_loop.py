@@ -11,6 +11,10 @@ Run the levels on both networks first, for example:
     (the same with --network final), then:
     uv run python scripts/validate_closed_loop.py final
 
+The judged table is given twice: approaches split as D46 judged them (from θ and the gap), and
+split by object identity from a replay of the bot's presses (D48 amendment, 2026-11-03), so D46
+and D48 use the same definition of an approach. No new simulation.
+
 Writes results/closed_loop/<subcircuit>/rule5.md (git-ignored).
 """
 
@@ -21,8 +25,11 @@ import sys
 import numpy as np
 import pandas as pd
 
+from inspect_encoding import LEVELS as LEVEL_FILES, job
 from run_pathway_tests import ROOT
+from stereo_flyness.experiments.step2_analysis import approach_spans, replay
 from stereo_flyness.experiments.subcircuit_validation import press_agreement
+from stereo_flyness.game.suites import load_level
 
 OUT = ROOT / "results" / "closed_loop"
 MIN_SHARE = 0.95  # D36 rule 5
@@ -33,8 +40,19 @@ def brain(folder):
     return pd.read_parquet(folder / "brain.parquet")
 
 
-def judged(sub: str) -> tuple[list[str], dict]:
-    lines = ["## Rule 5: bot-driven, first press per approach\n",
+def object_spans(folder, level_name, setting, brain_df):
+    """Approaches split by object identity: replay the bot's logged presses (D48 amendment)."""
+    level, _ = load_level(LEVEL_FILES, job(level_name, "training"))
+    held = pd.read_parquet(folder / "ticks.parquet", columns=["held"])["held"].to_numpy(bool)
+    rep = replay(level, held, "all" if "_all_" in setting else "collision")
+    if not np.allclose(rep.theta, brain_df["theta_deg"].to_numpy(), atol=1e-6):
+        raise ValueError(f"replay of {folder} doesn't see the θ the brain saw")
+    return approach_spans(rep)
+
+
+def judged(sub: str, by_object: bool = False) -> tuple[list[str], dict]:
+    title = "split by object (D48 amendment)" if by_object else "split from θ and the gap (as D46 judged)"
+    lines = [f"## Rule 5: bot-driven, first press per approach; approaches {title}\n",
              "| Setting | Levels | Approaches | Neither pressed | Judged | Matched (±1 frame) | Only whole brain | "
              "Only subcircuit | Further apart | Frame diffs (sub − whole) | Share | Verdict |",
              "|---|---|---|---|---|---|---|---|---|---|---|---|"]
@@ -46,7 +64,8 @@ def judged(sub: str) -> tuple[list[str], dict]:
             w, s = OUT / "whole_brain" / setting / "bot" / level, OUT / sub / setting / "bot" / level
             if not ((w / "brain.parquet").exists() and (s / "brain.parquet").exists()):
                 continue
-            r = press_agreement(brain(w), brain(s))
+            bw = brain(w)
+            r = press_agreement(bw, brain(s), spans=object_spans(w, level, setting, bw) if by_object else None)
             for k in total:
                 total[k] += r[k]
             done.append(level)
@@ -93,12 +112,14 @@ def main() -> None:
     sys.stdout.reconfigure(encoding="utf-8")  # ± and −; Windows consoles default to cp1252
 
     lines, verdicts = judged(args.subcircuit)
+    by_object, _ = judged(args.subcircuit, by_object=True)
     if not verdicts:
         sys.exit(f"No paired bot-driven runs for {args.subcircuit}. Run scripts/play_cube.py --bot on both networks first.")
     text = "\n".join([f"# Closed-loop check (D36 rule 5, D46): `{args.subcircuit}` vs the whole brain\n",
                       f"Levels: {', '.join(LEVELS)}. Pass at >= {MIN_SHARE:.0%} of the approaches in which "
                       "at least one network presses. Fixed in advance (D46): a failing R is dropped from the "
-                      "Step 3 range; a failing comparison runs on the whole brain.\n", *lines, *described(args.subcircuit)])
+                      "Step 3 range; a failing comparison runs on the whole brain.\n", *lines, "", *by_object,
+                      *described(args.subcircuit)])
     print(text)
     out = OUT / args.subcircuit / "rule5.md"
     out.write_text(text + "\n", encoding="utf-8")
