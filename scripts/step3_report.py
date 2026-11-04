@@ -187,6 +187,20 @@ def median_runs(df) -> dict:
     return out
 
 
+def breakdown(tuned, untuned, rate, default, seeds) -> list[str]:
+    """Per setting: runs completed by difficulty and by seed, and D48's death classes over all runs."""
+    lines = ["| Setting | " + " | ".join(f"{d} completed" for d in DIFFICULTIES) + " | by seed | Deaths "
+             + " / ".join(f"({c})" for c in CLASSES) + " |", "|---|" + "---|" * (len(DIFFICULTIES) + 2)]
+    for label, g in ((f"R = {rate:g} Hz (tuned)", tuned), (f"R = {default:g} Hz (Step 2 baseline)", untuned)):
+        diff = g["level"].str.extract(r"cube-(\w+)-")[0]
+        by_diff = [f"{int(g.loc[diff == d, 'completed'].sum())}/{int((diff == d).sum())}" for d in DIFFICULTIES]
+        by_seed = ", ".join(str(int(g.loc[g["seed"] == s, "completed"].sum())) for s in seeds)
+        deaths = g[~g["completed"]]["class"].value_counts()
+        lines.append(f"| {label} | " + " | ".join(by_diff) + f" | {by_seed} | "
+                     + " / ".join(str(int(deaths.get(c, 0))) for c in CLASSES) + " |")
+    return lines
+
+
 def held_out(cfg, rate, training_score) -> str:
     seeds = cfg["held_out_seeds"]
     tuned = collect(cfg, [(rate, s) for s in seeds], "held_out")
@@ -206,13 +220,18 @@ def held_out(cfg, rate, training_score) -> str:
     p = sign_test(better, worse)
     diff = sum(t[lv]["progress"] - u[lv]["progress"] for lv in t) / n
     reading = "better" if p < 0.05 and better > worse else "worse" if p < 0.05 else "no clear difference"
+    held_score = tuned["progress"].mean()
+    overfit = ("lower on held-out, as overfitting to the training levels would show" if held_score < training_score - 0.01
+               else "no lower on held-out, so no sign of overfitting to the training levels")
     lines += [f"- **Better {better}, worse {worse}, equal {equal}; sign test p = {p:.3f}: {reading}.**",
               f"- Paired difference in median progress, tuned − untuned: {100 * diff:+.1f} points.",
               f"- Runs completed: tuned {int(tuned['completed'].sum())}/{len(tuned)}, "
               f"untuned {int(untuned['completed'].sum())}/{len(untuned)}.",
               f"- Mean progress at R = {rate:g} Hz: training {100 * training_score:.1f}%, held-out "
-              f"{100 * tuned['progress'].mean():.1f}% (so overfitting to the training levels shows).", "",
-              "| level | tuned (median) | untuned (median) | |", "|---|---|---|---|"]
+              f"{100 * held_score:.1f}% ({overfit}).", "",
+              "Described only (not part of the test):", ""]
+    lines += breakdown(tuned, untuned, rate, cfg["default_rate_hz"], seeds)
+    lines += ["", "| level | tuned (median) | untuned (median) | |", "|---|---|---|---|"]
     mark = {1: "better", -1: "worse", 0: "equal"}
     for lv in sorted(t):
         cell = lambda r: f"{100 * r['progress']:.0f}%" + ("" if r["completed"] else f" ({r['class']})")  # noqa: E731
@@ -235,6 +254,10 @@ def main() -> None:
             sys.exit(f"R = {args.held_out:g} Hz doesn't have its full training run.")
         text = held_out(cfg, args.held_out, grid["progress"].mean())
         (OUT / "held_out.md").write_text(text + "\n", encoding="utf-8")
+        seeds = cfg["held_out_seeds"]
+        pd.concat([collect(cfg, [(args.held_out, s) for s in seeds], "held_out"),
+                   collect(cfg, [(cfg["default_rate_hz"], s) for s in seeds], "held_out", tag="")]
+                  ).to_csv(OUT / "held_out.csv", index=False)
         print(f"Wrote {(OUT / 'held_out.md').relative_to(ROOT)} (outcomes not shown: blind, D33)")
         return
     margin_runs = df[(df["seed"] == cfg["margin_seed"]) & (df["rate"] == cfg["default_rate_hz"])] if len(df) else df

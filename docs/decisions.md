@@ -794,6 +794,14 @@ From `docs/notes/step3_proposal.md` with Shannyn's answers of 2026-11-02 and her
 - **Prediction, recorded before the grid:** the ideal fly does best with a later threshold (45–50°, D47), and on the training check nearly all the fly's deaths are early jumps, (d1): its first Giant Fiber spike, without carry-over, comes at 37.2 ± 6.5°, so more than half its first spikes come before 39°, which spike rows punish (D48 amendment). **So we expect the best R below 150, probably 75–100 Hz** (open-loop θ 50–56°). If lower rates miss too many obstacles, the middle wins. A prediction to check against, not a rule. (Written before the Step 2 held-out results were opened; left unchanged after.)
 - **Code:** `configs/step3.toml`, `scripts/step3_grid.py` (`check`, `margin`, `grid`, `held-out --rate R`), `scripts/step3_report.py` (and `--held-out R`), `stereo_flyness.experiments.tuning` (tested).
 - Stereo Madness isn't touched (D7).
+- **Result (2026-11-04; write-up: `docs/notes/step3_report.md`):**
+  - **The tuned fly jumps outside the range measured in real flies.** The rule picks **R = 50 Hz**: open-loop first-spike θ 83.7 ± 22.0° (10 of 10 fired), against the fly's 25–53°.
+  - **Grid:** 300 runs at clean commit `ccd900c`, 0 stuck, 0 (u). Mean progress 42.3 / **49.6** / 43.6 / 28.4 / 22.7 / 17.2% at 25 / 50 / 75 / 100 / 150 / 200 Hz. Tie margin 3.1 points, so the tie-break wasn't used. The gain comes from (d1) deaths: 31 at 150 Hz, 0 at 50 Hz.
+  - **Prediction (75–100 Hz):** missed on where; right that the best R is below 150 Hz.
+  - **Held-out** (60 runs at clean commit `61a9bf6`, opened together): **11 better, 4 worse, 5 equal, p = 0.118: no clear difference.**
+  - Described only: median progress +23.5 points; 23/60 runs completed against 6/60, all easy; training 49.6%, held-out 52.8%, so no sign of overfitting.
+  - (d1) deaths fall from 33 to 1 and (d2) deaths rise from 2 to 13: tuning trades early jumps for late ones.
+  - After opening, `step3_report.py --held-out` got a fix and additions. The overfitting sentence was hard-coded; it now depends on the scores. It now also describes completions by difficulty and seed and death classes, and writes `held_out.csv`. The test and its numbers are unchanged.
 
 ## Open
 
@@ -803,7 +811,11 @@ Still open:
 - Brain time, input encoding, output rule and the cube dials: decided in T4 (D40–D43). Ship mode is decided in Step 5.
 - The cube encoding's rates: R × f, adopted in D45 (D41's text is updated after the von Reyn et al. 2017 check). Calibrated on the whole brain: 200° (R × f) and 1,082° (flat R).
 - The final subcircuit: built and validated (D46: rules 1–5, the calibration and the time limit pass, on D47's encoding). Step 2 is done: runs, analysis and result in D48 (write-up: `docs/notes/step2_report.md`).
-- Step 3 (tuning R): fixed in D49; next, the grid.
+- Step 3 (tuning R): done, result in D49 (write-up: `docs/notes/step3_report.md`).
+- **Which R goes forward (Step 4 controls, Stereo Madness): to decide together; D49 doesn't fix it.** Jacob's proposal, not agreed yet:
+  - **R = 150 Hz stays the fly of record.** It's calibrated to the real fly's threshold, and the held-out test fixed beforehand showed no clear gain from tuning.
+  - **R = 50 Hz runs beside it as a labelled "tuned" variant**, at the same N and seeds, with both fixed before any Stereo Madness run (D7). Its descriptive gain is large, so it's worth reporting, always with "outside the range measured in real flies".
+  - The Step 4 controls (shuffled connectome, lesions) run at 150 Hz, the setting of record.
 - **Stereo Madness run N times, not once (changes D7; agreed in principle 2026-11-02, written up at Step 6).** A frozen fly with Poisson input is a distribution, not a single outcome, so one run can't tell luck from typical. Conditions:
   - N and the seeds are fixed before any Stereo Madness run, and nothing changes between or after the runs (D7 still holds: no tuning on it);
   - the headline is the full count and median progress (e.g. "3 of 10, median X%"), never the best run;
