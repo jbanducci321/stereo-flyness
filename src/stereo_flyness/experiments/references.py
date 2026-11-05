@@ -6,8 +6,14 @@
   Step 4 (docs/notes/step4_proposal.md, section 5): a control brain whose Giant Fiber fires
   nonstop plays like this, so its result can be read against it, not against the floor.
 
-`play` is the game loop scripts/reference_flies.py uses. A press only counts in cube mode, and
-the decision after tick i holds tick i + 1, as for the fly (D40/D42).
+`play` is the game loop scripts/reference_flies.py uses. A press only counts in the listed modes
+(the cube, by default, as in Step 2), and the decision after tick i holds tick i + 1, as for the
+fly (D40/D42).
+
+Ship (Step 5, before any ship design; docs/notes/ship_brief.md): `play(..., modes=("ship",))`
+with `never` (never hold: the ship falls to the floor and slides) and `always` (always hold: it
+climbs to the ceiling and slides). Random holds need a rate, which D48 took from the fly's own
+presses, so the ship's random reference waits for the ship baseline.
 """
 
 from collections.abc import Callable
@@ -15,12 +21,15 @@ from collections.abc import Callable
 from stereo_flyness.game.engine import Game
 
 
-def play(level, press: Callable[[Game], bool]) -> dict:
-    """One game where `press(game)` decides, after each tick, whether the next tick is held."""
+def play(level, press: Callable[[Game], bool], modes: tuple[str, ...] = ("cube",)) -> dict:
+    """One game where `press(game)` decides, after each tick, whether the next tick is held.
+
+    `press` is only asked while the player is in one of `modes`; otherwise the tick isn't held.
+    """
     game, held = Game(level), False
     while not game.over:
         game.tick(held)
-        held = game.player.mode == "cube" and press(game)
+        held = game.player.mode in modes and press(game)
     d = game.death
     return {"completed": game.finished, "progress": game.progress, "ticks": game.ticks,
             "death": None if d is None else f"{d.kind} at x {d.x:.0f}"}
