@@ -221,3 +221,18 @@ def test_matched_random_lesion_refuses_when_nothing_matches():
     lid = int(con["Presynaptic_ID"].iloc[0])
     with pytest.raises(ValueError):
         matched_random_lesion(con, [lid], [], seed=0, tol=0.0)
+
+
+def test_recruited_matched_lesion_keeps_involvement_status():
+    from stereo_flyness.brain.controls import matched_random_lesion
+
+    con = table(n_neurons=60, n_edges=1500)
+    ids = con.groupby("Presynaptic_ID")["Connectivity"].sum().index.to_numpy()
+    lesion, exclude = list(ids[:4]), list(ids[4:6])
+    involved = set(ids[::2])  # every other neuron "fired in the recruitment runs"
+    for seed in range(3):
+        picked = matched_random_lesion(con, lesion, exclude, seed=seed, tol=0.6, involved=involved)
+        for lid, pid in zip(sorted(int(i) for i in lesion), picked):
+            assert (pid in involved) == (lid in involved)
+    # Same count of involved neurons silenced as in the lesion.
+    assert sum(p in involved for p in picked) == sum(int(i) in involved for i in lesion)

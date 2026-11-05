@@ -247,9 +247,14 @@ def random_network(con: pd.DataFrame, flyids, seed: int) -> pd.DataFrame:
     return out[list(con.columns)].astype(con.dtypes.to_dict())
 
 
-def matched_random_lesion(con: pd.DataFrame, lesion_ids, exclude_ids, seed: int, tol: float = 0.10) -> list[int]:
+def matched_random_lesion(con: pd.DataFrame, lesion_ids, exclude_ids, seed: int, tol: float = 0.10,
+                          involved=None) -> list[int]:
     """D51's random-lesion control: one random neuron per lesioned neuron, same sign, total output
     synapses within +-tol, never in `exclude_ids` or the lesion itself, and never picked twice.
+
+    With `involved` (D51 amendment: the neurons that fired in the recruitment runs), each stand-in
+    also has the lesioned neuron's status: involved for involved, not involved for not involved,
+    so the control silences exactly as many involved neurons as the lesion.
 
     Lesioned neurons are matched in ID order, each from its own candidates, with a fixed seed.
     """
@@ -257,13 +262,15 @@ def matched_random_lesion(con: pd.DataFrame, lesion_ids, exclude_ids, seed: int,
     out_syn = con.groupby("Presynaptic_ID")["Connectivity"].sum()
     sign = con.groupby("Presynaptic_ID")["Excitatory"].first()
     banned = {int(i) for i in exclude_ids} | {int(i) for i in lesion_ids}
+    involved = None if involved is None else {int(i) for i in involved}
     picked = []
     for lid in sorted(int(i) for i in lesion_ids):
         if lid not in out_syn.index:
             raise ValueError(f"{lid} has no outgoing connections to match")
         w, s = out_syn[lid], sign[lid]
         ok = out_syn.index[((out_syn >= (1 - tol) * w) & (out_syn <= (1 + tol) * w) & (sign == s)).to_numpy()]
-        ok = [int(i) for i in ok if int(i) not in banned]
+        ok = [int(i) for i in ok if int(i) not in banned
+              and (involved is None or (int(i) in involved) == (lid in involved))]
         if not ok:
             raise ValueError(f"no candidate matches {lid}")
         choice = ok[int(rng.integers(len(ok)))]

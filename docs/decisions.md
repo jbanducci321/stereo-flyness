@@ -856,6 +856,19 @@ Jacob's proposal (`docs/notes/step4_proposal.md`, revision 3) with Shannyn's ans
 - **Described beside them:** progress, completions by difficulty, death classes, stuck runs, presses per second, first-spike θ with and without carry-over, approaches with no Giant Fiber spike, and an open-loop calibration-loom check of every network and lesion before the runs. References: never press, random presses, always press.
 - **Runs:** night 1 is intact, E5b and E5c (180 runs). Night 2 is the random lesions and (a)–(d) (360 runs). Blind (D33): nothing is opened before the whole batch is done.
 - Stereo Madness isn't touched (D7).
+- **Amended before night 2 (2026-11-04; agreed by both after the open-loop check, before any game result was read).** Night 1 (intact, E5b, E5c) had already run (180 runs, clean commit `91989c6`, not opened); it doesn't depend on anything below.
+  - **Why:** open loop, every random-lesion draw is identical to intact (38.0 ± 6.3°): the randomly picked neurons take no part in the loom response. So "E5b beats its random control" would only show that silencing *involved* neurons matters, not that it's *these* ones (Shannyn).
+  - **New: a recruited-matched control for each lesion**, 3 draws with fixed seeds, draw *k* at Poisson seed *k*:
+    - each lesioned neuron is matched by a random neuron of the same sign with total output within ±10%, never a Giant Fiber, LC4/LPLC2 or lesion-set neuron;
+    - **matched by recruitment status:** a lesioned neuron that fired in the recruitment runs gets a stand-in that also fired, and one that didn't gets one that didn't. So the control silences exactly as many involved neurons as the lesion: **13 of E5b's 22, 10 of E5c's 12**.
+    - **Why by status (Jacob; Shannyn agreed):** her first rule, drawing only from recruited neurons, has no candidate for two SAD014 neurons and 3 for a third (all three were never recruited themselves). Widening the tolerance for them would silence 22 involved neurons against the lesion's 13, which biases the test towards "not specific".
+    - **"Involved" is an approximation (Shannyn):** it means fired in the 70 bot-driven recruitment runs of D46 (10 training levels × 7 settings, 965 candidates once the Giant Fibers, LC4/LPLC2 and the lesion sets are excluded), not in the held-out games themselves.
+    - Run through the same open-loop check before night 2, recorded as description.
+  - **Specificity now uses the new control:** E5b or E5c counts as specific only if it differs from intact **and** from its recruited-matched control at p < 0.05, in the same direction.
+  - **The old random-lesion controls are kept and reported** (fixed), but "lesion against old control" is dropped from the tests: open loop it's the same as "lesion against intact".
+  - **Holm family, now 12:** (a), (b), (c), (d), E5b, E5c, both old controls and both recruited-matched controls against intact (10), plus E5b and E5c against their recruited-matched controls (2).
+  - **Night 2 is now 480 runs** (~8–10 h): the old random lesions, the recruited-matched controls and (a)–(d).
+  - **(b)'s prediction, a dated note (Shannyn):** the open-loop check points the other way. Shannyn predicted (b) would jump earlier, but open loop it fires later: 46.6 ± 4.0° against intact 38.0°, identical to (c) relay-only. So on balance the rest of the brain makes the Giant Fiber fire *earlier*. The prediction stays as recorded. A later threshold also helps at 150 Hz, so **if (b) or (c) does better than intact, it's read as the same late-threshold effect as Step 3 and E5c, not as "a relay plays better"**. With identical open-loop results, (b) and (c) are expected to play alike; both stay as fixed.
 
 ## Open
 
@@ -867,7 +880,7 @@ Still open:
 - The final subcircuit: built and validated (D46: rules 1–5, the calibration and the time limit pass, on D47's encoding). Step 2 is done: runs, analysis and result in D48 (write-up: `docs/notes/step2_report.md`).
 - Step 3 (tuning R): done, result in D49 (write-up: `docs/notes/step3_report.md`).
 - Which R goes forward: decided in D50 (150 Hz of record; 50 Hz as a labelled variant on Stereo Madness, always reported second).
-- Step 4 (controls and lesions): fixed in D51; next, the code, then two nights of runs.
+- Step 4 (controls and lesions): fixed in D51 (amended before night 2); night 1 run, night 2 next.
 - **Stereo Madness run N times, not once (changes D7; agreed in principle 2026-11-02, written up at Step 6).** A frozen fly with Poisson input is a distribution, not a single outcome, so one run can't tell luck from typical. Conditions:
   - N and the seeds are fixed before any Stereo Madness run, and nothing changes between or after the runs (D7 still holds: no tuning on it);
   - the headline is the full count and median progress (e.g. "3 of 10, median X%"), never the best run;

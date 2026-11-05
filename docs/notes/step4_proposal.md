@@ -1,6 +1,6 @@
 # Step 4 proposal: controls and lesions on the cube
 
-*Jacob, 2026-11-04. Revision 3, with Shannyn's answers and her review of 2026-11-04 (she leads the lesion design and interpretation). **Logged as D51 on 2026-11-04; the log is canonical.** No Step 4 run exists yet; nothing here has been run on a control network or a lesion. Once logged, nothing is changed, re-run or dropped after the results are seen (as D48, D49).*
+*Jacob, 2026-11-04. Revision 3, with Shannyn's answers and her review of 2026-11-04 (she leads the lesion design and interpretation). **Logged as D51 on 2026-11-04; the log is canonical.** **Amended before night 2** (recruited-matched controls, a Holm family of 12, a dated note on (b)): see D51 in `docs/decisions.md`. No Step 4 run exists yet; nothing here has been run on a control network or a lesion. Once logged, nothing is changed, re-run or dropped after the results are seen (as D48, D49).*
 
 **The question (PROJECT_BRIEF Step 4):** does the fly's play depend on the real wiring? It matters most because of caveat 1. LC4 and LPLC2 synapse directly onto the Giant Fiber (293 connections, 1,885 synapses: 19.9% of the Giant Fibers' input in v783), so in cube mode the fly could be little more than a one-hop relay plus a threshold.
 

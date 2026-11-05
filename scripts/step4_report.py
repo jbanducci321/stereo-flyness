@@ -42,15 +42,18 @@ CONDITIONS = {
     "E5c (excitatory partners silenced)": [("_silence-E5c", s) for s in SEEDS],
     "E5b random lesion": [(f"_randlesion-E5b_d{k}", k) for k in SEEDS],
     "E5c random lesion": [(f"_randlesion-E5c_d{k}", k) for k in SEEDS],
+    "E5b recruited-matched control": [(f"_recmatched-E5b_d{k}", k) for k in SEEDS],
+    "E5c recruited-matched control": [(f"_recmatched-E5c_d{k}", k) for k in SEEDS],
     "(a) shuffle": [(f"_shuffle_s{k}", k) for k in SEEDS],
     "(b) looming-kept shuffle": [(f"_loomkept_s{k}", k) for k in SEEDS],
     "(c) relay-only": [("_relay", s) for s in SEEDS],
     "(d) random network": [(f"_random_s{k}", k) for k in SEEDS],
 }
 E5B, E5C = "E5b (inhibitory partners silenced)", "E5c (excitatory partners silenced)"
-RANDOM_OF = {E5B: "E5b random lesion", E5C: "E5c random lesion"}
-# The Holm family, named in D51: 8 against intact, 2 against their own random-lesion controls.
-FAMILY = [(c, INTACT) for c in CONDITIONS if c != INTACT] + [(E5B, RANDOM_OF[E5B]), (E5C, RANDOM_OF[E5C])]
+# D51 amendment: specificity is judged against the recruited-matched controls.
+MATCHED_OF = {E5B: "E5b recruited-matched control", E5C: "E5c recruited-matched control"}
+# The Holm family, as amended in D51: 10 against intact, 2 against the recruited-matched controls.
+FAMILY = [(c, INTACT) for c in CONDITIONS if c != INTACT] + [(E5B, MATCHED_OF[E5B]), (E5C, MATCHED_OF[E5C])]
 WIRING = ("(a) shuffle", "(d) random network")
 RELAY = ("(b) looming-kept shuffle", "(c) relay-only")
 
@@ -147,6 +150,8 @@ def open_loop_table() -> list[str]:
     sets = {INTACT: [""], E5B: ["_silence-E5b"], E5C: ["_silence-E5c"],
             "E5b random lesion": [f"_randlesion-E5b_d{k}" for k in SEEDS],
             "E5c random lesion": [f"_randlesion-E5c_d{k}" for k in SEEDS],
+            "E5b recruited-matched control": [f"_recmatched-E5b_d{k}" for k in SEEDS],
+            "E5c recruited-matched control": [f"_recmatched-E5c_d{k}" for k in SEEDS],
             "(a) shuffle": [f"_shuffle_s{k}" for k in SEEDS], "(b) looming-kept shuffle": [f"_loomkept_s{k}" for k in SEEDS],
             "(c) relay-only": ["_relay"], "(d) random network": [f"_random_s{k}" for k in SEEDS]}
     for cond, suffixes in sets.items():
@@ -165,9 +170,10 @@ def comparisons(df, appr) -> list[str]:
     runs = {c: df[df["condition"] == c].to_dict("records") for c in CONDITIONS}
     results = {(a, b): paired(runs[a], runs[b]) for a, b in FAMILY}
     adj = holm({f"{a} vs {b}": r.p for (a, b), r in results.items()})
-    lines = ["## The D51 comparisons (the Holm family: these 10 sign tests)", "",
+    lines = [f"## The D51 comparisons (the Holm family, as amended: these {len(FAMILY)} sign tests)", "",
              "Per level, each setting's median run across its 3 seeds or instances; D48's \"equal\"; two-sided sign test, "
-             "equal levels left out; \"better\"/\"worse\" only at p < 0.05. Holm-adjusted p over the 10.", "",
+             "equal levels left out; \"better\"/\"worse\" only at p < 0.05. Holm-adjusted p over all of them. "
+             "The old random-lesion controls are compared with intact only (D51 amendment).", "",
              "| Comparison | Better | Worse | Equal | p | Reading | Holm-adjusted p | Survives Holm |",
              "|---|---|---|---|---|---|---|---|"]
     for (a, b), r in results.items():
@@ -194,12 +200,17 @@ def comparisons(df, appr) -> list[str]:
                      f"({results[(c, INTACT)].reading}); first-spike θ: {'pass' if rr.theta_ok else 'fail'} ({theta}); "
                      f"(d1) share: {'pass' if rr.d1_ok else 'fail'} ({rr.d1_diff:.0%} against a seed range of {rr.d1_range:.0%}).")
     for c in (E5B, E5C):
-        s = specific(results[(c, INTACT)], results[(c, RANDOM_OF[c])])
+        s = specific(results[(c, INTACT)], results[(c, MATCHED_OF[c])])
         lines.append(f"- **{c}: specific to those neurons?** **{'yes' if s else 'no'}** "
-                     f"(against intact: {results[(c, INTACT)].reading}; against its random lesion: "
-                     f"{results[(c, RANDOM_OF[c])].reading}).")
+                     f"(against intact: {results[(c, INTACT)].reading}; against its recruited-matched control: "
+                     f"{results[(c, MATCHED_OF[c])].reading}).")
     lines.append("- **E5c, fixed reading:** if it does better than intact, that's Step 3's late-threshold effect (D49), "
                  "not the lesion improving the fly.")
+    lines.append("- **(b) and (c), fixed reading (D51 amendment):** open loop they fire later than intact (46.6° against "
+                 "38.0°), so if either does better than intact, it's the same late-threshold effect, not \"a relay plays "
+                 "better\". (b)'s prediction (\"earlier\") stays as recorded.")
+    lines.append("- \"Involved\" (recruited-matched controls) means fired in D46's 70 bot-driven recruitment runs: an "
+                 "approximation of involvement in the held-out games, not an exact match.")
     lines.append("- The relay bars use a 3-seed range, which is small and noisy, so they're strict: they make \"relay\" "
                  "harder to claim, not easier (D51).")
     return lines + [""]
