@@ -38,7 +38,7 @@ Outputs go to `results/replays/` (git-ignored). Replays of Stereo Madness show R
 
 ## Hooks for the final showcase
 The polished final video of the fly's winning run is the last thing built (D19). This viewer is its base:
-- **Brain panel (R3, Shannyn's design):** a second drawing pass beside or over the game. It will read the brain activity logged with each closed-loop run. The renderer already separates drawing the level/player from the overlay, so a panel slots in as another layer.
+- **Brain panel:** `brain_panel.py` (R2, 2026-11-06) draws a 200 px strip under the game for every brain run (`--no-brain` leaves it out). It shows only what `brain.parquet` logged, unaltered. Left, in blue: **our input** for the mode shown (θ, f and R × f for the cube; whatever the ship's controller logs). Right, in yellow: **the fly's spikes**, one lane per watched group over the last second, the press each frame decided, how many neurons fired, and the stuck flag. It works for cube, ship and mixed runs. **The layout is provisional and says so on screen:** which neurons to show, with what labels, colours and visual-field layout, is Shannyn's design (R3).
 - **Music:** `--audio FILE` mixes a local audio file into the export, aligned to the run's start.
 - **Sound effects:** `event_cues()` gives the exact time of every `jump`, `death`, `portal_*` and `finish`, ready to place sounds.
 - **Nicer graphics:** sprites in place of hitbox rectangles. Keep a "hitbox view" option for debugging and honesty.

@@ -105,15 +105,15 @@ def render_frame(surface: pygame.Surface, timeline: Timeline, tick: int) -> Came
     return cam
 
 
-DRIVER_LABELS = {  # hard rule 10, D19: a replay always says who controlled the cube
-    "fly": "SIMULATION REPLAY: the cube is controlled by the fly brain model",
-    "bot": "BOT-DRIVEN: the bot controls the cube; the brain only watches. Not the fly playing",
+DRIVER_LABELS = {  # hard rule 10, D19: a replay always says who controlled the player (cube or ship)
+    "fly": "SIMULATION REPLAY: the player is controlled by the fly brain model",
+    "bot": "BOT-DRIVEN: the bot controls the player; the brain only watches. Not the fly playing",
 }
 _font = {}
 
 
 def draw_driver_label(surface: pygame.Surface, timeline: Timeline) -> None:
-    """Who controlled the cube, drawn on every frame of a brain run (overlay or not)."""
+    """Who controlled the player, drawn on every frame of a brain run (overlay or not)."""
     label = DRIVER_LABELS.get(getattr(timeline, "driver", None))
     if label is None:
         return
@@ -163,7 +163,9 @@ def _draw_death(surface, cam: Camera, view: TickView) -> None:
 
 
 def save_still(timeline: Timeline, seconds: float, path, size=SIZE) -> None:
-    """Render the run at `seconds` to an image file (no window needed)."""
-    surface = pygame.Surface(size)
-    render_frame(surface, timeline, timeline.at_time(seconds).tick)
+    """Render the run at `seconds` to an image file (no window needed), with the brain panel for brain runs."""
+    from stereo_flyness.viewer.playback import draw_screen, screen_size  # playback imports this module
+
+    surface = pygame.Surface(screen_size(timeline, size))
+    draw_screen(surface, timeline, timeline.at_time(seconds).tick)
     pygame.image.save(surface, str(path))
