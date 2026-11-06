@@ -31,7 +31,7 @@ Both are R = 150 Hz, R × f, θ_full = 200°, collision course, on the 20 held-o
 
 ## 3. What it costs
 - **Agreeing on this:** her review, about 15 minutes to log as D52.
-- **Code:** a small `scripts/step7_report.py` that reuses Step 2/3/4's tools (replay, classes, `paired`) and adds a tick-by-tick comparison of the logged presses. About 1 hour.
+- **Code:** done (2026-11-06), written blind: `scripts/step7_report.py` with `stereo_flyness/experiments/step7_analysis.py`. It reuses Step 2/3/4's tools (replay, classes, `paired`) and computes **both** candidate bars from question 1, so it works whichever one D52 fixes. Its dry run passed its checks (60 pairs, settings shared, all clean) and its output was deleted unread.
 - **Runs:** none. **Report:** written blind, opened together right after the Step 4 opening, since it reads the same intact runs.
 
 ## 4. Questions for Shannyn
