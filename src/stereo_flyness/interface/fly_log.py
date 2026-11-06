@@ -6,7 +6,9 @@ A run is saved as a folder:
     brain.parquet                 one row per brain frame: our input (θ, f, driven counts, R) kept
                                   apart from the fly's activity (watched spike counts, active
                                   neurons, the stuck-state share and flags; hard rule 10)
-    spikes.npz                    every neuron that fired, per frame, stored sparsely (as D34)
+    spikes.npz                    every neuron that fired, per frame, stored sparsely (as D34), and
+                                  `stimulated`: the IDs we drive, so analyses and the brain panel
+                                  can tell our input apart from the fly's activity (hard rule 10)
     run.json                      who drove the cube ("fly" or "bot"), settings, flags, commit
 
 Frame i saw the game after i ticks, and its press is the `held` of game tick i + 1 (D40).
@@ -110,7 +112,8 @@ class FlyRecorder:
         self.brain.to_parquet(folder / "brain.parquet", index=False)
         cat = lambda xs, dt: np.concatenate(xs) if xs else np.zeros(0, dtype=dt)  # noqa: E731
         np.savez_compressed(folder / "spikes.npz", flyids=self.flyids, frame=cat(self._frames, np.int32),
-                            neuron=cat(self._neurons, np.int32), count=cat(self._counts, np.uint16))
+                            neuron=cat(self._neurons, np.int32), count=cat(self._counts, np.uint16),
+                            stimulated=self.flyids[self.stim_idx])  # our input's neurons, for the brain panel (D38)
         (folder / "run.json").write_text(json.dumps(self.summary, indent=1, default=str), encoding="utf-8")
         return folder
 

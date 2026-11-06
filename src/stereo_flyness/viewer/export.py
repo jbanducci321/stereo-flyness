@@ -53,11 +53,13 @@ def export_video(timeline: Timeline, path: Path, size=SIZE, overlay: bool = True
     surface = pygame.Surface(size)
     n_frames = timeline.last_tick // TICKS_PER_FRAME + 1 + round(tail_seconds * FPS)
     proc = subprocess.Popen(cmd, stdin=subprocess.PIPE)
+    drawn = None
     try:
         for frame in range(n_frames):
             tick = min(frame * TICKS_PER_FRAME, timeline.last_tick)
             clock = PlaybackClock(timeline.duration, time=tick / P.TICKS_PER_SECOND) if overlay else None
-            draw_screen(surface, timeline, tick, clock, font)
+            draw_screen(surface, timeline, tick, clock, font, since=drawn)
+            drawn = tick
             proc.stdin.write(pygame.image.tobytes(surface, "RGB"))
     finally:
         proc.stdin.close()
