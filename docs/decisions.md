@@ -880,7 +880,10 @@ Still open:
 - The final subcircuit: built and validated (D46: rules 1–5, the calibration and the time limit pass, on D47's encoding). Step 2 is done: runs, analysis and result in D48 (write-up: `docs/notes/step2_report.md`).
 - Step 3 (tuning R): done, result in D49 (write-up: `docs/notes/step3_report.md`).
 - Which R goes forward: decided in D50 (150 Hz of record; 50 Hz as a labelled variant on Stereo Madness, always reported second).
-- Step 4 (controls and lesions): fixed in D51 (amended before night 2); night 1 run, night 2 next.
+- Step 4 (controls and lesions): fixed in D51 (amended before night 2). All 660 runs are done, blind and clean; the report is written and unopened, to open together (`docs/notes/step4_opening.md`). Its replays (D51's rule) are rendered, unwatched.
+- Step 7 (whole brain against the subcircuit): drafted in `docs/notes/step7_proposal.md`, to agree as D52 before the Step 4 opening. Questions: the bar, and whether 50 Hz needs its own check.
+- Step 5 (ship): waiting on Shannyn's design. Agreed 2026-11-05 (to log at the start of Step 5): ship mode stays in whatever happens in Stereo Madness; whether to tune it is decided after its baseline.
+- Brain panel (R3): version 1 of Shannyn's design is built; her five questions are answered in `docs/notes/brain_panel_design.md`, for her review.
 - **Stereo Madness run N times, not once (changes D7; agreed in principle 2026-11-02, written up at Step 6).** A frozen fly with Poisson input is a distribution, not a single outcome, so one run can't tell luck from typical. Conditions:
   - N and the seeds are fixed before any Stereo Madness run, and nothing changes between or after the runs (D7 still holds: no tuning on it);
   - the headline is the full count and median progress (e.g. "3 of 10, median X%"), never the best run;

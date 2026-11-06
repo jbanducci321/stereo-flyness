@@ -2,9 +2,13 @@
 
 **Purpose of this document:** bring any Claude Code session (especially Shannyn's) fully up to speed on what this project is, what has been decided, what has been built, and how to work in this repo without contradicting earlier decisions.
 
-**Last updated:** 2026-10-22. Written by Jacob's Claude Code session, which did the planning and setup with Jacob.
+**Last updated:** 2026-11-06 (status and plan; first written 2026-10-22). Written by Jacob's Claude Code session, which did the planning and setup with Jacob.
 
-**Status (2026-11-04):** Steps 0–3 are done. The untuned fly plays the cube held-out levels (Step 2, D48, `docs/notes/step2_report.md`), and tuning R was checked on held-out levels (Step 3, D49, `docs/notes/step3_report.md`). 150 Hz goes forward (D50). Next: Step 4, controls and lesions.
+**Status (2026-11-06):** Steps 0–3 are done. The untuned fly plays the cube held-out levels (Step 2, D48, `docs/notes/step2_report.md`), and tuning R was checked on held-out levels (Step 3, D49, `docs/notes/step3_report.md`). 150 Hz goes forward (D50).
+- **Step 4:** all 660 runs are done (blind). The report is written and **unopened**, to open together (`docs/notes/step4_opening.md`).
+- **Step 7:** plan drafted (`docs/notes/step7_proposal.md`, D52 pending). It needs no new runs; its report script is ready.
+- **Step 5 (ship):** waiting on Shannyn's design (`docs/notes/ship_brief.md`). Everything else for it is built: the mode-switching loop, the runner, the ship report and the no-brain references.
+- **Brain panel:** version 1 of Shannyn's design is built (R3).
 
 > **To the Claude session reading this:** treat everything under "Decisions" and "Hard rules" as settled. Don't re-litigate, override or "improve" them without the human explicitly asking. If a task seems to need a change to a decision, stop and ask your human first. Shannyn and Jacob decide together, and every change gets logged in `docs/decisions.md`.
 
@@ -110,6 +114,9 @@ The canonical, up-to-date log is **`docs/decisions.md`**. Read it first. Summary
 - **Subcircuit rule:** decided in **D36** (recruited neurons + their ≥ 30-synapse inputs; interim build for T3, final rebuild after T4) and **D37** (cascade trials left out; tuning-time limit; 30 s practice levels).
 - **Brain time, input encoding, output rule, cube dials:** decided in T4 (**D40–D43**). Ship mode is decided in Step 5.
 - **Stereo Madness run N times, not once:** agreed in principle (2026-11-02); N and the seeds are fixed at Step 6, before any run (`docs/decisions.md`, "Open").
+- **Ship design (Step 5):** encoding, output rule, dials and calibration. Shannyn leads (`docs/notes/ship_brief.md`).
+- **Step 7 plan (D52):** the bar (identical games ≥ 57 of 60, or per approach), and whether 50 Hz gets its own check (~1 night of whole-brain runs).
+- **GPU:** deferred until it's needed.
 - **Closed-loop simulation approach:** resolved for now by D17 (Brian2 with `run_frames`). Our own reimplementation (e.g. PyTorch, validated against Brian2) stays an option for speed or for the GPU phase.
 - **Code LICENSE.**
 
@@ -294,11 +301,11 @@ Each `step()` call costs ~100–250 ms of Brian2 overhead regardless of network 
 | 1 | Build the game, including a viewer that can replay a recorded run log: **complete** |
 | 2 | Cube baseline with **default, untuned** values. Record this before any tuning; it's a key result. Closed-loop runs log every frame from here on (R1), and the first brain panel appears in the viewer (R2): **complete (D48)** |
 | 3 | Tune at most 2–3 dials on generated levels, evaluate on held-out generated levels: **complete (D49)** |
-| 4 | (next) Controls and lesions: degree-preserving shuffled connectome; random network of the same size; LC4/LPLC2 silenced; Giant Fiber silenced. Does performance depend on the real wiring? |
-| 5 | Ship pathway: repeat Steps 2–4 |
-| 6 | Mixed levels, then Stereo Madness with everything frozen. Run N times, not once (agreed in principle; see Open decisions), with the replay picked by rule as the showcase. |
-| 7 | Whole brain on a free GPU (Kaggle or Lightning AI), compared with the subcircuit |
-| 8 | Write-up: honest README, figures, reproducibility, and the replay viewer showcase (Stereo Madness replay plus an exported video) |
+| 4 | Controls and lesions (D51): shuffled, looming-kept, relay-only and random networks; E5b/E5c lesions with matched controls. Does performance depend on the real wiring? **Runs done (660, blind); report unopened, to open together** |
+| 5 | Ship pathway: repeat Steps 2–4. Ship mode stays in whatever happens (agreed 2026-11-05); whether to tune it is decided after its baseline. **Waiting on Shannyn's design;** loop, runner (`scripts/play_level.py`), report (`scripts/ship_report.py`) and references are built |
+| 6 | Mixed levels, then Stereo Madness with everything frozen. Run N times, not once (agreed in principle; see Open decisions), with the replay picked by rule as the showcase. The runner refuses Stereo Madness without `--stereo-madness-final` and always runs it blind |
+| 7 | Whole brain compared with the subcircuit. **Plan drafted** (`docs/notes/step7_proposal.md`): it reuses the Step 2 and Step 4 intact runs, so no GPU is needed for it; the GPU decision is deferred. Report script ready (`scripts/step7_report.py`) |
+| 8 | Write-up: honest README, figures, reproducibility, and the replay viewer showcase (Stereo Madness replay plus an exported video). Methods draft for Steps 0–3: `docs/notes/writeup_methods.md` (for Shannyn to edit) |
 
 **Stretch:** evolutionary search over the dials, or mushroom-body dopamine-gated learning (only KC→MBON synapses plastic).
 
@@ -339,7 +346,7 @@ Each `step()` call costs ~100–250 ms of Brian2 overhead regardless of network 
 |---|---|---|---|
 | **R1. Run recorder** | Jacob | Step 2 (with the closed loop) | Every closed-loop run writes a per-frame log from the `run_frames` callback: frame index, game state (player position, mode, alive/dead, obstacles in view), input rates per group, and watched spike counts per neuron. Saved alongside the run's config, seed and git commit. It feeds both the metrics and the viewer. |
 | **R2. Replay viewer engine** | Jacob | Steps 1–2 | Plays a recorded log at real 60 fps, with pause, scrub and slow motion: the game panel plus a brain panel. Exports to video. The library (likely pygame) is chosen when built, with approval. |
-| **R3. Brain panel design** | **Shannyn** | Steps 2–5 | Which neuron groups to show and how: LC4/LPLC2 laid out by visual-field position, the Giant Fiber, VS cells, the steering neurons. Plus biologically accurate labels and colours, and short explanations. It must visibly separate our computed input (the looming signal) from the fly's spikes. |
+| **R3. Brain panel design** (v1 built 2026-11-06, `docs/notes/brain_panel_design.md`) | **Shannyn** | Steps 2–5 | Which neuron groups to show and how: LC4/LPLC2 laid out by visual-field position, the Giant Fiber, VS cells, the steering neurons. Plus biologically accurate labels and colours, and short explanations. It must visibly separate our computed input (the looming signal) from the fly's spikes. |
 | **R4. Showcase replay** | Both | Step 6 | Record the single frozen Stereo Madness run and produce the showcase replay and video. |
 | R5. Live mode (optional) | Jacob | After Step 3 | Run a small subcircuit (~1k–5k neurons, near real time) live in the viewer. |
 | R6. 3D neurons (stretch) | Shannyn + Jacob | After Step 6 | Render real FlyWire neuron positions/morphologies lighting up in the brain panel. Check the mesh licence and citation first. |
