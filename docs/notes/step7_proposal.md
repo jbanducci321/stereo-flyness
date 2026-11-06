@@ -1,5 +1,7 @@
 # Step 7 proposal: the whole brain against the subcircuit, in closed loop
 
+*Agreed as **D52** (2026-11-06), with changes: the bar is judged on the cube's state, not the press log, and 50 Hz gets its own pairing. D52 is the binding version.*
+
 *Jacob, 2026-11-05. Draft for Shannyn (Step 7 is a shared step: she leads the comparison, Jacob the runs). No code, no new runs. **To fix before the Step 4 report is opened**, because the intact whole brain's results sit in that report: once we've read them, a comparison plan made afterwards could be shaped by them.*
 
 **The question:** does the final subcircuit (D46: 33,486 neurons) play the cube like the whole brain (~139,000) on levels neither has seen? If it does, every subcircuit result (Steps 2–3, and Stereo Madness if run on it) stands for the whole brain. If it doesn't, we say where they part.

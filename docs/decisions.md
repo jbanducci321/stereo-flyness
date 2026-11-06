@@ -870,6 +870,31 @@ Jacob's proposal (`docs/notes/step4_proposal.md`, revision 3) with Shannyn's ans
   - **Night 2 is now 480 runs** (~8–10 h): the old random lesions, the recruited-matched controls and (a)–(d).
   - **(b)'s prediction, a dated note (Shannyn):** the open-loop check points the other way. Shannyn predicted (b) would jump earlier, but open loop it fires later: 46.6 ± 4.0° against intact 38.0°, identical to (c) relay-only. So on balance the rest of the brain makes the Giant Fiber fire *earlier*. The prediction stays as recorded. A later threshold also helps at 150 Hz, so **if (b) or (c) does better than intact, it's read as the same late-threshold effect as Step 3 and E5c, not as "a relay plays better"**. With identical open-loop results, (b) and (c) are expected to play alike; both stay as fixed.
 
+**D52. Step 7: the whole brain against the subcircuit in closed loop, fixed before reading** (2026-11-06)
+Jacob's proposal (`docs/notes/step7_proposal.md`) with Shannyn's answers of 2026-11-06; she leads the comparison. **Fixed before the Step 4 report is opened:** nobody has read any result of the Step 4 intact whole brain, and the report script's dry run printed only its checks. The proposal has the detail; this entry is the binding summary, and where they differ this entry wins.
+- **The question:** does the final subcircuit (D46) play the cube like the whole brain on unseen levels, in fly-driven closed loop?
+- **Two pairings, 60 pairs each** (the 20 held-out cube levels × seeds 0, 1, 2; θ_full = 200°, R × f, collision course; the same level and Poisson seed within a pair):
+  - **150 Hz (the fly of record):** the Step 2 baseline on the subcircuit (D48, commit `5d9de12`) against the Step 4 intact whole brain (D51, `91989c6`). No new runs.
+  - **50 Hz (the labelled variant, D50; Shannyn):** Step 3's held-out runs on the subcircuit (D49, `61a9bf6`) against **60 new whole-brain runs at 50 Hz**, run blind (D33). Rule 5 checked 25 and 200 Hz bot-driven only, and 50 Hz goes to Stereo Madness, so it gets its own closed-loop check.
+- **Only the network differs** within a pair:
+  - **150 Hz** (checked by Shannyn and Jacob): from `5d9de12` to `91989c6`, no existing file in `brain/`, `interface/` or `game/` changed. One new module, `brain/controls.py` (the Step 4 networks), isn't used by intact runs. `play_cube.py` only gained the Step 4 options, which default to nothing.
+  - **50 Hz** (checked by Jacob): from `61a9bf6` to the new runs' commit, the same holds, plus two changes that don't touch the simulation: the recorder also saves the stimulated IDs, and `interface/modes.py` is new and not used by `play_cube.py`.
+  - Every setting recorded in `run.json` matches within each pair; the stuck-state list is restricted to each network (D38).
+- **The bar, for each pairing: identical games in ≥ 57 of 60 pairs.**
+  - **A pair is identical if the cube's state (x, y, vy) is the same on every tick,** and both runs have the same number of ticks (Shannyn). Not the raw press log: the Giant Fiber carries over and presses in mid-air, where a press does nothing, so an extra mid-air press on one network isn't a split.
+  - The game is deterministic, so "the same" means exactly equal; no tolerance.
+  - **For every pair that splits,** reported: the first tick where the state differs, what was in view, which network pressed, and whether the outcome changed (the killing object, or completed).
+- **Described only, not a bar:**
+  - **Per approach** (rule 5 style): the first press of each approach within ±1 frame, counted only up to each pair's first split. After it, the games are in different states, so approaches don't line up.
+  - **Per level:** each network's median run across the 3 seeds, D48's "equal" and the two-sided sign test.
+  - Progress, completions, death classes, first-spike θ with and without carry-over, stuck runs, presses per second.
+- **Readings, fixed now** (the proposal's §2):
+  - **A pass** means the subcircuit's results stand for the whole brain at that rate, in this setting (cube, D47's encoding).
+  - **A fail:** the subcircuit's results stay valid as subcircuit results, and nothing is rerun because of it. Every later step (Stereo Madness, the ship) runs on the network fixed before that step starts, knowing this result.
+  - The ship gets its own check (`docs/notes/ship_brief.md` §5).
+- **Order:** the 50 Hz runs first, blind. Then the Step 4 opening (D51), then Step 7 straight after, both pairings together.
+- **Code:** `scripts/step7_report.py`, `stereo_flyness/experiments/step7_analysis.py`.
+
 ## Open
 
 Still open:
@@ -881,7 +906,7 @@ Still open:
 - Step 3 (tuning R): done, result in D49 (write-up: `docs/notes/step3_report.md`).
 - Which R goes forward: decided in D50 (150 Hz of record; 50 Hz as a labelled variant on Stereo Madness, always reported second).
 - Step 4 (controls and lesions): fixed in D51 (amended before night 2). All 660 runs are done, blind and clean; the report is written and unopened, to open together (`docs/notes/step4_opening.md`). Its replays (D51's rule) are rendered, unwatched.
-- Step 7 (whole brain against the subcircuit): drafted in `docs/notes/step7_proposal.md`, to agree as D52 before the Step 4 opening. Questions: the bar, and whether 50 Hz needs its own check.
+- Step 7 (whole brain against the subcircuit): fixed in D52. The 50 Hz whole-brain runs are next (blind); then the Step 4 opening (Monday 2026-11-09), then Step 7.
 - Step 5 (ship): waiting on Shannyn's design. Agreed 2026-11-05 (to log at the start of Step 5): ship mode stays in whatever happens in Stereo Madness; whether to tune it is decided after its baseline.
 - Brain panel (R3): version 1 of Shannyn's design is built; her five questions are answered in `docs/notes/brain_panel_design.md`, for her review.
 - **Stereo Madness run N times, not once (changes D7; agreed in principle 2026-11-02, written up at Step 6).** A frozen fly with Poisson input is a distribution, not a single outcome, so one run can't tell luck from typical. Conditions:

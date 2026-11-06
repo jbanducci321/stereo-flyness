@@ -2,7 +2,10 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from stereo_flyness.experiments.step7_analysis import first_split, shared_approaches
+from stereo_flyness.experiments.step7_analysis import first_split, shared_approaches, state_split
+from stereo_flyness.game.engine import Game
+from stereo_flyness.game.level import Level
+from stereo_flyness.game.recorder import play
 
 
 def test_identical_games_have_no_split():
@@ -46,3 +49,30 @@ def test_mismatched_input_before_the_split_is_refused():
     s = brain([0, 11, 20], [0, 0, 1])
     with pytest.raises(ValueError):
         shared_approaches(w, s, [(1, 3)], split=None)
+
+
+def game_ticks(presses: set[int], length=1500):
+    level = Level("flat", "test", length, [])
+    return play(Game(level), lambda g: g.ticks in presses).to_frame()
+
+
+def test_a_mid_air_press_is_not_a_split():
+    """Shannyn's rule (D52): judged on the cube's state, so a press that does nothing doesn't split the game."""
+    a = game_ticks({10})
+    b = game_ticks({10, 40})  # tick 40 is mid-jump: the press does nothing
+    assert first_split(a["held"], b["held"]) == 40
+    assert state_split(a, b) is None
+
+
+def test_a_press_that_jumps_splits_at_its_tick():
+    a = game_ticks({10})
+    b = game_ticks({12})
+    k = state_split(a, b)
+    assert k == 10  # row 10 is the state after the tick that applied press 10
+    assert a.iloc[:k][["x", "y", "vy"]].equals(b.iloc[:k][["x", "y", "vy"]])
+
+
+def test_games_of_different_length_split_where_the_shorter_ends():
+    a = game_ticks(set(), length=1500)
+    b = a.iloc[:-5]
+    assert state_split(a, b) == len(b)
