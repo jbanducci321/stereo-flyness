@@ -33,6 +33,7 @@ class Controller:
 
     mode: str = ""
     groups: dict[str, list[int]] = {}  # input group name -> FlyWire IDs it drives
+    watch: dict[str, list[int]] = {}  # watched group name -> FlyWire IDs its output rule reads
 
     def encode(self, player) -> tuple[dict[str, np.ndarray], dict]:
         """Per-group rates (Hz, in `groups` order) and the row logged for this tick (hard rule 10)."""
@@ -52,9 +53,10 @@ class CubeController(Controller):
 
     mode = "cube"
 
-    def __init__(self, encoder):
+    def __init__(self, encoder, gf: dict[str, list[int]] | None = None):
         self.encoder = encoder
         self.groups = {"loom": list(encoder.ids)}
+        self.watch = dict(gf or {})  # the Giant Fibers (GF_R, GF_L) the jump rule reads
 
     def encode(self, player):
         loom = self.encoder.encode(player)
