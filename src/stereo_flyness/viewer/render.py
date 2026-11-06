@@ -109,7 +109,18 @@ DRIVER_LABELS = {  # hard rule 10, D19: a replay always says who controlled the 
     "fly": "SIMULATION REPLAY: the player is controlled by the fly brain model",
     "bot": "BOT-DRIVEN: the bot controls the player; the brain only watches. Not the fly playing",
 }
-_font = {}
+_fonts: dict[int, pygame.font.Font] = {}
+
+
+def font(size: int) -> pygame.font.Font:
+    """A cached Consolas font. pygame.quit() (e.g. when a replay window closes) kills every Font
+    object, so the cache asks pygame to clear it at quit and fills again on the next use."""
+    if not _fonts:
+        pygame.font.init()
+        pygame.register_quit(_fonts.clear)
+    if size not in _fonts:
+        _fonts[size] = pygame.font.SysFont("consolas", size)
+    return _fonts[size]
 
 
 def draw_driver_label(surface: pygame.Surface, timeline: Timeline) -> None:
@@ -117,11 +128,8 @@ def draw_driver_label(surface: pygame.Surface, timeline: Timeline) -> None:
     label = DRIVER_LABELS.get(getattr(timeline, "driver", None))
     if label is None:
         return
-    if "f" not in _font:
-        pygame.font.init()
-        _font["f"] = pygame.font.SysFont("consolas", 18)
     colour = COLOURS["death"] if timeline.driver == "bot" else COLOURS["ground_line"]
-    text = _font["f"].render(label, True, colour)
+    text = font(18).render(label, True, colour)
     surface.blit(text, (16, surface.get_height() - 30))
 
 

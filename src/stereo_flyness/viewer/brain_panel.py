@@ -24,7 +24,7 @@ import pandas as pd
 import pygame
 
 from stereo_flyness.game import physics as P
-from stereo_flyness.viewer.render import COLOURS
+from stereo_flyness.viewer.render import COLOURS, font
 
 HEIGHT = 200
 WINDOW_TICKS = P.TICKS_PER_SECOND  # spike lanes show the last second
@@ -95,18 +95,8 @@ def _num(v) -> str:
     return f"{v:.3g}" if 0 < abs(v) < 1 else f"{v:.1f}"
 
 
-_fonts: dict = {}
-
-
-def _font(size):
-    if size not in _fonts:
-        pygame.font.init()
-        _fonts[size] = pygame.font.SysFont("consolas", size)
-    return _fonts[size]
-
-
 def _text(surface, text, xy, colour=COLOURS["ground_line"], size=16):
-    surface.blit(_font(size).render(text, True, colour), xy)
+    surface.blit(font(size).render(text, True, colour), xy)
 
 
 def draw_brain_panel(surface: pygame.Surface, track: BrainTrack, tick: int) -> None:
