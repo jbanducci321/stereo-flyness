@@ -8,9 +8,9 @@ A strip under the game in three columns, in the order the signal flows:
    (the ship, until its design is logged), the logged input values are listed instead.
 2. **The fly's escape neurons** (the model's activity, amber, filled): both Giant Fibers, which
    light when they spike, with their spike count; a raster of each over the last second, one mark
-   per frame with spikes; presses on the same time axis, one tick after the spike that made them
+   per tick with spikes; presses on the same time axis, one tick after the spike that made them
    (▲ with ✓ if it started a jump, grey ▲ if not). Any other watched group gets its own raster.
-3. **The rest of the brain** (the model's activity): how many neurons fired per frame over the
+3. **The rest of the brain** (the model's activity): how many neurons fired per tick (1/240 s) over the
    last 2 s, **not counting the neurons we stimulate** (D38); the stuck-state share with its 50%
    line; a banner from the frame the stuck flag starts (D38).
 
@@ -227,7 +227,8 @@ def _column_input(surface, track, tick, rect):
         pygame.draw.rect(surface, INPUT, (gx, gy, round(gw * min(theta, GAUGE_MAX_DEG) / GAUGE_MAX_DEG), 6))
         tx = gx + round(gw * THRESHOLD_DEG / GAUGE_MAX_DEG)
         pygame.draw.line(surface, AMBER_DIM, (tx, gy - 3), (tx, gy + 9), 2)
-        _text(surface, "39° (the real fly's threshold)", (tx + 4, gy + 8), SMALL, 11)
+        _text(surface, "39° (the real fly's average threshold)", (tx + 4, gy + 8), SMALL, 11)
+        _text(surface, "Our input, computed by our code from the game.", (x0 + 10, y0 + h - 30), SMALL, 11)
         _text(surface, "Dots are in our patch order, not the eye's real layout.", (x0 + 10, y0 + h - 16), SMALL, 11)
     else:
         _text(surface, f"mode: {mode.upper()}", (x0 + 10, y0 + 28), INPUT, 14)
@@ -238,6 +239,11 @@ def _column_input(surface, track, tick, rect):
             _text(surface, "no input on this frame", (x0 + 10, y0 + 50), INPUT, 13)
         if mode == "ship":
             _text(surface, "Ship display: added with the ship design (Step 5).", (x0 + 10, y0 + h - 16), SMALL, 11)
+
+
+def gf_label(group: str) -> str:
+    """One name for each Giant Fiber, in the circles and the rasters alike."""
+    return {"GF_L": "GF left", "GF_R": "GF right"}.get(group, group)
 
 
 def _raster(surface, x, y, w, h, counts, colour):
@@ -259,7 +265,7 @@ def _column_escape(surface, track, timeline, tick, since, rect):
         if n:
             pygame.draw.circle(surface, AMBER, (cx, y0 + 44), 13)
         pygame.draw.circle(surface, AMBER, (cx, y0 + 44), 13, width=2)
-        label = "GF left" if g == "GF_L" else "GF right"
+        label = gf_label(g)
         _text(surface, f"{label}  {n}", (cx + 18, y0 + 36), AMBER if n else AMBER_DIM, 14)
     _text(surface, f"spikes in the last {b - a} tick{'s' if b - a != 1 else ''}"
           + (" (1/60 s)" if b - a == BIN_TICKS else ""), (x0 + 10, y0 + 62), SMALL, 11)
@@ -267,7 +273,7 @@ def _column_escape(surface, track, timeline, tick, since, rect):
     lanes = track.gf + track.others
     lane_h = max(10, min(18, (h - 140) // max(1, len(lanes))))
     for g in lanes:
-        _text(surface, g, (x0 + 10, y), AMBER, 12)
+        _text(surface, gf_label(g), (x0 + 10, y), AMBER, 12)
         _raster(surface, lx, y, lw, lane_h - 4, track.spike_window(g, tick), AMBER)
         y += lane_h
     # Presses on the same axis, at the tick the game applied them (one tick after the spike).
@@ -302,7 +308,7 @@ def _column_rest(surface, track, tick, since, rect):
     for k in np.flatnonzero(trace):
         xs = round(tx + k * step)
         pygame.draw.line(surface, AMBER, (xs, ty + th), (xs, ty + th - round(th * trace[k] / top)), 1)
-    _text(surface, f"per frame, last 2 s (scale 0–{top})", (tx, ty + th + 2), SMALL, 11)
+    _text(surface, f"per tick (1/240 s), last 2 s (scale 0–{top})", (tx, ty + th + 2), SMALL, 11)
     share = float(track.brain["stuck_share"].iloc[track.row(tick)]) if "stuck_share" in track.brain else 0.0
     by = ty + th + 22
     _text(surface, f"stuck-state share (last ~100 ms): {share:.0%}", (tx, by), TEXT, 12)
