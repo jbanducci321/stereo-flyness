@@ -105,23 +105,31 @@ def render_frame(surface: pygame.Surface, timeline: Timeline, tick: int) -> Came
     return cam
 
 
-DRIVER_LABELS = {  # hard rule 10, D19: a replay always says who controlled the cube
-    "fly": "SIMULATION REPLAY: the cube is controlled by the fly brain model",
-    "bot": "BOT-DRIVEN: the bot controls the cube; the brain only watches. Not the fly playing",
+DRIVER_LABELS = {  # hard rule 10, D19: a replay always says who controlled the player (cube or ship)
+    "fly": "SIMULATION REPLAY: the player is controlled by the fly brain model",
+    "bot": "BOT-DRIVEN: the bot controls the player; the brain only watches. Not the fly playing",
 }
-_font = {}
+_fonts: dict[int, pygame.font.Font] = {}
+
+
+def font(size: int) -> pygame.font.Font:
+    """A cached Consolas font. pygame.quit() (e.g. when a replay window closes) kills every Font
+    object, so the cache asks pygame to clear it at quit and fills again on the next use."""
+    if not _fonts:
+        pygame.font.init()
+        pygame.register_quit(_fonts.clear)
+    if size not in _fonts:
+        _fonts[size] = pygame.font.SysFont("consolas", size)
+    return _fonts[size]
 
 
 def draw_driver_label(surface: pygame.Surface, timeline: Timeline) -> None:
-    """Who controlled the cube, drawn on every frame of a brain run (overlay or not)."""
+    """Who controlled the player, drawn on every frame of a brain run (overlay or not)."""
     label = DRIVER_LABELS.get(getattr(timeline, "driver", None))
     if label is None:
         return
-    if "f" not in _font:
-        pygame.font.init()
-        _font["f"] = pygame.font.SysFont("consolas", 18)
     colour = COLOURS["death"] if timeline.driver == "bot" else COLOURS["ground_line"]
-    text = _font["f"].render(label, True, colour)
+    text = font(18).render(label, True, colour)
     surface.blit(text, (16, surface.get_height() - 30))
 
 
@@ -163,7 +171,9 @@ def _draw_death(surface, cam: Camera, view: TickView) -> None:
 
 
 def save_still(timeline: Timeline, seconds: float, path, size=SIZE) -> None:
-    """Render the run at `seconds` to an image file (no window needed)."""
-    surface = pygame.Surface(size)
-    render_frame(surface, timeline, timeline.at_time(seconds).tick)
+    """Render the run at `seconds` to an image file (no window needed), with the brain panel for brain runs."""
+    from stereo_flyness.viewer.playback import draw_screen, screen_size  # playback imports this module
+
+    surface = pygame.Surface(screen_size(timeline, size))
+    draw_screen(surface, timeline, timeline.at_time(seconds).tick)
     pygame.image.save(surface, str(path))

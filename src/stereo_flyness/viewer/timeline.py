@@ -27,10 +27,11 @@ class TickView:
 class Timeline:
     """Per-tick view data for one run, starting with tick 0 (the start position)."""
 
-    def __init__(self, level: Level, log: RunLog, driver: str | None = None):
+    def __init__(self, level: Level, log: RunLog, driver: str | None = None, brain=None):
         self.level = level
         self.summary = log.summary
         self.driver = driver  # "fly" or "bot" for brain runs (run.json); None for plain game runs
+        self.brain = brain  # a viewer.brain_panel.BrainTrack for brain runs, drawn under the game; or None
         df = log.to_frame()
         start_mode = level.start_mode
         start_y = P.HALF_PLAYER

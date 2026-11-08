@@ -38,7 +38,12 @@ Outputs go to `results/replays/` (git-ignored). Replays of Stereo Madness show R
 
 ## Hooks for the final showcase
 The polished final video of the fly's winning run is the last thing built (D19). This viewer is its base:
-- **Brain panel (R3, Shannyn's design):** a second drawing pass beside or over the game. It will read the brain activity logged with each closed-loop run. The renderer already separates drawing the level/player from the overlay, so a panel slots in as another layer.
+- **Brain panel:** `brain_panel.py` is version 1 of Shannyn's design (R3, `docs/notes/brain_panel_design.md`), built 2026-11-06. It's a 230 px strip under the game for every brain run (`--no-brain` leaves it out), in three columns:
+  - **What we show the fly** (white/grey, outlined): both eyes' LC4/LPLC2 as dots in patch order, lit when we drive them, plus θ, f, the rate and a 39° gauge. A mode with no eye display yet (the ship) lists its logged inputs instead.
+  - **The escape neurons** (amber): both Giant Fibers, a 1 s raster of each, and presses one tick after their spike (ticked if it started a jump, grey if in mid-air).
+  - **The rest of the brain** (amber): active neurons over 2 s, not counting the ones we stimulate; the stuck-state share with its 50% line; a striped banner from the frame the stuck flag starts.
+
+  The backup flag is marked on the progress bar. **Nothing is smoothed. The "now" numbers sum every tick since the previous drawn frame** (4 ticks in video, labelled), so no spike is dropped. The recorder now saves the stimulated IDs in `spikes.npz`; for older cube runs they're the LC4/LPLC2 list in `configs/target_neurons_783.csv`, checked against the count each run recorded.
 - **Music:** `--audio FILE` mixes a local audio file into the export, aligned to the run's start.
 - **Sound effects:** `event_cues()` gives the exact time of every `jump`, `death`, `portal_*` and `finish`, ready to place sounds.
 - **Nicer graphics:** sprites in place of hitbox rectangles. Keep a "hitbox view" option for debugging and honesty.

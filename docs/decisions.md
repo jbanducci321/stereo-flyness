@@ -803,6 +803,98 @@ From `docs/notes/step3_proposal.md` with Shannyn's answers of 2026-11-02 and her
   - (d1) deaths fall from 33 to 1 and (d2) deaths rise from 2 to 13: tuning trades early jumps for late ones.
   - After opening, `step3_report.py --held-out` got a fix and additions. The overfitting sentence was hard-coded; it now depends on the scores. It now also describes completions by difficulty and seed and death classes, and writes `held_out.csv`. The test and its numbers are unchanged.
 
+**D50. Which R goes forward: 150 Hz of record, 50 Hz as a labelled variant** (2026-11-04)
+Jacob's proposal after Step 3 (D49), with Shannyn's addition; agreed by both on 2026-11-04, before any Step 4 or Stereo Madness run.
+- **R = 150 Hz is the fly of record** for every later step: the Step 4 controls and lesions, and Stereo Madness.
+  - **Why:** it's calibrated to the real fly's threshold (first spike ~38°, inside 39 ± 14°), and the held-out test fixed in D49 showed no clear gain from tuning (p = 0.118).
+- **R = 50 Hz runs beside it on Stereo Madness as a labelled "tuned" variant**, at the same N and seeds. Both settings, N and the seeds are fixed before any Stereo Madness run (D7).
+- **Fixed now, whichever does better (Shannyn):**
+  - **The Stereo Madness headline is 150 Hz.**
+  - **50 Hz is always reported second**, with "outside the range measured in real flies" (its open-loop first spike is at ~84°).
+  - So neither setting can be picked after the results are seen. The showcase replay is also a 150 Hz run, picked by the rule fixed at Step 6.
+- **Step 4 runs at 150 Hz only.** 50 Hz isn't part of the controls.
+- **Ship mode (Step 5)** has its own dials and isn't covered here.
+
+**D51. Step 4: controls and lesions on the cube, fixed before any run** (2026-11-04)
+Jacob's proposal (`docs/notes/step4_proposal.md`, revision 3) with Shannyn's answers and review of 2026-11-04; she leads the lesion design and interpretation. **Written before any Step 4 run: no level has been played on a control network or with a lesion.** Everything below is fixed: nothing is changed, re-run or dropped after the results are seen. The proposal has the full detail; this entry is the binding summary.
+- **Question:** does the fly's play depend on the real wiring? Caveat 1: 293 direct LC4/LPLC2 → Giant Fiber connections carry 19.9% of the Giant Fibers' input, so the fly could be little more than a relay plus a threshold.
+- **Setup:**
+  - Whole brain (D36), R = 150 Hz (D50), the Step 2 baseline's encoding, original signs. No recalibration for any control or lesion.
+  - The 20 held-out cube levels, seeds 0–2, 60 runs per condition. Reference: the intact whole brain on the same levels and seeds.
+  - Every ID checked against v783. Every run records its connectivity file, SHA-256 and lesion.
+- **Not run:**
+  - **Giant Fiber silenced.** `silence()` leaves it spiking and our output reads its spikes, so it would only test our output rule. Write-up: "In real flies, Giant Fiber–silenced flies still escape through the long-mode pathway (von Reyn et al. 2014), which our output can't see."
+  - **LC4 only / LPLC2 only.** With both types calibrated together, it acts like lowering R (Step 3), and it doesn't test the von Reyn 2017 split.
+- **Code check, not a result:** LC4/LPLC2 silenced on 2 held-out levels at seed 0 must give exactly 0 Giant Fiber spikes and 0 presses, or nothing runs until it's fixed.
+- **Control networks** (instance *k* at Poisson seed *k*):
+  - **(a)** degree-preserving shuffle ×3;
+  - **(b)** shuffle keeping the 293 looming → Giant Fiber connections ×3. They're held out of the pool, every neuron's degree is still preserved, and no new looming → Giant Fiber connection is allowed;
+  - **(c)** relay-only network: only those 293 connections, 3 seeds;
+  - **(d)** random network ×3: same neurons and connection count, signs kept per neuron, synapse counts from the real distribution.
+- **Lesions** (whole cell types, both sides, D5):
+  - **E5b**, the inhibitory partners: 22 neurons;
+  - **E5c**, the excitatory partners: 12 neurons;
+  - **a random-lesion control for each:** 3 draws, each lesioned neuron matched by a random one of the same sign with total output within ±10%, never a Giant Fiber, LC4/LPLC2 or lesion-set neuron.
+- **Predictions:**
+  - (a), (d): worse than intact, playing like never press (or always press if they run away).
+  - (b) (Shannyn): earlier jumps, more (d1), progress the same or lower.
+  - (c): no confident prediction.
+  - E5b (Shannyn): earlier first spike (below ~37°), more (d1), lower progress.
+  - E5c (Shannyn): later first spike, fewer (d1), more (d2), progress the same or higher. **If higher, it's read as Step 3's late-threshold effect, not as the lesion improving the fly.**
+  - Random lesions: no clear difference.
+- **Judging:**
+  - **Every comparison:** per level, the median run across seeds or instances; D48's "equal"; the two-sided sign test, with "better" or "worse" only at p < 0.05.
+  - **"Depends on the wiring" (a, d):** worse than intact at p < 0.05.
+  - **"It's a relay" (b, c):** all three bars must pass:
+    1. progress shows no clear difference;
+    2. the pooled median first-spike θ without carry-over differs from the intact brain's (3 seeds pooled) by no more than the largest difference between any two intact seeds;
+    3. the (d1) share of deaths passes the same bar.
+
+    A Giant Fiber that never fires fails (2). These bars are strict, since a 3-seed range is small and noisy, which is the safe direction. If (1) holds but (2) or (3) fails: "plays about as far, but not the same way".
+  - **"It's those neurons" (E5b, E5c):** differs from intact **and** from its own random-lesion control at p < 0.05, in the same direction.
+  - **Holm family (10 sign tests, named now):** (a), (b), (c), (d), E5b, E5c and the two random-lesion controls against intact (8), plus E5b and E5c against their own controls (2). Each is also reported on its own.
+- **Described beside them:** progress, completions by difficulty, death classes, stuck runs, presses per second, first-spike θ with and without carry-over, approaches with no Giant Fiber spike, and an open-loop calibration-loom check of every network and lesion before the runs. References: never press, random presses, always press.
+- **Runs:** night 1 is intact, E5b and E5c (180 runs). Night 2 is the random lesions and (a)–(d) (360 runs). Blind (D33): nothing is opened before the whole batch is done.
+- Stereo Madness isn't touched (D7).
+- **Amended before night 2 (2026-11-04; agreed by both after the open-loop check, before any game result was read).** Night 1 (intact, E5b, E5c) had already run (180 runs, clean commit `91989c6`, not opened); it doesn't depend on anything below.
+  - **Why:** open loop, every random-lesion draw is identical to intact (38.0 ± 6.3°): the randomly picked neurons take no part in the loom response. So "E5b beats its random control" would only show that silencing *involved* neurons matters, not that it's *these* ones (Shannyn).
+  - **New: a recruited-matched control for each lesion**, 3 draws with fixed seeds, draw *k* at Poisson seed *k*:
+    - each lesioned neuron is matched by a random neuron of the same sign with total output within ±10%, never a Giant Fiber, LC4/LPLC2 or lesion-set neuron;
+    - **matched by recruitment status:** a lesioned neuron that fired in the recruitment runs gets a stand-in that also fired, and one that didn't gets one that didn't. So the control silences exactly as many involved neurons as the lesion: **13 of E5b's 22, 10 of E5c's 12**.
+    - **Why by status (Jacob; Shannyn agreed):** her first rule, drawing only from recruited neurons, has no candidate for two SAD014 neurons and 3 for a third (all three were never recruited themselves). Widening the tolerance for them would silence 22 involved neurons against the lesion's 13, which biases the test towards "not specific".
+    - **"Involved" is an approximation (Shannyn):** it means fired in the 70 bot-driven recruitment runs of D46 (10 training levels × 7 settings, 965 candidates once the Giant Fibers, LC4/LPLC2 and the lesion sets are excluded), not in the held-out games themselves.
+    - Run through the same open-loop check before night 2, recorded as description.
+  - **Specificity now uses the new control:** E5b or E5c counts as specific only if it differs from intact **and** from its recruited-matched control at p < 0.05, in the same direction.
+  - **The old random-lesion controls are kept and reported** (fixed), but "lesion against old control" is dropped from the tests: open loop it's the same as "lesion against intact".
+  - **Holm family, now 12:** (a), (b), (c), (d), E5b, E5c, both old controls and both recruited-matched controls against intact (10), plus E5b and E5c against their recruited-matched controls (2).
+  - **Night 2 is now 480 runs** (~8–10 h): the old random lesions, the recruited-matched controls and (a)–(d).
+  - **(b)'s prediction, a dated note (Shannyn):** the open-loop check points the other way. Shannyn predicted (b) would jump earlier, but open loop it fires later: 46.6 ± 4.0° against intact 38.0°, identical to (c) relay-only. So on balance the rest of the brain makes the Giant Fiber fire *earlier*. The prediction stays as recorded. A later threshold also helps at 150 Hz, so **if (b) or (c) does better than intact, it's read as the same late-threshold effect as Step 3 and E5c, not as "a relay plays better"**. With identical open-loop results, (b) and (c) are expected to play alike; both stay as fixed.
+
+**D52. Step 7: the whole brain against the subcircuit in closed loop, fixed before reading** (2026-11-06)
+Jacob's proposal (`docs/notes/step7_proposal.md`) with Shannyn's answers of 2026-11-06; she leads the comparison. **Fixed before the Step 4 report is opened:** nobody has read any result of the Step 4 intact whole brain, and the report script's dry run printed only its checks. The proposal has the detail; this entry is the binding summary, and where they differ this entry wins.
+- **The question:** does the final subcircuit (D46) play the cube like the whole brain on unseen levels, in fly-driven closed loop?
+- **Two pairings, 60 pairs each** (the 20 held-out cube levels × seeds 0, 1, 2; θ_full = 200°, R × f, collision course; the same level and Poisson seed within a pair):
+  - **150 Hz (the fly of record):** the Step 2 baseline on the subcircuit (D48, commit `5d9de12`) against the Step 4 intact whole brain (D51, `91989c6`). No new runs.
+  - **50 Hz (the labelled variant, D50; Shannyn):** Step 3's held-out runs on the subcircuit (D49, `61a9bf6`) against **60 new whole-brain runs at 50 Hz**, run blind (D33). Rule 5 checked 25 and 200 Hz bot-driven only, and 50 Hz goes to Stereo Madness, so it gets its own closed-loop check.
+- **Only the network differs** within a pair:
+  - **150 Hz** (checked by Shannyn and Jacob): from `5d9de12` to `91989c6`, no existing file in `brain/`, `interface/` or `game/` changed. One new module, `brain/controls.py` (the Step 4 networks), isn't used by intact runs. `play_cube.py` only gained the Step 4 options, which default to nothing.
+  - **50 Hz** (checked by Jacob): from `61a9bf6` to the new runs' commit (`03eff81`, which also logs this entry), the same holds, plus two changes that don't touch the simulation: the recorder also saves the stimulated IDs, and `interface/modes.py` is new and not used by `play_cube.py`.
+  - Every setting recorded in `run.json` matches within each pair; the stuck-state list is restricted to each network (D38).
+- **The bar, for each pairing: identical games in ≥ 57 of 60 pairs.**
+  - **A pair is identical if the cube's state (x, y, vy) is the same on every tick,** and both runs have the same number of ticks (Shannyn). Not the raw press log: the Giant Fiber carries over and presses in mid-air, where a press does nothing, so an extra mid-air press on one network isn't a split.
+  - The game is deterministic, so "the same" means exactly equal; no tolerance.
+  - **For every pair that splits,** reported: the first tick where the state differs, what was in view, which network pressed, and whether the outcome changed (the killing object, or completed).
+- **Described only, not a bar:**
+  - **Per approach** (rule 5 style): the first press of each approach within ±1 frame, counted only up to each pair's first split. After it, the games are in different states, so approaches don't line up.
+  - **Per level:** each network's median run across the 3 seeds, D48's "equal" and the two-sided sign test.
+  - Progress, completions, death classes, first-spike θ with and without carry-over, stuck runs, presses per second.
+- **Readings, fixed now** (the proposal's §2):
+  - **A pass** means the subcircuit's results stand for the whole brain at that rate, in this setting (cube, D47's encoding).
+  - **A fail:** the subcircuit's results stay valid as subcircuit results, and nothing is rerun because of it. Every later step (Stereo Madness, the ship) runs on the network fixed before that step starts, knowing this result.
+  - The ship gets its own check (`docs/notes/ship_brief.md` §5).
+- **Order:** the 50 Hz runs first, blind. Then the Step 4 opening (D51), then Step 7 straight after, both pairings together.
+- **Code:** `scripts/step7_report.py`, `stereo_flyness/experiments/step7_analysis.py`.
+
 ## Open
 
 Still open:
@@ -812,10 +904,11 @@ Still open:
 - The cube encoding's rates: R × f, adopted in D45 (D41's text is updated after the von Reyn et al. 2017 check). Calibrated on the whole brain: 200° (R × f) and 1,082° (flat R).
 - The final subcircuit: built and validated (D46: rules 1–5, the calibration and the time limit pass, on D47's encoding). Step 2 is done: runs, analysis and result in D48 (write-up: `docs/notes/step2_report.md`).
 - Step 3 (tuning R): done, result in D49 (write-up: `docs/notes/step3_report.md`).
-- **Which R goes forward (Step 4 controls, Stereo Madness): to decide together; D49 doesn't fix it.** Jacob's proposal, not agreed yet:
-  - **R = 150 Hz stays the fly of record.** It's calibrated to the real fly's threshold, and the held-out test fixed beforehand showed no clear gain from tuning.
-  - **R = 50 Hz runs beside it as a labelled "tuned" variant**, at the same N and seeds, with both fixed before any Stereo Madness run (D7). Its descriptive gain is large, so it's worth reporting, always with "outside the range measured in real flies".
-  - The Step 4 controls (shuffled connectome, lesions) run at 150 Hz, the setting of record.
+- Which R goes forward: decided in D50 (150 Hz of record; 50 Hz as a labelled variant on Stereo Madness, always reported second).
+- Step 4 (controls and lesions): fixed in D51 (amended before night 2). All 660 runs are done, blind and clean; the report is written and unopened, to open together (`docs/notes/step4_opening.md`). Its replays (D51's rule) are rendered, unwatched.
+- Step 7 (whole brain against the subcircuit): fixed in D52. The 60 whole-brain runs at 50 Hz are done (2026-11-06, commit `03eff81`), blind; the report's checks pass at both rates (60/60 pairs, settings shared, all commits clean) and nothing has been read. Next: the Step 4 opening (Monday 2026-11-09), then Step 7 at both rates.
+- Step 5 (ship): waiting on Shannyn's design. Agreed 2026-11-05 (to log at the start of Step 5): ship mode stays in whatever happens in Stereo Madness; whether to tune it is decided after its baseline.
+- Brain panel (R3): version 1 of Shannyn's design is built; her five questions are answered in `docs/notes/brain_panel_design.md`, for her review.
 - **Stereo Madness run N times, not once (changes D7; agreed in principle 2026-11-02, written up at Step 6).** A frozen fly with Poisson input is a distribution, not a single outcome, so one run can't tell luck from typical. Conditions:
   - N and the seeds are fixed before any Stereo Madness run, and nothing changes between or after the runs (D7 still holds: no tuning on it);
   - the headline is the full count and median progress (e.g. "3 of 10, median X%"), never the best run;

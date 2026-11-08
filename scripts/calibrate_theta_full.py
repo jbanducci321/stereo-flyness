@@ -19,7 +19,11 @@ Usage:
     uv run python scripts/calibrate_theta_full.py --network whole_brain --rate-scaling --trials 10  # official
     uv run python scripts/calibrate_theta_full.py --network whole_brain --trials 10     # flat R (comparison 1)
 
-Writes results/calibration/<network>/gap<gap>_R<R>[_scaled]/ (git-ignored): one recorded run
+Step 4 (D51): `--control`, `--silence`, `--random-lesion --draw` and `--lesion-name` run the same
+check on a control connectome or with a lesion (scripts/step4_options.py); the folder name says so,
+and every trial records its connectivity file, SHA-256 and silenced neurons.
+
+Writes results/calibration/<network>/gap<gap>_R<R>[_scaled][<step 4>]/ (git-ignored): one recorded run
 per θ_full x trial, results.csv and report.md, plus checks_R<R>[_scaled].md for several gaps.
 """
 
@@ -36,6 +40,7 @@ from joblib import Parallel, delayed
 from find_target_neurons import fetch_annotations
 from reproduce_sugar import PATH_COMP, PATH_CON
 from run_pathway_tests import CONFIG, git_commit, network
+from step4_options import add_args as add_step4_args, resolve as resolve_step4
 from stereo_flyness.brain.celltypes import CellTypes
 from stereo_flyness.experiments.cascades import load_stuck_state
 from stereo_flyness.experiments.pathway_tests import loom_patches
@@ -51,15 +56,15 @@ GRID = [180, 360, 720, 1440, 2880, 5760, 11520]
 CHECKS = {"max_theta_full": 360.0, "max_sd": 28.0, "max_shift": 5.0, "shift_gaps": (600.0, 1200.0)}
 
 
-def trial(theta_full, t, gap, path_comp, path_con, patches, gf, stuck_ids, args, out):
+def trial(theta_full, t, gap, path_comp, path_con, patches, gf, stuck_ids, args, out, silence=(), extra=None):
     from stereo_flyness.brain.stepper import BrainStepper
 
     level = approach_level(gap)
     enc = CubeEncoder(level, patches, theta_full, args.rate, rate_scaling=args.rate_scaling)
     seed = 1000 * t + int(theta_full)  # fixed per (θ_full, trial)
-    st = BrainStepper(path_comp, path_con, inputs={"loom": enc.ids}, watch=gf, seed=seed)
+    st = BrainStepper(path_comp, path_con, inputs={"loom": enc.ids}, watch=gf, seed=seed, silence=silence)
     meta = {"network": args.network, "seed": seed, "commit": git_commit(), "purpose": "theta_full calibration (D43)",
-            "status": "official" if args.network == "whole_brain" else "dry run (subcircuit)"}
+            "status": "official" if args.network == "whole_brain" else "dry run (subcircuit)", **(extra or {})}
     rec = play(Game(level), st, enc, policy=lambda g: False, stuck_ids=stuck_ids, meta=meta)
     rec.save(out / f"{theta_full:g}deg" / f"trial_{t:02d}")
     theta = first_spike_theta(rec.brain)
@@ -165,6 +170,7 @@ def main() -> None:
                         help="number trials from here, for fresh seeds (seed = 1000 x trial + θ_full)")
     parser.add_argument("--tag", default="", help="suffix for the output folders, to keep a rerun separate")
     parser.add_argument("--jobs", type=int, default=4)
+    add_step4_args(parser)
     args = parser.parse_args()
     sys.stdout.reconfigure(encoding="utf-8")
 
@@ -175,11 +181,13 @@ def main() -> None:
     gf = {"GF_R": cells.ids("DNp01", side="right"), "GF_L": cells.ids("DNp01", side="left")}
     stuck_ids = load_stuck_state(ROOT / cfg["cascade"]["stuck_state"])
     path_comp, con_paths, _ = network(None if args.network == "whole_brain" else args.network)
-    tag = ("_scaled" if args.rate_scaling else "") + args.tag
+    step4 = resolve_step4(args, cells, con_paths["original"])
+    tag = ("_scaled" if args.rate_scaling else "") + step4.suffix + args.tag
     outs = {g: OUT / args.network / f"gap{g:g}_R{args.rate:g}{tag}" for g in args.start_gap}
 
     rows = Parallel(n_jobs=args.jobs)(
-        delayed(trial)(tf, t, g, path_comp, con_paths["original"], patches, gf, stuck_ids, args, outs[g])
+        delayed(trial)(tf, t, g, path_comp, step4.path_con, patches, gf, stuck_ids, args, outs[g],
+                       step4.silence, step4.meta)
         for g in args.start_gap for tf in args.grid for t in range(args.first_trial, args.first_trial + args.trials))
     df = pd.DataFrame(rows)
     results = {}

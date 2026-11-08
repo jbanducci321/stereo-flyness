@@ -80,5 +80,5 @@ At R = 50 Hz against the Step 2 baseline (R = 150 Hz), both at seeds 0, 1 and 2 
 - **Interpretation (ours, not a tested result):** the grid supports the Step 2 reading that these levels punish early jumps far more than late ones. The penalty only turns at about twice the real fly's threshold, which is where late jumps start to die on medium levels.
 - **Nothing here touched Stereo Madness (D7).**
 
-## Still to decide (together, before Stereo Madness)
-Which R goes forward to Stereo Madness and the later steps isn't fixed by D49. Jacob's proposal is in `docs/decisions.md`, "Open".
+## What goes forward (D50, decided after this report)
+R = 150 Hz stays the fly of record for Step 4 and Stereo Madness. 50 Hz runs beside it on Stereo Madness as a labelled "tuned" variant, always reported second with "outside the range measured in real flies"; the headline is 150 Hz whichever does better.

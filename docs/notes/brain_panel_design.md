@@ -102,3 +102,17 @@ Almost everything is already recorded (`interface/fly_log.py`):
 3. **Driven neurons:** reconstruct them from counts + patch order, or log the IDs per frame?
 4. **Raster length:** ~1 s for the Giant Fibers and ~2 s for active neurons are guesses. What reads well at playback speed?
 5. **Order of work:** build version 1 for the Step 2 baseline replays, and leave version 2 for the showcase (R4)?
+
+## Jacob's answers (2026-11-06), and version 1 as built
+
+Version 1 is built to this design (`src/stereo_flyness/viewer/brain_panel.py`, `docs/replay_viewer.md`). The answers below are what it does; any of them can change.
+
+1. **Placement:** a strip below the game, 230 px, so the game keeps its full 1280 × 720 and the export is 1280 × 950.
+2. **Binning:** yes. The "now" numbers (Giant Fiber counts, active neurons) sum every tick since the previous drawn frame: 4 ticks in video, labelled "spikes in the last 4 ticks (1/60 s)". The live window does the same for whatever it skipped. The rasters and the active-neuron trace draw every tick, so nothing is binned there.
+3. **Driven neurons:** reconstructed, not logged. Driven neurons fill the patch order from its start (D41), so dot *k* of a row is lit if *k* < that row's logged driven count. That is exact, and the dots never need the IDs. The IDs, if needed, come from `loom_patches` with the same seed.
+4. **Raster lengths:** 1 s for the Giant Fibers and 2 s for active neurons, as you proposed. They read well at 1× in the training replays.
+5. **Order:** version 1 now; version 2 (the Giant Fiber's input partners) for the showcase (R4).
+
+**Two additions, for your review:**
+- **Stimulated neurons, for the active-neuron count:** runs now save the IDs we drive in `spikes.npz`. Older cube runs drive exactly LC4 + LPLC2, so the panel uses the v783 list (`configs/target_neurons_783.csv`). It checks that against the count the run recorded, and labels the count "raw" if they disagree.
+- **Ship mode:** column 1 lists the ship's logged inputs as text, and column 2 adds a raster for any other watched group (e.g. the ship's output neurons), until your ship design says how to show them.

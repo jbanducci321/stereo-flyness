@@ -14,6 +14,7 @@ from dataclasses import dataclass
 import pygame
 
 from stereo_flyness.game import physics as P
+from stereo_flyness.viewer.brain_panel import HEIGHT as PANEL_HEIGHT, draw_brain_panel
 from stereo_flyness.viewer.render import COLOURS, SIZE, render_frame
 from stereo_flyness.viewer.timeline import Timeline
 
@@ -114,6 +115,11 @@ def draw_overlay(surface: pygame.Surface, timeline: Timeline, clock: PlaybackClo
     pygame.draw.rect(surface, COLOURS["outline"], bar, border_radius=7)
     pygame.draw.rect(surface, COLOURS["cube"], (bar.x, bar.y, round(bar.w * progress), bar.h), border_radius=7)
     pygame.draw.rect(surface, COLOURS["ground_line"], bar, width=2, border_radius=7)
+    backup = (getattr(getattr(timeline, "brain", None), "run", None) or {}).get("backup_from_frame")
+    if backup is not None:  # D38's backup flag needs the run's median, so it's marked here, not live
+        bx = bar.x + round(bar.w * min(timeline.at_tick(backup).x / timeline.level.length, 1.0))
+        pygame.draw.line(surface, COLOURS["death"], (bx, bar.y - 4), (bx, bar.bottom + 4), 3)
+        surface.blit(font.render("backup flag", True, COLOURS["death"]), (bx + 4, bar.bottom + 2))
 
     lines = [
         f"{clock.time:6.2f} / {timeline.duration:.2f} s   {progress:5.1%}",
@@ -134,13 +140,33 @@ def draw_overlay(surface: pygame.Surface, timeline: Timeline, clock: PlaybackClo
         surface.blit(font.render(EVENT_LABELS.get(event, event), True, colour), (w - 140, 80 + 24 * i))
 
 
+def screen_size(timeline: Timeline, size=SIZE) -> tuple[int, int]:
+    """The game's size, plus the brain panel's strip under it for brain runs."""
+    return (size[0], size[1] + PANEL_HEIGHT) if getattr(timeline, "brain", None) is not None else tuple(size)
+
+
+def draw_screen(surface: pygame.Surface, timeline: Timeline, tick: int, clock: "PlaybackClock | None" = None,
+                font: "pygame.font.Font | None" = None, since: int | None = None) -> None:
+    """One whole frame: the game (with the overlay if `clock` is given) and, for brain runs, the brain
+    panel. `since` is the tick drawn before this one: the panel's "now" numbers sum every frame after it."""
+    w, h = surface.get_size()
+    brain = getattr(timeline, "brain", None)
+    game = surface if brain is None else surface.subsurface((0, 0, w, h - PANEL_HEIGHT))
+    render_frame(game, timeline, tick)
+    if clock is not None:
+        draw_overlay(game, timeline, clock, font)
+    if brain is not None:
+        draw_brain_panel(surface.subsurface((0, h - PANEL_HEIGHT, w, PANEL_HEIGHT)), brain, timeline, tick, since)
+
+
 def run_window(timeline: Timeline, size=SIZE, title: str | None = None) -> None:
     """Open a window and play the run until the user quits."""
     pygame.init()
-    screen = pygame.display.set_mode(size)
+    screen = pygame.display.set_mode(screen_size(timeline, size))
     pygame.display.set_caption(title or f"stereo-flyness replay: {timeline.level.name}")
     font = pygame.font.SysFont("consolas", 20)
     clock, frame_timer = PlaybackClock(timeline.duration), pygame.time.Clock()
+    drawn = None  # the tick drawn last, for the panel's bins
     running = True
     while running:
         real_dt = frame_timer.tick(FPS) / 1000.0
@@ -150,7 +176,7 @@ def run_window(timeline: Timeline, size=SIZE, title: str | None = None) -> None:
             elif event.type == pygame.KEYDOWN:
                 running = handle_key(clock, event.key) and running
         clock.update(real_dt)
-        render_frame(screen, timeline, clock.tick)
-        draw_overlay(screen, timeline, clock, font)
+        draw_screen(screen, timeline, clock.tick, clock, font, since=drawn)
+        drawn = clock.tick
         pygame.display.flip()
     pygame.quit()

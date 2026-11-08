@@ -16,8 +16,8 @@ from pathlib import Path
 import pygame
 
 from stereo_flyness.game import physics as P
-from stereo_flyness.viewer.playback import FPS, PlaybackClock, draw_overlay
-from stereo_flyness.viewer.render import SIZE, render_frame
+from stereo_flyness.viewer.playback import FPS, PlaybackClock, draw_screen, screen_size
+from stereo_flyness.viewer.render import SIZE
 from stereo_flyness.viewer.timeline import Timeline
 
 TICKS_PER_FRAME = P.TICKS_PER_SECOND // FPS  # 4
@@ -40,6 +40,7 @@ def export_video(timeline: Timeline, path: Path, size=SIZE, overlay: bool = True
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
 
+    size = screen_size(timeline, size)
     w, h = size
     cmd = [ffmpeg, "-v", "error", "-y",
            "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{w}x{h}", "-r", str(FPS), "-i", "-"]
@@ -52,13 +53,13 @@ def export_video(timeline: Timeline, path: Path, size=SIZE, overlay: bool = True
     surface = pygame.Surface(size)
     n_frames = timeline.last_tick // TICKS_PER_FRAME + 1 + round(tail_seconds * FPS)
     proc = subprocess.Popen(cmd, stdin=subprocess.PIPE)
+    drawn = None
     try:
         for frame in range(n_frames):
             tick = min(frame * TICKS_PER_FRAME, timeline.last_tick)
-            render_frame(surface, timeline, tick)
-            if overlay:
-                clock = PlaybackClock(timeline.duration, time=tick / P.TICKS_PER_SECOND)
-                draw_overlay(surface, timeline, clock, font)
+            clock = PlaybackClock(timeline.duration, time=tick / P.TICKS_PER_SECOND) if overlay else None
+            draw_screen(surface, timeline, tick, clock, font, since=drawn)
+            drawn = tick
             proc.stdin.write(pygame.image.tobytes(surface, "RGB"))
     finally:
         proc.stdin.close()

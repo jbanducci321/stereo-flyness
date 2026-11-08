@@ -8,6 +8,7 @@ Usage:
         save a picture of the run at 30 s (default: results/replays/<run>_<seconds>s.png)
     uv run python scripts/replay.py results/runs/bot_stereo_madness --export
         render the run to video (default: results/replays/<run>.mp4; needs ffmpeg)
+        --no-brain     leave out the brain panel (shown by default for brain runs)
         --audio FILE   mix in a local audio file (your own copy; never committed)
         --no-overlay   video without the text overlay
 
@@ -23,6 +24,7 @@ from pathlib import Path
 
 from stereo_flyness.game.level import Level
 from stereo_flyness.game.recorder import RunLog
+from stereo_flyness.viewer.brain_panel import BrainTrack
 from stereo_flyness.viewer.export import export_video
 from stereo_flyness.viewer.playback import run_window
 from stereo_flyness.viewer.render import save_still
@@ -41,6 +43,7 @@ def main() -> int:
     parser.add_argument("--export", action="store_true", help="render the run to an MP4 video")
     parser.add_argument("--audio", type=Path, help="local audio file to mix into the video")
     parser.add_argument("--no-overlay", action="store_true", help="export without the text overlay")
+    parser.add_argument("--no-brain", action="store_true", help="leave out the brain panel (brain runs)")
     args = parser.parse_args()
 
     log = RunLog.load(args.run)
@@ -50,7 +53,8 @@ def main() -> int:
         return 1
     run_info = Path(args.run) / "run.json"  # brain runs say who drove the cube (fly_log)
     driver = json.loads(run_info.read_text(encoding="utf-8")).get("driver") if run_info.exists() else None
-    timeline = Timeline(Level.load(level_path), log, driver=driver)
+    brain = None if args.no_brain else BrainTrack.load(args.run)  # brain runs log brain.parquet (fly_log)
+    timeline = Timeline(Level.load(level_path), log, driver=driver, brain=brain)
 
     if args.export:
         out = args.out or ROOT / "results" / "replays" / f"{args.run.name}.mp4"

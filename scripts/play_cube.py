@@ -10,10 +10,17 @@ Usage:
     uv run python scripts/play_cube.py cube-easy-0 cube-easy-1 --suite training --jobs 2
     uv run python scripts/play_cube.py cube-easy-0 --bot      # bot drives, brain watches (D43)
     uv run python scripts/play_cube.py cube-easy-0 --seed 1 --quiet   # blind: progress and stuck flags only (D48)
+    uv run python scripts/play_cube.py cube-easy-0 --network whole_brain --control shuffle_s0   # Step 4 control
+    uv run python scripts/play_cube.py cube-easy-0 --network whole_brain --silence DNp70,PVLP151  # Step 4 lesion
+    uv run python scripts/play_cube.py cube-easy-0 --network whole_brain --random-lesion DNp70,PVLP151 --draw 0
+
+Step 4 (D51): `--control`, `--silence`, `--random-lesion --draw` and `--lesion-name` choose a
+control connectome or a lesion (scripts/step4_options.py). Every run records its connectivity file
+and SHA-256, and exactly which neurons were silenced, in run.json.
 
 Writes results/closed_loop/<network>/[<suite>/]<settings>/<driver>/<level>/ (the suite folder only
-for held_out; settings end in `_flat` without `--rate-scaling`, then `_seed<n>` for seeds other than 0,
-then any `--tag`), a recorded run (`fly_log`):
+for held_out; settings end in `_flat` without `--rate-scaling`, then `_<control>` and
+`_silence-<types>` if set, then `_seed<n>` for seeds other than 0, then any `--tag`), a recorded run (`fly_log`):
 the game's run log (replayable), brain.parquet, spikes.npz and run.json (git-ignored).
 """
 
@@ -29,6 +36,7 @@ from find_target_neurons import fetch_annotations
 from inspect_encoding import LEVELS, job
 from reproduce_sugar import PATH_COMP, PATH_CON
 from run_pathway_tests import CONFIG, git_commit, network
+from step4_options import add_args as add_step4_args, resolve as resolve_step4
 from stereo_flyness.brain.celltypes import CellTypes
 from stereo_flyness.experiments.pathway_tests import loom_patches
 from stereo_flyness.game.engine import Game
@@ -41,19 +49,19 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "results" / "closed_loop"
 
 
-def one(name, suite, path_comp, path_con, patches, gf, stuck_ids, args, out, seed):
+def one(name, suite, path_comp, path_con, patches, gf, stuck_ids, args, out, seed, silence=(), extra=None):
     from stereo_flyness.brain.stepper import BrainStepper
 
     level, bot = load_level(LEVELS, job(name, suite))
     enc = CubeEncoder(level, patches, args.theta_full, args.rate, args.mode, args.rate_scaling)
-    st = BrainStepper(path_comp, path_con, inputs={"loom": enc.ids}, watch=gf, seed=seed)
+    st = BrainStepper(path_comp, path_con, inputs={"loom": enc.ids}, watch=gf, seed=seed, silence=silence)
     policy = None
     if args.bot:
         inputs = bot.tick_inputs
         policy = lambda game: inputs[game.ticks] if game.ticks < len(inputs) else False  # noqa: E731
     meta = {"suite": suite, "network": args.network, "seed": seed, "commit": git_commit(),
             "status": {"final": "D43 run", "whole_brain": "D43 run (whole brain, the reference network)"}.get(
-                args.network, f"smoke test: {args.network} network (not the D43 baseline)")}
+                args.network, f"smoke test: {args.network} network (not the D43 baseline)"), **(extra or {})}
     rec = play(Game(level), st, enc, policy=policy, stuck_ids=stuck_ids, meta=meta)
     rec.save(out / rec.driver / name)
     return rec.summary
@@ -72,6 +80,7 @@ def main() -> None:
     parser.add_argument("--jobs", type=int, default=1)
     parser.add_argument("--bot", action="store_true", help="the bot drives; the brain only watches (D43)")
     parser.add_argument("--tag", default="", help="suffix for the settings folder, to keep a set of runs separate")
+    add_step4_args(parser)
     parser.add_argument("--quiet", action="store_true",
                         help="blind runs (D48, D33): show only progress and stuck flags, never outcomes")
     args = parser.parse_args()
@@ -83,13 +92,16 @@ def main() -> None:
     patches = loom_patches(con, cells, cfg["probes"]["p5"]["seed"])  # P5's patch order (D41)
     gf = {"GF_R": cells.ids("DNp01", side="right"), "GF_L": cells.ids("DNp01", side="left")}
     path_comp, con_paths, _ = network(None if args.network == "whole_brain" else args.network)
+    step4 = resolve_step4(args, cells, con_paths["original"])
     stuck_ids = load_stuck_state(ROOT / cfg["cascade"]["stuck_state"])  # restricted to the network (D38)
     # Held-out levels reuse training names (cube-easy-0, ...), so they get their own folder.
     base = OUT / args.network if args.suite == "training" else OUT / args.network / args.suite
     seed = "" if args.seed == 0 else f"_seed{args.seed}"  # seed 0 keeps the folders runs already use
-    out = base / f"{args.theta_full:g}deg_{args.mode}_R{args.rate:g}{'' if args.rate_scaling else '_flat'}{seed}{args.tag}"
+    out = base / (f"{args.theta_full:g}deg_{args.mode}_R{args.rate:g}{'' if args.rate_scaling else '_flat'}"
+                  f"{step4.suffix}{seed}{args.tag}")
     runs = Parallel(n_jobs=args.jobs, return_as="generator_unordered")(
-        delayed(one)(n, args.suite, path_comp, con_paths["original"], patches, gf, stuck_ids, args, out, args.seed)
+        delayed(one)(n, args.suite, path_comp, step4.path_con, patches, gf, stuck_ids, args, out, args.seed,
+                     step4.silence, step4.meta)
         for n in args.levels)
     summaries = []
     for i, s in enumerate(runs, 1):
