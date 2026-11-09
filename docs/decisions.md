@@ -579,7 +579,7 @@ Shannyn's proposal, after the interim dry run gave θ_full ≈ 1,165°. The whol
   - A 3° object barely expanding drives the Giant Fiber, which isn't biological: LC4/LPLC2 respond weakly to small, slow images.
   - The start gap becomes a hidden dial, and the spread near the target (59 ± 60° at θ_full = 2,880°) is several times the fly's (39 ± 14°).
 - **Proposed: rate scaling.** The same patch and f, but each driven neuron fires at **R × f** instead of R. No new dial or constant: θ_full stays the only calibrated number, with the same target and method. A distant 3° object then drives ~5 neurons at a few Hz, and the total input grows steeply as it nears. (`CubeEncoder(rate_scaling=True)`, off by default until this is decided.)
-  - Background (Shannyn; corrected 2026-11-07 after her S3 reading): LC4 tracks angular velocity (von Reyn et al. 2017). LPLC2 tracks angular size (Ache et al. 2019); von Reyn et al. 2017 names LPLC2 only as a candidate for size and doesn't test it.
+  - Background (Shannyn; corrected 2026-11-07 after her S3 reading of von Reyn et al. 2017): LC4 tracks angular velocity (von Reyn et al. 2017). von Reyn et al. 2017 names LPLC2 only as a candidate for angular size and doesn't test it; the LPLC2 = angular size line is cited to Ache et al. 2019, **not yet checked against that paper** (Shannyn checks it in S3).
 - **Dry run on the interim subcircuit, judged against a bar fixed before the run** (Shannyn's suggested numbers, agreed):
   1. calibrated θ_full ≤ ~360° (the patch grows to a large fraction of the neurons near contact);
   2. s.d. of the first-spike θ at the calibrated value ≤ ~28° (2× the fly's);
