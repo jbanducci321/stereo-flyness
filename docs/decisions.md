@@ -476,6 +476,7 @@ Agreed by both (draft §2, with Jacob's real-height change and Shannyn's correct
   - On each side, the fraction **f = min(1, θ / θ_full)** of the LC4 neurons and the same fraction of the LPLC2 neurons, on both eyes equally.
   - Neurons are added in a fixed patch order grown by shared input partners: probe P5's construction and code (`loom_patches`, seed fixed per side, never tuned).
   - Every driven neuron gets the same Poisson rate **R**; the rest get 0 Hz.
+  - **Amended by D45 (2026-10-31; text updated 2026-11-07 after Shannyn's citation check):** each driven neuron fires at **R × f**, not R.
   - It's implemented as one "loom" input group with per-neuron rates, so the input structure is fixed for the whole run.
 - **Logged every tick, separately from the fly's spikes** (hard rule 10): θ, f, R, and which neurons are driven.
 - **Choices we state as ours** (they go in the README):
@@ -578,7 +579,7 @@ Shannyn's proposal, after the interim dry run gave θ_full ≈ 1,165°. The whol
   - A 3° object barely expanding drives the Giant Fiber, which isn't biological: LC4/LPLC2 respond weakly to small, slow images.
   - The start gap becomes a hidden dial, and the spread near the target (59 ± 60° at θ_full = 2,880°) is several times the fly's (39 ± 14°).
 - **Proposed: rate scaling.** The same patch and f, but each driven neuron fires at **R × f** instead of R. No new dial or constant: θ_full stays the only calibrated number, with the same target and method. A distant 3° object then drives ~5 neurons at a few Hz, and the total input grows steeply as it nears. (`CubeEncoder(rate_scaling=True)`, off by default until this is decided.)
-  - Background (Shannyn, to be checked in her S3 reading before D41 changes): LC4 tracks angular velocity and LPLC2 angular size (von Reyn et al. 2017).
+  - Background (Shannyn; corrected 2026-11-07 after her S3 reading of von Reyn et al. 2017): LC4 tracks angular velocity (von Reyn et al. 2017). von Reyn et al. 2017 names LPLC2 only as a candidate for angular size and doesn't test it; the LPLC2 = angular size line is cited to Ache et al. 2019, **not yet checked against that paper** (Shannyn checks it in S3).
 - **Dry run on the interim subcircuit, judged against a bar fixed before the run** (Shannyn's suggested numbers, agreed):
   1. calibrated θ_full ≤ ~360° (the patch grows to a large fraction of the neurons near contact);
   2. s.d. of the first-spike θ at the calibrated value ≤ ~28° (2× the fly's);
@@ -607,7 +608,7 @@ Shannyn's proposal, after the interim dry run gave θ_full ≈ 1,165°. The whol
 - **Check 3 is rerun, with rules fixed before the run** (Shannyn, 2026-10-31): 30 fresh trials (new seeds, trials 10–39) at θ_full = 204°, start gaps 600 vs 1,200, judged alone (not pooled with the first 10), same bar (< 5°). **Pass:** R × f is adopted, and both the 10-trial fail and the 30-trial result are reported here. **Fail:** it's a fail, and we discuss the LC4/LPLC2 split.
 - **Rerun result (2026-10-31): pass.** First-spike θ at θ_full = 204°: **37.6 ± 6.6° from 600 and 37.8 ± 10.6° from 1,200, a shift of 0.1°** (bar < 5°). 30/30 trials fired at each gap, none got stuck.
   - Both results are reported, as agreed: the first 10-trial run missed the bar by 0.3° (5.3°), and the fresh 30-trial run passes (0.1°).
-  - **So R × f is adopted** for the cube encoding (the rule set before the rerun). D41's text is updated after Shannyn's von Reyn et al. 2017 check. Until then the code keeps `rate_scaling` as an explicit switch, and every run states which encoding it used.
+  - **So R × f is adopted** for the cube encoding (the rule set before the rerun). D41's text is updated after Shannyn's von Reyn et al. 2017 check. **The check is done (2026-11-07)** and D41 is updated; the citation above is corrected. The code keeps `rate_scaling` as an explicit switch, and every run states which encoding it used.
 - **Agreed with the rerun (2026-10-31), updating D43:**
   - **Comparison 1 is now the pre-D45 encoding:** flat rate R = 150 Hz, calibrated the same way (first Giant Fiber spike at 39°, same start gap, R = 150), and labelled "pre-D45 encoding". It shows the effect of the one encoding change we made after seeing data. It replaces θ_full = 180° in the Step 2 comparisons and in the recruitment runs (`preD45_flat_R150`). So the whole-brain calibration is run twice: R × f and flat R.
   - **R's range stays 25–200 Hz**, restated: R is the **peak per-neuron rate, reached near contact** (f = 1). At the 39° threshold each driven neuron fires at ~0.19 × R.
@@ -901,7 +902,7 @@ Still open:
 
 - Subcircuit rule: decided in D36 (recipe) and D37 (cascade trials left out, tuning-time limit). The interim neuron list is built in J5; the final one after T4.
 - Brain time, input encoding, output rule and the cube dials: decided in T4 (D40–D43). Ship mode is decided in Step 5.
-- The cube encoding's rates: R × f, adopted in D45 (D41's text is updated after the von Reyn et al. 2017 check). Calibrated on the whole brain: 200° (R × f) and 1,082° (flat R).
+- The cube encoding's rates: R × f, adopted in D45; D41 is updated and the citation check is done (2026-11-07). Calibrated on the whole brain: 200° (R × f) and 1,082° (flat R).
 - The final subcircuit: built and validated (D46: rules 1–5, the calibration and the time limit pass, on D47's encoding). Step 2 is done: runs, analysis and result in D48 (write-up: `docs/notes/step2_report.md`).
 - Step 3 (tuning R): done, result in D49 (write-up: `docs/notes/step3_report.md`).
 - Which R goes forward: decided in D50 (150 Hz of record; 50 Hz as a labelled variant on Stereo Madness, always reported second).

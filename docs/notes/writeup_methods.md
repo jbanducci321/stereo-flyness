@@ -26,7 +26,7 @@
 - All frames run inside one Brian2 run, with a callback at each frame boundary that reads spikes and sets the next frame's rates (D17).
 - **Brain time equals game time:** one brain frame per 240 Hz game tick, exactly 1000/240 ms (Brian2 alternates 42, 42 and 41 steps of 0.1 ms, with no drift) (D40).
 
-**[Shannyn] The two pathways and why we used them:** LC4/LPLC2 → Giant Fiber (DNp01) for the cube's jump; T4/T5 → VS cells → DNp20/DNp22 for the ship. Cell counts and synapses are in `docs/FEASIBILITY.md` (target-neuron table).
+**[Shannyn] The two pathways and why we used them:** LC4/LPLC2 → Giant Fiber (DNp01) for the cube's jump; for the ship, T4/T5 → VS cells → DNp20/DNp22 is **planned, pending Step 5**: the ship design isn't fixed yet. Cell counts and synapses are in `docs/FEASIBILITY.md` (target-neuron table).
 
 ## 2. Pathway tests (Step 0)
 
