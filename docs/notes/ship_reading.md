@@ -1,16 +1,21 @@
 # Ship design reading: the DNOVS readout and a speed anchor
 
-*Shannyn, Step 5 groundwork. Last updated 2026-11-09. Reading for Q2 (output rule) and Q4 (calibration anchor) in `docs/notes/ship_brief.md`, plus a connectome check. Nothing here is a decision: the ship design is proposed separately and logged as a D entry once agreed.*
+*Shannyn, Step 5 groundwork. Last updated 2026-11-10. Reading for Q2 (output rule) and Q4 (calibration anchor) in `docs/notes/ship_brief.md`, plus a connectome check. Nothing here is a decision: the ship design is proposed separately and logged as a D entry once agreed.*
 
 **Sources**
 - Suver MP, Huda A, Iwasaki N, Safarik S, Dickinson MH (2016). An array of descending visual interneurons encoding self-motion in *Drosophila*. *J Neurosci* 36:11768–11780. doi:10.1523/JNEUROSCI.2277-16.2016
 - Maisak MS, Haag J, Ammer G, Serbe E, Meier M, Leonhardt A, Schilling T, Bahl A, Rubin GM, Nern A, Dickson BJ, Reiff DF, Hopp E, Borst A (2013). A directional tuning map of *Drosophila* elementary motion detectors. *Nature* 500:212–216. Results read from the published abstract and from Maisak's dissertation (LMU Munich), which reproduces the paper's text.
+- Strother JA, Wu ST, Rogers EM, Eliason JLM, Wong AM, Nern A, Reiser MB (2018). Behavioral state modulates the ON visual motion pathway of *Drosophila*. *PNAS* 115:E102–E111. doi:10.1073/pnas.1703090115
+- Jung SN, Borst A, Haag J (2011). Flight activity alters velocity tuning of fly motion-sensitive neurons. *J Neurosci* 31:9231–9237. Abstract only.
+- Suver MP, Mamiya A, Dickinson MH (2012). Octopamine neurons mediate flight-induced modulation of visual processing. *Curr Biol* 22:2294–2302. Abstract only; the temporal-frequency details are in Suver's 2013 thesis, which we couldn't reach.
+- Lüders J, Kurtz R (2015). Octopaminergic modulation of temporal frequency tuning of a fly visual motion-sensitive neuron depends on adaptation level. *Front Integr Neurosci* 9:36. Abstract only.
 
 ## Summary
 
 - **DNp20 (DNOVS1) doesn't spike in the real fly** and mainly targets neck motor neurons. A spike-based hold/release rule on DNp20 would read a signal the real neuron never sends.
 - **DNOVS2 spikes and reaches the wing motor region.** The connectome check below supports **DNp22 = DNOVS2** (not DNOVS3): its numbered VS inputs are VS2 and VS3 only, exactly the cells Suver found coupled to DNOVS2.
-- **A speed anchor exists:** T4 and T5 respond most to motion at a temporal frequency of ~1 Hz (30°/s for a 30° grating) in non-flying flies. Using it needs one stated choice of ours: how far away the ship's scenery is.
+- **A speed anchor exists:** T4 and T5 respond most to motion at a temporal frequency of ~1 Hz (30°/s for a 30° grating) in non-flying flies. Using it needs stated choices of ours: how far away the ship's scenery is, and what counts as one cycle of pattern.
+- **Activity shifts that tuning toward faster motion,** but no study gives T4/T5's peak in a flying *Drosophila*. So 1 Hz is the only clean measured value, and it's from the wrong state for a ship.
 
 ## Suver et al. 2016: the DNOVS neurons in *Drosophila*
 
@@ -33,7 +38,36 @@ Other points:
 
 - Calcium imaging of T4 and T5 in non-flying flies, with gratings moving front to back at speeds spanning two orders of magnitude.
 - **T4 responded most at 30°/s, a temporal frequency of 1 Hz** (Fig. 3e). T5 peaked at a similar temporal frequency. The dissertation sums up the optimum of both as "around 1–2 Hz".
-- **Not yet checked:** reports that flight or octopamine shift the optimum higher (Jung et al. 2011; Suver et al. 2012). If they hold up, the anchor depends on behavioural state, and the ship flies.
+- Flight and other active states shift this toward faster motion (next section).
+
+## Behavioural state: does flight change the best speed?
+
+**Strother et al. 2018** (*Drosophila*, calcium imaging of T4 and its ON-pathway inputs Mi1, Tm3, Mi4, Mi9):
+- When the fly was walking or moving its legs, or after bath application of the octopamine agonist chlordimeform (CDM), these neurons responded more strongly to faster gratings.
+- A resting fly's T4 barely responds to a 3 Hz grating; with CDM it responds strongly to the same grating.
+- The CDM-minus-control difference was band-pass, peaking at **~10 Hz** for most of the neurons.
+- Even with CDM or walking, T4's tuning stayed slower than the fly's optomotor turning, so the imaging may not capture the fully active state.
+- In walking flies, silencing octopamine neurons reduced turning only to fast gratings (> 8 Hz; significant at 16 and 24 Hz, i.e. 480 and 720°/s).
+- **Not measured:** T4 in flight, or a new peak frequency.
+
+**Jung et al. 2011** (blowfly H1, extracellular, 12–800°/s, i.e. 0.3–20 Hz): flight strongly broadens tuning toward higher speeds, and CDM reproduces this in resting flies. Different species and neuron.
+
+**Suver et al. 2012** (*Drosophila* VS cells): octopamine neurons are necessary and sufficient for the flight boost in VS responses.
+
+**Caveat** (Lüders & Kurtz 2015, blowfly H1): CDM broadened temporal tuning only after adaptation to motion, which may explain differences between studies.
+
+**What this means for the anchor**
+
+| Option | Value | For | Against |
+|---|---|---|---|
+| A. Resting T4/T5 peak | 1 Hz (30°/s for a 30° grating), Maisak et al. 2013 | One clean, directly measured *Drosophila* value, like the cube's 39° | Wrong behavioural state: the ship flies |
+| B. Active-state range | ~3–10 Hz | Closer to flight | No measured peak; a range pieced together from walking and CDM experiments |
+
+**Proposal for discussion:** A as the calibrated value of record, with the state mismatch stated; B, if we want it, as a labelled variant fixed before any ship run (as D50 did for R).
+
+**Two more points**
+- **The model has no behavioural state.** It has no octopamine and its weights are frozen, so it is neither "resting" nor "flying". The anchor only sets which game motion counts as full drive, which is our encoding choice.
+- **Hz needs a spatial pattern.** Temporal frequency = speed ÷ spatial wavelength, and the game's scenery is blocks and spikes, not gratings. Turning the anchor into a rule needs two stated choices: the scenery distance (game units → °/s) and the pattern period (°/s → Hz).
 
 ## Connectome check: which VS cells feed DNp20 and DNp22
 
@@ -80,12 +114,12 @@ Other points:
 | Q2: rate rule | DNOVS2's spike rate tracks its membrane potential roughly linearly, so a rate- or window-based rule (not a single spike) is closer to how it signals. |
 | Q1: what the fly sees | The DNOVS neurons encode body **rotation**. The ship's climb and fall are translation, which still moves the scene down or up past both eyes. Using that is our mapping, stated as such. |
 | Q3: population | DNp22's numbered VS inputs (VS2, VS3) get almost only "down" motion (T4d/T5d). |
-| Q4: anchor | T4/T5 peak at ~1 Hz (30°/s for a 30° grating, non-flying). Calibrating needs our choice of scenery distance to turn game speed into °/s; that choice gets logged like θ_full. |
+| Q4: anchor | T4/T5 peak at ~1 Hz (30°/s for a 30° grating, non-flying) as the value of record; ~3–10 Hz (active state) as a possible labelled variant. Calibrating needs our choices of scenery distance and pattern period; both get logged like θ_full. |
 | Model limits | No gap junctions (VS–DNOVS and DNOVS1–neck motor neurons are electrical); no ocellar input; the model's VS cells spike, while real ones signal mostly with graded potentials. |
 
 ## Still open
 
-- Whether flight shifts the T4/T5 optimum (Jung et al. 2011; Suver et al. 2012), and by how much.
+- VS temporal tuning in flying vs. resting *Drosophila* (Suver 2013 thesis, §2.3.1; server unreachable 2026-11-10). The closest measurement to a flight anchor.
 - DNOVS2 response size at a known speed (Suver Fig. 3G gives spike rates at 22.5°/s rotation; figure only).
 - How VSm responded to "down" drive in the pathway tests (it wasn't watched, but every neuron that fired was recorded, D34), and whether the subcircuit keeps it.
 - What VSm is, and whether it has a described counterpart.
