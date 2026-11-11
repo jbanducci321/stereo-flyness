@@ -8,11 +8,9 @@ As for the cube (`docs/notes/t4_proposals.md`), every choice here is **our code,
 
 ## Summary
 
-| Question | Proposal |
-|---|---|
 | Question | Proposal | Status |
 |---|---|---|
-| Q1. What the fly sees | **Image motion from geometry:** how fast the scene moves up or down across the eye in fixed viewing directions, computed from the level, as θ is for the cube | Encoder details agreed; the choice of full geometry vs. self-motion only waits for the ideal ships (§1d) |
+| Q1. What the fly sees | **Image motion from geometry:** how fast the scene moves up or down across the eye in fixed viewing directions, computed from the level, as θ is for the cube | Both ideal ships failed (0/50 training levels). **Redesign proposed in §8:** option B (stabiliser plus computed target), with C and self-motion only as controls |
 | Q2. Output rule | **DNp22** (≈ DNOVS2), both sides. Any spike in a frame means **release** on the next tick; otherwise **hold** | **Agreed (2026-11-10)** |
 | Q3. Input neurons | **T4d/T5d** for downward image motion and **T4c/T5c** for upward, **both eyes** (left–right asymmetry stated), all neurons of each type driven together | **Agreed (2026-11-10)**, with a left-eye-only test before the baseline |
 | Q4. Anchor and dials | Full drive at **30°/s** (T4/T5 peak, Maisak et al. 2013), fixed. One dial, **R_ship**, the peak rate; untuned baseline 150 Hz | Proposed |
@@ -142,10 +140,52 @@ Whatever is chosen, **the self-motion-only ship stays as a control:** the differ
 3. **Hold unless released:** one line in the output rule.
 4. **DNp22:** no objection; DNp20 stays recorded and shown.
 
+## 8. Redesign after the ideal-ship check (2026-11-10, proposed, to agree with Jacob)
+
+**Result** (`docs/notes/ship_ideal.md`): neither ideal ship completed any of the 50 training ship levels; both died where never hold does. Full geometry stuck to the floor (the §1d problem); self-motion only stabilised but had nothing to steer by. This is reported as a result in its own right: **a wide-field motion stabiliser alone doesn't navigate**, which fits VS cells' role. Options: `docs/notes/ship_redesign_options.md`.
+
+**Choice: option B as the candidate, option C as its control,** self-motion only staying as the second control. Not A (the forward-flight term pulls toward obstacle edges too) and not D (the opposite sign to VS → DNp22, and a bee strategy).
+
+**Framing:** Straw et al. 2010 found flies set altitude from the *position* of horizontal edges, through a circuit nobody has found. In B, our code stands in for that edge tracking (where to go), and the fly's VS → DNp22 pathway does the stabilising. **The steering is ours and is labelled as ours** (hard rule 10: the replay shows the target and the required speed separately from the fly's spikes).
+
+### 8a. The next opening (from geometry, nothing tuned)
+
+- **The column:** the nearest column of visual cells **the ship hasn't fully passed** (back face beyond the ship's back edge, x − 15), within 600 units of the eye. So while the ship is inside a gap, it stays the target.
+- **Its openings:** free vertical stretches between the floor and ceiling at least 30 units tall (the ship's outer hitbox; conservative, since only the inner 9 × 9 kills).
+- **The target:** the opening whose centre is nearest the ship's height (ties go to the lower one). Error Δy = target centre − ship's y.
+- **No column in range, or no opening:** no target (v_req = 0).
+
+### 8b. The required speed
+
+v_req = Δy · vx / dx: the vertical speed that reaches the target centre by the time the ship reaches the column.
+- dx = horizontal distance from the eye to the column's front face, **at least 30** (one ship length), so it stays finite inside the column.
+- Clipped to the ship's top speeds: +8.0 × 54 = 432 units/s up, −6.4 × 54 = 345.6 units/s down.
+
+### 8c. What drives the fly
+
+Both use only the self-motion part of the §1b formula, ω_self(v) = the mean over the 37 directions of −v · d / (d² + Δy²) (in °/s, empty directions count as 0). The forward-flight term is left out.
+
+| | Input ω | Meaning |
+|---|---|---|
+| **B (candidate)** | ω_self(vy − v_req) | The ship's own vertical motion, seen **relative to the motion that would take it to the opening**. Zero when it's moving at v_req. |
+| **C (control)** | ω_self(−v_req) | The same with the ship's own motion removed (B with vy = 0): steering only, no stabiliser. |
+| **Self-motion only (control)** | ω_self(vy) | As before: stabiliser only, no steering (B with v_req = 0). |
+
+- Then as before: f = min(1, \|ω\| / ω_full) with ω_full = 30°/s; downward ω drives T4d/T5d, upward drives T4c/T5c, both eyes; DNp22 rule unchanged.
+- **The three differ in one term each,** so the held-out comparison B against C asks: **does the fly's stabiliser improve steering?**
+- **Logged every tick:** Δy, dx, v_req, vy, ω_self(vy), ω_self(v_req) and the ω used.
+
+### 8d. The bars (fixed before the runs)
+
+On the 50 training ship levels, sign-only ideal ships as in §1d:
+- **B and C each:** ≥ 50% of easy training levels (10 of 20).
+- **B also:** completes more training levels than self-motion only.
+- If B fails its bar, we discuss before changing anything; nothing is tweaked and re-run unlogged. If B passes and C doesn't, B goes ahead and C stays as its control.
+
 ## Next
 
-1. Jacob builds the encoder and both ideal ships, and runs them on the training ship levels (§1d).
-2. Together: choose Q1 from the ideal-ship table.
-3. The left-eye-only test (§3).
-4. Log the whole ship design as one D entry, noting it departs from D31's use of DNp20.
+1. ~~Jacob builds the encoder and both ideal ships and runs them (§1d).~~ Done: both failed (§8).
+2. ~~The left-eye-only test (§3).~~ Done from the logged steering tests (`docs/notes/ship_pathway_check.md`): the left eye reaches DNp22 at 80–95% of the right's rate.
+3. Agree §8 with Jacob; he builds B and C and runs their ideal ships against the §8d bars.
+4. Log the whole ship design as one D entry (including the failed draft, and noting it departs from D31's use of DNp20), with the analysis plan (`docs/notes/ship_analysis_plan.md`), updated for B and C.
 5. Ship baseline on the held-out levels, whole brain, R_ship = 150 Hz.
