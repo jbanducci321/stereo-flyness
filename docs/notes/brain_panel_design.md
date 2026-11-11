@@ -116,3 +116,87 @@ Version 1 is built to this design (`src/stereo_flyness/viewer/brain_panel.py`, `
 **Two additions, for your review:**
 - **Stimulated neurons, for the active-neuron count:** runs now save the IDs we drive in `spikes.npz`. Older cube runs drive exactly LC4 + LPLC2, so the panel uses the v783 list (`configs/target_neurons_783.csv`). It checks that against the count the run recorded, and labels the count "raw" if they disagree.
 - **Ship mode:** column 1 lists the ship's logged inputs as text, and column 2 adds a raster for any other watched group (e.g. the ship's output neurons), until your ship design says how to show them.
+
+## Ship mode (D53): draft, 2026-11-11
+
+*Shannyn. For Jacob to build once B is registered. Same three columns, same rules (recorded activity unaltered, our input separate and labelled, artefacts labelled). Only what changes in ship mode is listed.*
+
+```
++---------------------------------------------------------------------------+
+|                GAME   [ ] <- target opening (our code), outlined          |
+|   SIMULATION REPLAY: the ship is controlled by the fly brain model        |
++------------------------+--------------------------+-----------------------+
+| WHAT WE SHOW THE FLY   | THE FLY'S FLIGHT NEURONS | THE REST OF THE BRAIN |
+| (our input, D53)  [B]  | (the model's activity)   | (unchanged)           |
+|                        |                          |                       |
+|  OUR STEERING          |  DNp22 left  DNp22 right |  active neurons ~~~~  |
+|  target  Δy +42        |     (o)         (o)      |  stuck-state  [ 2%]   |
+|  speed: vy | v_req ◇   |  |  | || |    | |||  |   |                       |
+|                        |  release ▼ ▼   hold ════ |                       |
+|  MOTION WE DRIVE       |  VS1-8 L ▪▪▪▪▪▪▪▪        |                       |
+|        left   right    |  VS1-8 R ▪▪▪▪▪▪▪▪        |                       |
+|  down  [███]  [███]    |  DNp20 (recorded only)   |                       |
+|  up    [   ]  [   ]    |                          |                       |
+|  ω ↓ 18°/s  f 60% 90 Hz|                          |                       |
++------------------------+--------------------------+-----------------------+
+```
+
+### On the game: the target (our code)
+
+- **An outlined white bracket on the target opening,** with a thin line from the ship's eye to its centre. Labelled "target (our code)".
+- It is **our input, not something the fly computes**, so it uses the input style (white, outlined), never amber.
+- It moves to the next column only when the ship's back has cleared the current one (D53), so viewers can see when the target changes.
+- **Not shown for self-motion only** (no target); shown for B and C.
+
+### Column 1: "What we show the fly" (ship)
+
+**Variant tag** in the header: B, C, self-motion only, 90°/s or corrected signs (from `run.json`), so a replay can't be mistaken for another condition.
+
+**Our steering** (top):
+- **Δy** to the target centre, and the distance to its column (dx).
+- **A small vertical speed gauge:** the ship's vertical speed vy (solid white tick) and **v_req** (hollow diamond). **The gap between them is what B drives.** In C the vy tick is greyed and labelled "not used in C".
+
+**Motion we drive** (bottom):
+- **Two eyes × two groups:** "down" (T4d + T5d) and "up" (T4c + T5c), as **one bar each** rather than a dot per neuron. Every neuron in a group is driven at the same rate (D53), so one bar shows it exactly; a dot per neuron (~1,500 per bar) would add nothing. Brightness = the rate we send; the bar's label gives the neuron count (e.g. "down, right: 1,504").
+- Only one group is ever lit (the sign of ω), on both eyes together.
+- **Readouts:** ω (°/s, with ↓ or ↑), f, and the rate per neuron. A gauge marks ω_full (30°/s, or 90°/s in that variant), where f reaches 100%.
+- **Honesty line:** "Image motion computed from the level's geometry and our target speed, not from pixels."
+
+### Column 2: "The fly's flight neurons" (the model's activity)
+
+- **DNp22, left and right** (the readout), as the Giant Fibers are for the cube: large amber markers that flash on every spike, with the spike count, and a 1 s raster each.
+- **Release and hold** on the same time axis: ▼ a **release**, one tick after a DNp22 spike (D53); a thin white bar for **held** ticks, since silence holds. White, because they're game events.
+- **VS cells:** a row of 8 small amber squares per side (VS1–VS8), each flashing on its spikes. They're the pathway between our input and DNp22, so viewers can see the signal travel. Short label: "VS cells: wide-field motion neurons that stabilise flight. The model's VS cells spike; real ones mostly signal with graded voltage."
+- **DNp20:** two small grey-outlined markers flashing amber on spikes, labelled "DNp20: recorded, not read by the game".
+
+### Column 3
+
+Unchanged. The active-neuron count excludes the neurons we stimulate, which in ship mode are the T4/T5 groups we drive (~6,000 neurons, both eyes), as `spikes.npz` records.
+
+### Mixed levels and Stereo Madness
+
+- Columns 1 and 2 switch with the mode on the tick the portal changes it.
+- **Every raster and trace gets a vertical line at a mode change,** labelled "→ ship" or "→ cube", so a raster that spans both modes reads correctly.
+
+### One-line labels (ship)
+
+- "T4/T5: motion-detector neurons in the fly's optic lobe. Here we drive the 'down' or 'up' set from image motion our code computes."
+- "Target (our code): the next opening, and the vertical speed that reaches it. Real flies set altitude by tracking edges through a circuit nobody has found; this stands in for it."
+- "DNp22 (≈ DNOVS2): a descending neuron driven by VS cells. Here any spike releases the button; silence holds it."
+
+### What the ship column needs from the run files
+
+| Needed | Where |
+|---|---|
+| Δy, dx, v_req, vy, ω, ω_self(vy), ω_self(v_req), f, rate, driven group | `brain.parquet`, per frame (D53 says these are logged every tick) |
+| Target opening (column x, bottom, top) | **Not logged yet:** log it per frame, or recompute it from the level with the opening finder? |
+| DNp22 spikes, releases | `brain.parquet` (`spikes_DNp22_*`, `fly_press`) |
+| VS1–VS8 and DNp20 spikes | `spikes.npz` (every neuron), or log them as watched groups? |
+| Variant | `run.json` |
+
+### Questions for Jacob
+
+1. **The target bracket on the game:** OK to draw on the game area, as long as it's outlined, white and labelled? If you'd rather keep the game untouched, it can go in column 1 as a small side view instead.
+2. **Target opening:** log it per frame, or recompute it from the level? Logging is safer: the replay then shows what the run actually used.
+3. **VS and DNp20:** from `spikes.npz`, or add them as watched groups in `brain.parquet`?
+4. **Space:** column 1 now holds two blocks. Does it fit in the 230 px strip, or does the speed gauge need to go beside the bars?
