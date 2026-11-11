@@ -908,6 +908,46 @@ Jacob's proposal (`docs/notes/step7_proposal.md`) with Shannyn's answers of 2026
   - **Checked that it isn't the same runs twice:** the subcircuit and whole-brain runs record different networks (33,486 and 138,639 neurons), yet in the one pair checked tick by tick the same 154 neurons fired at the same frames; in that pair, the whole brain's activity stays inside the subcircuit.
   - **Reading, as fixed:** the subcircuit's cube results stand for the whole brain, at 150 Hz and at 50 Hz, in this setting.
 
+**D53. Step 5: the ship interface, fixed before any brain run** (2026-11-10)
+Shannyn's design (`docs/notes/ship_proposals.md`, §1–§5 and §8), agreed with Jacob on 2026-11-10. **No fly-driven ship run has happened,** and the held-out ship levels are unseen. The notes have the detail; this entry is the binding summary, and where they differ this entry wins. Every choice here is our code, not the fly's. **Departs from D31,** which named DNp20 as the ship's readout.
+- **The first draft failed, and that's reported** (`docs/notes/ship_ideal.md`). Image motion from the level's geometry, pooled over 37 directions, failed its no-brain check. With a sign-only rule in place of the brain, neither version completed any of the 50 training ship levels, and both died where never hold does:
+  - **full geometry:** the forward-flight term pins the ship to the floor;
+  - **self-motion only:** it stabilises but has nothing to steer by.
+
+  **Reading:** a wide-field motion stabiliser alone doesn't navigate, which fits VS cells' role. The draft is kept as a described result, not run with the brain.
+- **Framing:** real flies set altitude from the *position* of horizontal edges, through an unidentified circuit (Straw et al. 2010), and stabilise with wide-field motion. Here, **our code stands in for edge tracking (where to go), and the fly's T4/T5 → VS → DNp22 pathway stabilises.** The steering is ours, logged and shown in replays as our input (hard rule 10).
+- **The next opening (geometry only, nothing tuned):**
+  - **Column:** the nearest column of visual cells the ship hasn't fully passed (back face beyond x − 15), within 600 units ahead of the eye.
+  - **Openings:** its free stretches between the floor and ceiling at least 30 units tall (the outer hitbox).
+  - **Target:** the opening whose centre is nearest the ship's height (ties go to the lower one); Δy = centre − y.
+  - **No column or no opening in range:** no target, so v_req = 0.
+- **The required speed:** v_req = Δy · vx / dx, the vertical speed that reaches the target centre at the column.
+  - dx is the distance from the eye to the column's front face, at least 30.
+  - Clipped to the ship's limits: 432 units/s up (8.0 × 54) and 345.6 units/s down (6.4 × 54).
+- **The input:** ω_self(v) = the mean over 37 directions (every 5° from −90° to +90°) of −v · d / (d² + Δy_dir²), in °/s, where d and Δy_dir locate the nearest surface each direction sees within 600 units; empty directions count as 0. The forward-flight term is not used.
+
+  | | ω | Role |
+  |---|---|---|
+  | **B: the design of record** | ω_self(vy − v_req) | The ship's vertical motion seen relative to the motion that would reach the opening; zero when on course |
+  | **C: control** | ω_self(−v_req) | Steering without the stabiliser (B with vy = 0) |
+  | **Self-motion only: control** | ω_self(vy) | Stabiliser without steering (B with v_req = 0) |
+
+  - f = min(1, |ω| / ω_full), ω_full = **30°/s** (T4/T5's optimum, Maisak et al. 2013; from resting flies). **Faster-anchor variant: 90°/s** (active-state range, Strother et al. 2018), labelled and always reported second.
+  - Downward ω drives all T4d + T5d, upward drives all T4c + T5c, **both eyes**, each at R_ship × f; the other group gets 0 Hz.
+  - **Both eyes, asymmetry stated:** the left VS cells get ~59–65% of the right's "down" input in v783, yet the left eye drives the left DNp22 at 80–95% of the right's rate. Driving both eyes lowers DNp22 by ~20–35% against one eye (`ship_neuron_check.md`, `ship_pathway_check.md`).
+  - **Alternative considered (Jacob):** clip a motion term (ω_self(vy) / 30°/s) and an error term (v_req / v_top) to ±1 each, then add them. **Not chosen:** near surfaces the stabiliser term saturates and opposes any climb, steering included. Its balance also rests on two separate full-scale constants. B's single motion term opposes only deviations from v_req.
+- **Output rule:** if either DNp22 (≈ DNOVS2) spikes in frame i, tick i + 1 is **released**; otherwise **held**. So silence means hold. DNp20 is recorded and shown, not read.
+- **One dial, R_ship;** untuned baseline 150 Hz. Whether to tune it is decided after the baseline.
+- **Network:** the whole brain, original signs (the T4/T5-corrected version as D28's sensitivity check).
+- **Ship mode stays in whatever happens** (agreed 2026-11-05).
+- **Bars for the ideal ships, fixed before they run** (50 training ship levels, sign-only rule as in the draft's check):
+  - **B and C:** each completes ≥ 50% of the easy training levels (10 of 20).
+  - **B also:** completes more training levels than self-motion only.
+  - **What the ideal ships test (Jacob):** ω_self(v) is v times a geometry factor that is never negative, so with the sign-only rule B reduces to "release when rising faster than v_req". C reduces to "release when the target is below", and self-motion only to "release when rising". The geometry changes only ω's size, not its sign, so **the ideal ships test the steering logic; the graded drive (f) matters only with the brain.** One exception: if no direction except straight up or down sees a surface within 600 units, the factor is 0, so ω = 0 and the ship holds.
+  - **If B fails,** we discuss before changing anything; nothing is altered and re-run without a new entry. **If B passes and C fails,** B goes ahead and C stays as its control.
+- **How the baseline is judged:** `docs/notes/ship_analysis_plan.md`, fixed with this entry: the brain runs B, C and B's faster-anchor variant, and the plan has the references, open-loop checks, death classes and comparisons. **The question B against C asks:** does the fly's stabiliser improve steering?
+- **Model limits to state:** no gap junctions (VS–DNOVS coupling is electrical in the fly), no ocellar input (the largest input to DNp20 and DNp22), spiking VS cells (real ones are mostly graded), DNOVS cells encode rotation while the ship translates (our mapping), and no behavioural state.
+
 ## Open
 
 Still open:
