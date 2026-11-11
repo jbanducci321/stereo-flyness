@@ -1,9 +1,9 @@
 """The ship baseline report (Step 5): D53's designs judged by docs/notes/ship_analysis_plan.md.
 
-Per design (B, the design of record; C, its control; B90, the faster-anchor variant), on the 20 ship
-levels of a suite at seeds 0-2, whole brain:
-- **Checks first:** every run present and fly-driven with the right design, seed and R_ship; every run
-  replays exactly from its logged holds; commits clean; stuck runs counted. If any check fails,
+Per design (B, the design of record; C, its control; B90, the faster-anchor variant; B_corrected, B on
+the T4/T5-corrected connectome, D28), on the 20 ship levels of a suite at seeds 0-2, whole brain:
+- **Checks first:** every run present and fly-driven with the right design, seed, R_ship and
+  connectome; every run replays exactly from its logged holds; commits clean; stuck runs counted. If any check fails,
   nothing is compared.
 - **Results:** levels and runs completed, mean progress, by difficulty.
 - **Against the references:** never hold, always hold, and random holds (10 draws per level, from the
@@ -13,14 +13,16 @@ levels of a suite at seeds 0-2, whole brain:
   (holding, DNp22 against the input, which side releases, lag, tracking) and the **seed-against-seed
   noise line**.
 - **Between designs** (when their runs are complete): C against B ("does the fly's stabiliser improve
-  steering?") and B90 against B ("does the anchor's state matter?").
+  steering?"), B90 against B ("does the anchor's state matter?") and B_corrected against B ("does the
+  T4/T5 sign labelling change the ship?").
 
 Blind on held_out (D33): only the checks are printed; everything goes to the files. Test it on
 training runs first (they don't count).
 
 Usage:
-    uv run python scripts/ship_baseline_report.py --suite training --seeds 0 --tag _smoke --designs B \n        --levels ship-easy-0 ship-medium-0           # the check, on the smoke-test runs
-    uv run python scripts/ship_baseline_report.py                       # held_out, all three designs
+    uv run python scripts/ship_baseline_report.py --suite training --seeds 0 --tag _smoke --designs B \
+        --levels ship-easy-0 ship-medium-0           # the check, on the smoke-test runs
+    uv run python scripts/ship_baseline_report.py                       # held_out, all four batches
 
 Writes results/ship_baseline/<suite>/report.md and runs.csv (git-ignored).
 """
@@ -48,15 +50,23 @@ from stereo_flyness.game.suites import load_level
 ROOT = Path(__file__).resolve().parents[1]
 RUNS = ROOT / "results" / "closed_loop" / "whole_brain"
 OUT = ROOT / "results" / "ship_baseline"
-DESIGNS = {"B": "B, the design of record", "C": "C, control (no stabiliser)", "B90": "B90, faster anchor (90°/s)"}
+DESIGNS = {"B": "B, the design of record", "C": "C, control (no stabiliser)", "B90": "B90, faster anchor (90°/s)",
+           "B_corrected": "B on the T4/T5-corrected connectome (D28's check)"}
+# Report name -> (ship design, connectome signs). Only the corrected batch differs from its name.
+RUN_OF = {"B": ("B", "original"), "C": ("C", "original"), "B90": ("B90", "original"),
+          "B_corrected": ("B", "corrected")}
+CONNECTOME = {"original": "Connectivity_783.parquet", "corrected": "Connectivity_783_T4T5corrected.parquet"}
 DIFFICULTIES = ("easy", "medium", "hard")
 RANDOM_DRAWS = 10
 R_SHIP = 150.0
 
 
 def folder(suite, design, seed, tag) -> Path:
+    """`design` is a report name (DESIGNS); folders as scripts/play_level.py writes them."""
+    ship, signs = RUN_OF[design]
     base = RUNS if suite == "training" else RUNS / suite
-    return base / f"200deg_collision_R150_ship-{design}{'' if seed == 0 else f'_seed{seed}'}{tag}" / "fly"
+    return base / (f"200deg_collision_R150_ship-{ship}{'' if signs == 'original' else '_' + signs}"
+                   f"{'' if seed == 0 else f'_seed{seed}'}{tag}") / "fly"
 
 
 def levels(suite) -> list[str]:
@@ -79,11 +89,14 @@ def death_object(level, game) -> str | None:
 
 def play(level, policy) -> dict:
     """A no-brain player; the decision after tick i holds tick i + 1, as for the fly."""
-    game, held = Game(level), False
+    game, held, ship_ticks, holds = Game(level), False, 0, 0
     while not game.over:
+        in_ship = game.player.mode == "ship"
         game.tick(held)
+        ship_ticks, holds = ship_ticks + in_ship, holds + (in_ship and held)
         held = game.player.mode == "ship" and policy(game)
-    return {"completed": game.finished, "progress": game.progress, "death_source_id": death_object(level, game)}
+    return {"completed": game.finished, "progress": game.progress, "death_source_id": death_object(level, game),
+            "ship_ticks": ship_ticks, "holds": holds}
 
 
 def collect(args, design, names):
@@ -96,8 +109,10 @@ def collect(args, design, names):
                 continue
             run = json.loads((d / "run.json").read_text(encoding="utf-8"))
             ship = run.get("modes", {}).get("ship", {})
-            if run.get("driver") != "fly" or run.get("seed") != seed or run.get("ship_design") != design \
-                    or ship.get("ship_rate_hz") != R_SHIP:
+            ship_design, signs = RUN_OF[design]
+            if run.get("driver") != "fly" or run.get("seed") != seed or run.get("ship_design") != ship_design \
+                    or ship.get("ship_rate_hz") != R_SHIP or run.get("signs", "original") != signs \
+                    or run.get("connectome", {}).get("file") != CONNECTOME[signs]:
                 problems.append(f"{design}: {name} seed {seed} has the wrong settings")
                 continue
             level, _ = load_level(LEVELS, job(name, args.suite))
@@ -109,7 +124,7 @@ def collect(args, design, names):
                 problems.append(f"{design}: {e}")
                 continue
             stuck = run.get("stuck_from_frame") is not None
-            cls, detail = ("completed", {}) if run["completed"] else classify_death(level, held, design, stuck)
+            cls, detail = ("completed", {}) if run["completed"] else classify_death(level, held, ship_design, stuck)
             hs = hold_stats(ticks)
             runs.append({"design": design, "level": name, "difficulty": name.split("-")[1], "seed": seed,
                          "completed": run["completed"], "progress": run["progress"], "seconds": run["seconds"],
@@ -124,7 +139,8 @@ def checks(design, df, problems, n_needed, allow_dirty=False) -> tuple[list[str]
     dirty = [c for c in commits if c.endswith("-dirty")]
     lines = [f"### Checks: {DESIGNS[design]}", "",
              f"- Runs (need {n_needed}): {len(df)}" + (" — all complete" if len(df) == n_needed else " — **INCOMPLETE**"),
-             f"- Every run replayed exactly from its logged holds; settings as fixed (fly-driven, design {design}, R_ship {R_SHIP:g} Hz).",
+             f"- Every run replayed exactly from its logged holds; settings as fixed (fly-driven, design {RUN_OF[design][0]}, "
+             f"R_ship {R_SHIP:g} Hz, {RUN_OF[design][1]} signs).",
              f"- Commits: {', '.join(c[:7] + ('-dirty' if c.endswith('-dirty') else '') for c in commits) or '–'}"
              + (" — **some runs are -dirty**" if dirty else " (all clean)"),
              f"- Stuck runs: {int(df['stuck'].sum()) if len(df) else 0}"]
@@ -174,10 +190,13 @@ def references(args, design, df, names) -> list[str]:
                  f"{100 * np.mean([r['progress'] for r in mean_ref.values()]):.1f}% | {compare(fly, mean_ref)} |")
     lines += ["", f"Random holds per draw: " + ", ".join(f"{readings.count(r)} {r}" for r in sorted(set(readings))) +
               f" (drawn from the fly's own {len(holds)} hold and {len(rels)} release stretches).", ""]
-    ideal = {n: play(level_objs[n], (lambda e: lambda g: ideal_holds(e, g))(ideal_encoder(level_objs[n], design)))
+    ship_design = RUN_OF[design][0]
+    ideal = {n: play(level_objs[n], (lambda e: lambda g: ideal_holds(e, g))(ideal_encoder(level_objs[n], ship_design)))
              for n in names}
+    held_share = sum(r["holds"] for r in ideal.values()) / max(1, sum(r["ship_ticks"] for r in ideal.values()))
     lines.append(f"**Its ideal ship** (described): completes {sum(r['completed'] for r in ideal.values())}/{len(names)}, "
-                 f"mean progress {100 * np.mean([r['progress'] for r in ideal.values()]):.1f}%; fly against it: "
+                 f"mean progress {100 * np.mean([r['progress'] for r in ideal.values()]):.1f}%, "
+                 f"{held_share:.0%} of ship ticks held; fly against it: "
                  f"{compare(fly, ideal).replace(' | ', ' / ')} (better / worse / equal / p / reading).")
     return lines + [""]
 
@@ -257,7 +276,8 @@ def main() -> None:
         lines += ["### Death classes", ""] + deaths(df) + ["### How it flies", ""] + flying(df, brains) + noise(df)
         all_runs.append(df)
     pairs = [("C", "B", "does the fly's stabiliser improve steering? (B better: yes)"),
-             ("B90", "B", "does the anchor's state matter? (B stays the headline either way)")]
+             ("B90", "B", "does the anchor's state matter? (B stays the headline either way)"),
+             ("B_corrected", "B", "does the T4/T5 sign labelling change the ship? (the original stays of record, D28)")]
     done = [(a, b, q) for a, b, q in pairs if a in medians and b in medians]
     if done:
         lines += ["## Between designs", "", "| Comparison | Better | Worse | Equal | p | Reading |", "|---|---|---|---|---|---|"]

@@ -10,11 +10,17 @@ tests are (every neuron that fires, D34), and **described**, except check 1:
 3. **Left eye only:** "down" at the same f on the left eye's T4d + T5d.
 4. **Both together:** "down" and "up" at the same f.
 
+With `--signs corrected`, checks 1 and 2 on the T4/T5-corrected connectome (D27), before the
+corrected-signs baseline batch (D53's addition of 2026-11-11, D28). Same seeds as the original, so
+each corrected trial pairs with its original one.
+
 Usage:
     uv run python scripts/ship_open_loop.py --jobs 4      # runs what's missing, then the summary
     uv run python scripts/ship_open_loop.py --summary     # summary only
+    uv run python scripts/ship_open_loop.py --signs corrected --jobs 4
 
-Trials go to results/ship_open_loop/ (git-ignored); the summary to results/ship_open_loop/summary.md.
+Trials go to results/ship_open_loop/<signs>/ (git-ignored); the summary to
+results/ship_open_loop/summary.md (original) or summary_corrected.md.
 """
 
 import argparse
@@ -27,8 +33,8 @@ from joblib import Parallel, delayed
 
 from analyse_pathway_tests import md_table
 from find_target_neurons import fetch_annotations
-from reproduce_sugar import PATH_COMP, PATH_CON
-from run_pathway_tests import git_commit
+from reproduce_sugar import PATH_COMP
+from run_pathway_tests import CON_PATHS, git_commit
 from stereo_flyness.brain.celltypes import CellTypes
 from stereo_flyness.experiments.pathway_tests import Condition, load_trial, n_frames, run_trial
 
@@ -43,7 +49,7 @@ BASE_SEED = 53
 VS = [f"VS{i}" for i in range(1, 9)] + ["VSm"]
 
 
-def conditions(cells: CellTypes) -> list[Condition]:
+def conditions(cells: CellTypes, signs: str = "original") -> list[Condition]:
     def ids(*types, side=None):
         return cells.ids(*types) if side is None else cells.ids(*types, side=side)
 
@@ -54,7 +60,7 @@ def conditions(cells: CellTypes) -> list[Condition]:
     n = n_frames(DURATION_MS, FRAME_MS)
 
     def cond(check, name, inputs, rates):
-        return Condition(check, name, "original", inputs, [(n, rates)], watch, trials=TRIALS, side="both")
+        return Condition(check, name, signs, inputs, [(n, rates)], watch, trials=TRIALS, side="both")
 
     out = [cond("check1", "zero_input", {"down": down, "up": up}, {"down": 0.0, "up": 0.0})]
     for f in F_LEVELS:
@@ -63,6 +69,8 @@ def conditions(cells: CellTypes) -> list[Condition]:
         out.append(cond("check2", f"up_both/f{f:g}", {"up": up}, {"up": r}))
         out.append(cond("check3", f"down_left/f{f:g}", {"down_left": down_left}, {"down_left": r}))
         out.append(cond("check4", f"down+up_both/f{f:g}", {"down": down, "up": up}, {"down": r, "up": r}))
+    if signs == "corrected":  # D53's addition: checks 1 and 2 only
+        out = [c for c in out if c.experiment in ("check1", "check2")]
     return out
 
 
@@ -87,15 +95,16 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--jobs", type=int, default=4)
     ap.add_argument("--summary", action="store_true")
+    ap.add_argument("--signs", default="original", choices=["original", "corrected"])
     args = ap.parse_args()
     sys.stdout.reconfigure(encoding="utf-8")
     cells = CellTypes.from_files(fetch_annotations(), PATH_COMP)
-    conds = conditions(cells)
+    conds = conditions(cells, args.signs)
     if not args.summary:
-        meta = {"commit": git_commit(), "network": "whole_brain", "purpose": "ship open-loop checks (D53)"}
+        meta = {"commit": git_commit(), "network": "whole_brain", "signs": args.signs, "purpose": "ship open-loop checks (D53)"}
         jobs = [(c, t) for c in conds for t in range(c.trials) if not c.path(OUT, t).exists()]
         print(f"{len(jobs)} trials to run", flush=True)
-        Parallel(n_jobs=args.jobs)(delayed(run_trial)(c, t, OUT, PATH_COMP, PATH_CON, BASE_SEED, FRAME_MS, meta)
+        Parallel(n_jobs=args.jobs)(delayed(run_trial)(c, t, OUT, PATH_COMP, CON_PATHS[args.signs], BASE_SEED, FRAME_MS, meta)
                                    for c, t in jobs)
     df = summary(conds)
     if df.empty:
@@ -106,12 +115,13 @@ def main() -> None:
     table.insert(0, "n", g.size())
     zero = df[df["check"] == "check1"]
     gate = zero[[c for c in cols if c.startswith("DNp22")]].to_numpy().sum() == 0 and len(zero) == TRIALS
-    lines = ["# Ship open-loop checks (D53), whole brain, original signs\n",
+    lines = [f"# Ship open-loop checks (D53), whole brain, {args.signs} signs\n",
              f"R_ship = {R_SHIP:g} Hz × f; 1 s trials; rates per cell, mean ± s.d. across trials.\n",
              f"**Check 1 (the gate), zero input → 0 DNp22 spikes in {len(zero)} trials: {'PASS' if gate else 'FAIL'}.**\n",
              md_table(table.reset_index(), 1)]
     OUT.mkdir(parents=True, exist_ok=True)
-    (OUT / "summary.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    name = "summary.md" if args.signs == "original" else f"summary_{args.signs}.md"
+    (OUT / name).write_text("\n".join(lines) + "\n", encoding="utf-8")
     print("\n".join(lines))
 
 

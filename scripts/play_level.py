@@ -22,7 +22,8 @@ Usage:
 
 Writes results/closed_loop/<network>/[<suite>/]<settings>/<driver>/<level>/ (as play_cube.py), or
 results/stereo_madness/<network>/<settings>/<driver>/stereo_madness/. Settings: θ_full, encoding
-mode and R as play_cube.py, then `_ship-<design>`, then `_seed<n>`, then any `--tag`.
+mode and R as play_cube.py, then `_ship-<design>`, then `_corrected` for the T4/T5-corrected
+connectome (`--signs corrected`, D27; D28's sensitivity check), then `_seed<n>`, then any `--tag`.
 """
 
 import argparse
@@ -142,6 +143,8 @@ def main() -> None:
     parser.add_argument("--flat", dest="rate_scaling", action="store_false", help="flat R instead of R x f (D45)")
     parser.add_argument("--ship", default=None, help="the ship design (Step 5), as named in SHIP_CONTROLLERS")
     parser.add_argument("--ship-rate", type=float, default=150.0, help="R_ship, Hz (D53: untuned baseline 150)")
+    parser.add_argument("--signs", default="original", choices=["original", "corrected"],
+                        help="the connectome: original (of record) or T4/T5-corrected (D27, D28's check)")
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--jobs", type=int, default=1)
     parser.add_argument("--bot", action="store_true", help="the bot drives; the brain only watches")
@@ -173,10 +176,13 @@ def main() -> None:
             else OUT / args.network / args.suite)
     out = base / (f"{args.theta_full:g}deg_{args.mode}_R{args.rate:g}{'' if args.rate_scaling else '_flat'}"
                   f"{'' if args.ship is None else f'_ship-{args.ship}' + ('' if args.ship_rate == 150 else f'_Rs{args.ship_rate:g}')}"
-                  f"{'' if args.seed == 0 else f'_seed{args.seed}'}{args.tag}")
-    path_con = con_paths["original"]
-    extra = {"status": status + (", Stereo Madness final test" if sm else ""),
-             "connectome": {"file": path_con.name, "sha256": file_sha256(path_con)}}
+                  f"{'' if args.signs == 'original' else '_corrected'}{'' if args.seed == 0 else f'_seed{args.seed}'}{args.tag}")
+    if args.signs not in con_paths:
+        sys.exit(f"Refused, nothing run: no {args.signs} connectivity for {args.network}.")
+    path_con = con_paths[args.signs]
+    extra = {"status": status + (", T4/T5-corrected signs (D28)" if args.signs == "corrected" else "")
+             + (", Stereo Madness final test" if sm else ""),
+             "signs": args.signs, "connectome": {"file": path_con.name, "sha256": file_sha256(path_con)}}
     runs = Parallel(n_jobs=args.jobs, return_as="generator_unordered")(
         delayed(one)(n, lv, path_comp, path_con, cells, patches, gf, stuck_ids, args, out, extra)
         for n, lv in levels.items())
