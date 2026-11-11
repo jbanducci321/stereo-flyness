@@ -55,4 +55,4 @@ The VS → DNp22 column matches `ship_reading.md`'s table.
 - The options I see, for Shannyn:
   - **Both eyes, as drafted, with the asymmetry stated.** The connectome as it is, and the right side doing most of the work is a result in itself.
   - **The right eye only, as in the pathway tests.** Tested, but it throws away half the input.
-- Either way, the pathway tests never drove the left eye. A short left-eye-only run (the S2 "down" test, left side) would show whether the left side reaches DNp22 at all before the ship baseline.
+- **Corrected 2026-11-10:** the pathway tests *did* drive the left eye and both eyes (S1, S2: logged recruitment runs, not judged), so no new run was needed. The left side reaches DNp22 at 80–95% of the right side's rate: `docs/notes/ship_pathway_check.md`.

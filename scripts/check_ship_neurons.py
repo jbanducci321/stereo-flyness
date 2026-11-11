@@ -5,7 +5,7 @@ comparison), from Shannyn's draft (docs/notes/ship_proposals.md):
 1. every ID in configs/target_neurons_783.csv is the same set as the annotation table's, per type
    and side, and every one is in the model (data/Completeness_783.csv);
 2. the wiring from each eye: T4/T5 onto VS cells, and VS cells onto DNp22, per side.
-The pathway tests drove the right eye only, so the left eye is new for the ship.
+The judged pathway tests drove the right eye; the left eye's responses are in scripts/ship_pathway_check.py.
 
 Reads only; writes nothing. Results are in docs/notes/ship_neuron_check.md.
 
