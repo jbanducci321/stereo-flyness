@@ -82,11 +82,31 @@ Held-out results are never looked at until the whole batch has finished and the 
 - **Data:** `scripts/download_data.py` fetches the v783 connectome files (~104 MB) and checks each against a SHA-256. The cell-type annotations are pinned to flywire_annotations v3.1.0 and checksummed.
 - **Every run** records its git commit (marked `-dirty` if the tree had changes; reported runs are all on clean commits), its seed and settings, and its connectivity file's SHA-256. Every run replays exactly from its logged inputs, and every report checks this before comparing anything.
 - **Levels:** generated from fixed seeds (`configs/level_suites.toml`), bot-validated, with training and held-out suites from separate seed ranges. Stereo Madness is never used for tuning and only runs behind its own flag, blind (D7).
-- **Commands:** *(to add: the exact command for each step's runs and report.)*
+- **Commands** (from each script's usage notes; `--quiet` marks blind runs, which print only progress and stuck flags). `$LEVELS` is the 20 held-out cube levels: `ls results/levels/held_out/cube-*.json | grep -v meta`, names only.
+
+| Step | What | Command |
+|---|---|---|
+| Setup | Environment, tests, data | `uv sync`; `uv run pytest`; `uv run python scripts/download_data.py` |
+| 0 | Target neurons (v783) | `uv run python scripts/find_target_neurons.py` |
+| 0 | Corrected-sign copy (D27) | `uv run python scripts/make_corrected_connectivity.py` |
+| 0 | Pathway tests and analysis | `uv run python scripts/run_pathway_tests.py --jobs 4`; `uv run python scripts/analyse_pathway_tests.py` |
+| 1 | Level suites | `uv run python scripts/generate_levels.py` |
+| 2.5 | θ_full calibration (whole brain) | `uv run python scripts/calibrate_theta_full.py --network whole_brain --rate-scaling --trials 10` (flat R: without `--rate-scaling`) |
+| 2.6 | Recruitment, subcircuit, validation | `uv run python scripts/run_recruitment.py --jobs 4`; `uv run python scripts/extract_subcircuit.py configs/subcircuits/<name>.toml`; `uv run python scripts/validate_subcircuit.py <name>` |
+| 2 | Baseline, per seed 0–2 | `uv run python scripts/play_cube.py $LEVELS --suite held_out --network final --theta-full 200 --rate 150 --rate-scaling --seed <s> --jobs 4 --quiet` |
+| 2 | References, ideal fly, report | `uv run python scripts/reference_flies.py`; `uv run python scripts/ideal_fly.py --suite held_out --quiet`; `uv run python scripts/step2_report.py` |
+| 3 | Tuning R | `uv run python scripts/step3_grid.py grid`, then `held-out --rate 50`; `uv run python scripts/step3_report.py --held-out 50` |
+| 4 | Control networks | `uv run python scripts/make_control_connectivity.py all` |
+| 4 | Runs and report | `uv run python scripts/step4_runs.py check`, `night1`, `night2`; `uv run python scripts/step4_report.py` |
+| 7 | 50 Hz whole brain, per seed 0–2 | `uv run python scripts/play_cube.py $LEVELS --suite held_out --network whole_brain --theta-full 200 --rate 50 --rate-scaling --seed <s> --tag _step7 --jobs 4 --quiet` |
+| 7 | Report | `uv run python scripts/step7_report.py` |
+| 5 | Ship checks (no brain) | `uv run python scripts/check_ship_neurons.py`; `uv run python scripts/ideal_ship.py`; `uv run python scripts/ship_pathway_check.py` |
+| Viewer | Replay, still, video | `uv run python scripts/replay.py <run folder>` (`--still <s>`, `--export`) |
+
+*Steps 5 and 6 (fly-driven ship and Stereo Madness runs) are added when they're fixed.*
 
 ## Still to add
 
 - Step 4 and Step 7 **results**, after the opening (16 Nov).
 - **Step 5:** the ship design, its checks and its baseline, once logged.
 - **Step 6:** Stereo Madness (N, seeds and the network, fixed before any run) and the showcase replay rule.
-- The exact commands in §13.
