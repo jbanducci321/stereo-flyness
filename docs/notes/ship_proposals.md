@@ -2,17 +2,19 @@
 
 *Shannyn, 2026-11-10. Draft for discussion with Jacob. Nothing here is decided until it's logged in `docs/decisions.md`. Answers Q1–Q5 of `docs/notes/ship_brief.md`, using the reading and connectome checks in `docs/notes/ship_reading.md`.*
 
+*Updated 2026-11-10 with Jacob's answers. Items marked **Agreed (2026-11-10)** are settled between us, and get logged in one D entry with the rest of the ship design once Q1 is chosen. Superseded: an earlier rule of "hold while DNp22 spiked within w ms" (positive feedback: climbing → downward image motion → DNp22 → hold → faster climbing) and a fixed scenery distance of 825 units (edge geometry gives real distances, §1b).*
+
 As for the cube (`docs/notes/t4_proposals.md`), every choice here is **our code, not the fly**. The aim is that each one is either fixed by geometry or biology, or an explicit dial.
 
 ## Summary
 
-| Question | Proposal |
-|---|---|
-| Q1. What the fly sees | **Image motion from geometry:** how fast the edges of the scene move up or down across the eye, computed from the level, as θ is for the cube. Checked first with a no-brain "ideal ship" (§1d) |
-| Q2. Output rule | **DNp22** (≈ DNOVS2), both sides. Any spike in a frame means **release** on the next tick; otherwise **hold** |
-| Q3. Input neurons | **T4d/T5d** for downward image motion and **T4c/T5c** for upward, both eyes, all neurons of each type driven together |
-| Q4. Anchor and dials | Full drive at **30°/s** (T4/T5 peak, Maisak et al. 2013), fixed. One dial, **R_ship**, the peak rate; untuned baseline 150 Hz |
-| Q5. Network | **Whole brain** for the ship, so no new subcircuit checks |
+| Question | Proposal | Status |
+|---|---|---|
+| Q1. What the fly sees | **Image motion from geometry:** how fast the scene moves up or down across the eye in fixed viewing directions, computed from the level, as θ is for the cube | Both ideal ships failed (0/50 training levels). **Redesign proposed in §8:** option B (stabiliser plus computed target), with C and self-motion only as controls |
+| Q2. Output rule | **DNp22** (≈ DNOVS2), both sides. Any spike in a frame means **release** on the next tick; otherwise **hold** | **Agreed (2026-11-10)** |
+| Q3. Input neurons | **T4d/T5d** for downward image motion and **T4c/T5c** for upward, **both eyes** (left–right asymmetry stated), all neurons of each type driven together | **Agreed (2026-11-10)**, with a left-eye-only test before the baseline |
+| Q4. Anchor and dials | Full drive at **30°/s** (T4/T5 peak, Maisak et al. 2013), fixed. One dial, **R_ship**, the peak rate; untuned baseline 150 Hz | Proposed |
+| Q5. Network | **Whole brain** for the ship, so no new subcircuit checks | **Agreed (2026-11-10)** |
 
 ## 1. Q1: what the fly sees
 
@@ -33,8 +35,14 @@ As for the cube (`docs/notes/t4_proposals.md`), every choice here is **our code,
 
   - The **vy term** is the ship's own climb or fall: climbing moves every edge down across the eye.
   - The **vx term** comes from flying forward: edges above the eye move up, edges below move down, faster when closer. Example: an edge 150 units below and 150 ahead moves down at ~60°/s from forward flight alone.
-- **Pooling:** VS cells integrate motion over large parts of the visual field. Proposal: the signed mean of dφ/dt over the edges in view. Downward means drive the "down" input and upward means drive the "up" input (§3).
-- **Choices of ours, to state and log:** the field of view (how far ahead, how far above and below), and pooling by a plain mean.
+- **Pooling over viewing directions. Agreed (2026-11-10), Jacob's proposal:**
+  - The eye looks in **fixed directions every 5° of elevation**, from straight down to straight up. In each direction, the nearest surface is what it sees, and its image motion is dφ/dt above.
+  - **Why directions, not edges:** VS cells integrate motion over the area of the visual field, not over objects. A plain mean over edges would let a row of small spikes outweigh one long wall.
+  - **Why 5°:** close to the angle between neighbouring facets (ommatidia) of the *Drosophila* eye, so each direction stands for roughly one point of the fly's view.
+  - The pooled signal is the **mean over all directions**. Downward means drive the "down" input and upward means drive the "up" input (§3).
+- **Field of view. Agreed (2026-11-10):** **600 units ahead** (20 blocks, ~2 s of flight) and the **full height** of the ship area, floor and ceiling included. Farther edges barely move.
+  - **A direction that sees nothing within range counts as zero motion,** and stays in the mean, so empty directions can't silently change the average.
+- These are choices of ours, stated and logged with the design.
 
 ### 1c. What this lets us claim, and what it doesn't
 
@@ -49,9 +57,17 @@ The output rule (§2) makes the ship follow the scene's motion: downward motion 
 
 So **the ship may be pulled toward whichever surface is nearest**, the opposite of keeping clear. Insects that balance optic flow (e.g. bees centring in a corridor) move *away* from the faster side. This may make (c) unstable, and nobody's brain can fix an encoding that doesn't work.
 
-**Proposal: before any decision, build two no-brain "ideal ships"** (like D44's ideal 39° fly), each using our encoding and output rule with a fixed threshold instead of a brain, on the training ship levels only:
+**Before any decision, build two no-brain "ideal ships"** (like D44's ideal 39° fly), each using our encoding and output rule with a fixed threshold instead of a brain, on the training ship levels only:
 1. **Full geometry** (vx and vy terms).
 2. **Self-motion only** (vy term only): a pure stabiliser, brief option (a).
+
+**Fixed before they run. Agreed (2026-11-10):**
+- **Threshold: sign only.** Release on the next tick whenever the pooled motion is downward (any amount); hold otherwise. No new number, and the same direction as the brain's output rule. It's on/off, while the brain's firing rate gives graded control.
+- **The bar for "flies the easy levels":** completes **≥ 50% of the easy ship training levels.**
+- **Reported:** both ships next to never hold and always hold, with completion and mean progress per difficulty (easy, medium, hard).
+- **Directions:** 37, every 5° from −90° (straight down) to +90° (straight up), both ends included. Each sees the nearest surface along its line of sight and counts if that surface is within 600 units ahead horizontally, so straight down and up always see the floor and ceiling.
+- **Prediction, recorded before they run (Jacob, agreed by Shannyn 2026-11-10):** near ±90° the floor and ceiling are very close, so the forward-flight term there is huge: looking straight down from 30 units above the floor, dφ/dt = −vx / 30 ≈ −10.4 rad/s ≈ −600°/s. **We expect it to dominate the full-geometry mean**, pulling the ship toward whichever of floor or ceiling is nearer (the worry above). The self-motion-only ship has no forward-flight term, so it won't have this.
+- Jacob builds and runs them (~2–3 h to build, minutes to run). The result comes back to both of us for the Q1 decision.
 
 | Ideal-ship result | Then |
 |---|---|
@@ -63,7 +79,7 @@ Whatever is chosen, **the self-motion-only ship stays as a control:** the differ
 
 ## 2. Q2: output rule
 
-**Proposal:** if **either DNp22 spikes** in brain frame *i*, the button is **released** on tick *i* + 1; otherwise it is **held**.
+**Agreed (2026-11-10):** if **either DNp22 spikes** in brain frame *i*, the button is **released** on tick *i* + 1; otherwise it is **held**. Jacob: the output rule returns hold/release directly; logs and the viewer say "hold", not "press", in ship mode. DNp20 stays recorded and shown.
 
 - **Why DNp22, not DNp20** (`ship_reading.md`):
   - DNp22's numbered VS inputs are VS2 and VS3 only, exactly DNOVS2's dye-coupled partners (Suver et al. 2016).
@@ -79,7 +95,10 @@ Whatever is chosen, **the self-motion-only ship stays as a control:** the differ
 ## 3. Q3: input neurons
 
 - **Downward image motion** drives T4d and T5d; **upward** drives T4c and T5c.
-- **Both eyes, equally:** in the 2D game the scene is the same on both sides. The pathway tests drove the right eye only, so the left eye is new (§5).
+- **Both eyes, equally. Agreed (2026-11-10):** in the 2D game the scene is the same on both sides, so driving one eye would be an arbitrary choice. The pathway tests drove the right eye only, so the left eye is new.
+  - **Every ship input ID is in v783 and the model,** both eyes (Jacob, `docs/notes/ship_neuron_check.md`).
+  - **Left–right asymmetry, to state:** in v783 the left VS cells get much less "down" input than the right: 59% (Jacob's count) or 65% for VS1–VS8 (T4d + T5d: 14,886 vs. 22,889 synapses; Shannyn's count), while the two eyes have nearly the same number of T4d/T5d neurons (796/740 left, 777/727 right). VS → DNp22 is equal on both sides (240/242). Most likely a reconstruction difference, not biology. With both eyes driven equally, the right side will probably set most releases.
+  - **Before the baseline:** a short open-loop left-eye-only test, to show whether the left side reaches DNp22.
 - **All neurons of a type are driven together** (no growing patch): VS cells integrate wide-field motion, and we pool over the whole view (§1b).
 - **Upward motion is still shown.** It drives nothing at the output directly, but it inhibits the "down" pathway through LPi neurons (S2: DNp20 104 → 18 Hz), so the fly's own circuit decides what up-and-down mixtures do.
 
@@ -96,7 +115,7 @@ Whatever is chosen, **the self-motion-only ship stays as a control:** the differ
 
 ## 5. Q5: whole brain or subcircuit
 
-**Proposal: run the ship on the whole brain.**
+**Agreed (2026-11-10): run the ship on the whole brain.** Jacob: ~3–6 h per held-out batch, so overnight.
 - The subcircuit was built and checked on cube inputs only. The ship adds new inputs (left-eye T4/T5, T4c/T5c), so it would need new pathway tests, recruitment and a rule-5 check (~1 day plus runs).
 - The whole brain needs none of that, at ~3× the run time (~3–6 h per held-out batch, `ship_brief.md` §5). Jacob's call on whether that fits.
 
@@ -114,9 +133,59 @@ Whatever is chosen, **the self-motion-only ship stays as a control:** the differ
 - **DNOVS neurons encode body rotation;** the ship climbs and falls (translation). Using their pathway for altitude is our mapping.
 - **The model has no behavioural state** (no octopamine), so it is neither "resting" nor "flying".
 
-## Open questions for Jacob
+## Jacob's answers (2026-11-10)
 
-1. Engineering cost of §1b's encoder and the two ideal ships.
-2. Whole brain for the ship (§5): does the run time fit?
-3. Does the closed loop already allow "hold unless released" as the default (§2)?
-4. Any objection to moving the steering readout from DNp20 to DNp22?
+1. **Cost:** encoder ~0.5–1 day; the two ideal ships ~2–3 h to build and minutes to run; ~30 min to check the left-eye and T4c/T5c IDs against v783 (done: all correct).
+2. **Whole brain:** fits, overnight per held-out batch.
+3. **Hold unless released:** one line in the output rule.
+4. **DNp22:** no objection; DNp20 stays recorded and shown.
+
+## 8. Redesign after the ideal-ship check (2026-11-10, proposed, to agree with Jacob)
+
+**Result** (`docs/notes/ship_ideal.md`): neither ideal ship completed any of the 50 training ship levels; both died where never hold does. Full geometry stuck to the floor (the §1d problem); self-motion only stabilised but had nothing to steer by. This is reported as a result in its own right: **a wide-field motion stabiliser alone doesn't navigate**, which fits VS cells' role. Options: `docs/notes/ship_redesign_options.md`.
+
+**Choice: option B as the candidate, option C as its control,** self-motion only staying as the second control. Not A (the forward-flight term pulls toward obstacle edges too) and not D (the opposite sign to VS → DNp22, and a bee strategy).
+
+**Framing:** Straw et al. 2010 found flies set altitude from the *position* of horizontal edges, through a circuit nobody has found. In B, our code stands in for that edge tracking (where to go), and the fly's VS → DNp22 pathway does the stabilising. **The steering is ours and is labelled as ours** (hard rule 10: the replay shows the target and the required speed separately from the fly's spikes).
+
+### 8a. The next opening (from geometry, nothing tuned)
+
+- **The column:** the nearest column of visual cells **the ship hasn't fully passed** (back face beyond the ship's back edge, x − 15), within 600 units of the eye. So while the ship is inside a gap, it stays the target.
+- **Its openings:** free vertical stretches between the floor and ceiling at least 30 units tall (the ship's outer hitbox; conservative, since only the inner 9 × 9 kills).
+- **The target:** the opening whose centre is nearest the ship's height (ties go to the lower one). Error Δy = target centre − ship's y.
+- **No column in range, or no opening:** no target (v_req = 0).
+
+### 8b. The required speed
+
+v_req = Δy · vx / dx: the vertical speed that reaches the target centre by the time the ship reaches the column.
+- dx = horizontal distance from the eye to the column's front face, **at least 30** (one ship length), so it stays finite inside the column.
+- Clipped to the ship's top speeds: +8.0 × 54 = 432 units/s up, −6.4 × 54 = 345.6 units/s down.
+
+### 8c. What drives the fly
+
+Both use only the self-motion part of the §1b formula, ω_self(v) = the mean over the 37 directions of −v · d / (d² + Δy²) (in °/s, empty directions count as 0). The forward-flight term is left out.
+
+| | Input ω | Meaning |
+|---|---|---|
+| **B (candidate)** | ω_self(vy − v_req) | The ship's own vertical motion, seen **relative to the motion that would take it to the opening**. Zero when it's moving at v_req. |
+| **C (control)** | ω_self(−v_req) | The same with the ship's own motion removed (B with vy = 0): steering only, no stabiliser. |
+| **Self-motion only (control)** | ω_self(vy) | As before: stabiliser only, no steering (B with v_req = 0). |
+
+- Then as before: f = min(1, \|ω\| / ω_full) with ω_full = 30°/s; downward ω drives T4d/T5d, upward drives T4c/T5c, both eyes; DNp22 rule unchanged.
+- **The three differ in one term each,** so the held-out comparison B against C asks: **does the fly's stabiliser improve steering?**
+- **Logged every tick:** Δy, dx, v_req, vy, ω_self(vy), ω_self(v_req) and the ω used.
+
+### 8d. The bars (fixed before the runs)
+
+On the 50 training ship levels, sign-only ideal ships as in §1d:
+- **B and C each:** ≥ 50% of easy training levels (10 of 20).
+- **B also:** completes more training levels than self-motion only.
+- If B fails its bar, we discuss before changing anything; nothing is tweaked and re-run unlogged. If B passes and C doesn't, B goes ahead and C stays as its control.
+
+## Next
+
+1. ~~Jacob builds the encoder and both ideal ships and runs them (§1d).~~ Done: both failed (§8).
+2. ~~The left-eye-only test (§3).~~ Done from the logged steering tests (`docs/notes/ship_pathway_check.md`): the left eye reaches DNp22 at 80–95% of the right's rate.
+3. Agree §8 with Jacob; he builds B and C and runs their ideal ships against the §8d bars.
+4. Log the whole ship design as one D entry (including the failed draft, and noting it departs from D31's use of DNp20), with the analysis plan (`docs/notes/ship_analysis_plan.md`), updated for B and C.
+5. Ship baseline on the held-out levels, whole brain, R_ship = 150 Hz.
