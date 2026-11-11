@@ -104,7 +104,8 @@ class ShipController(Controller):
             raise RuntimeError("ShipController needs bind(game) before play: it reads the ship's floor and ceiling")
         m = self.encoder.encode(player, self._game.bounds)
         row = {"omega_deg": m.omega_deg, "omega_self_deg": m.omega_self_deg, "omega_flight_deg": m.omega_flight_deg,
-               "directions_seen": m.seen, "f": m.f, "rate_hz": m.rate_hz, "driven_group": m.group or "none"}
+               "directions_seen": m.seen, "f": m.f, "rate_hz": m.rate_hz, "driven_group": m.group or "none",
+               "vy": m.vy, "target_dy": m.target_dy, "target_dx": m.dx, "v_req": m.v_req, "omega_req_deg": m.omega_req_deg}
         return {f"motion_{g}": r for g, r in self.encoder.rates(m).items()}, row
 
     def output(self, counts):

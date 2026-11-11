@@ -1,10 +1,11 @@
-"""Where the next opening is, for the ship (a building block for options B and C in
-docs/notes/ship_redesign_options.md). **Not used by any encoding yet:** Shannyn defines "the next
-opening" if one of those options is chosen; the choices below are parameters, not decisions.
+"""Where the next opening is, for the ship: Shannyn's §8a (docs/notes/ship_proposals.md), used by
+options B and C in `ship_encoding`.
 
 What it computes, from the level's geometry only:
 - **The next column:** the nearest column of visual cells (D41's 30 x 30 cells, clipped at the
-  ground, D47) whose front face is ahead of the eye (x + 15) and within `view_ahead` units.
+  ground, D47) that the ship **hasn't fully passed** (its back face beyond the ship's back edge,
+  x - 15), with its front face within `view_ahead` units of the eye (x + 15). So while the ship is
+  inside a gap, that column stays the target.
 - **Its openings:** the free vertical stretches between the ship area's floor and ceiling that no
   cell in that column covers, at least `min_gap` tall (default 30, the ship's hitbox).
 - **The target:** the opening whose centre is nearest the ship's current height (ties go to the lower
@@ -52,19 +53,23 @@ class OpeningFinder:
         self._x0 = [c.x0 for c in self.cells]
         self.view_ahead, self.min_gap = view_ahead, min_gap
 
-    def next_column(self, eye_x: float):
-        """(front x, its cells) of the nearest column ahead of the eye within range, or None."""
-        i = bisect.bisect_right(self._x0, eye_x + _EPS)
-        if i == len(self.cells) or self.cells[i].x0 > eye_x + self.view_ahead + _EPS:
+    def next_column(self, ship_x: float):
+        """(front x, its cells) of the nearest column the ship (centre at `ship_x`) hasn't fully
+        passed, with its front face within range of the eye, or None."""
+        back, eye = ship_x - PLAYER_SIZE / 2, ship_x + EYE_AHEAD
+        i = bisect.bisect_left(self._x0, back - PLAYER_SIZE - _EPS)  # cells are 30 wide
+        while i < len(self.cells) and self.cells[i].x1 <= back + _EPS:
+            i += 1
+        if i == len(self.cells) or self.cells[i].x0 > eye + self.view_ahead + _EPS:
             return None
         x0 = self.cells[i].x0
         j = bisect.bisect_right(self._x0, x0 + _EPS)
-        return x0, self.cells[i:j]
+        return x0, [c for c in self.cells[i:j] if c.x1 > back + _EPS]
 
     def find(self, player, bounds: tuple[float, float]) -> tuple[Opening | None, float | None]:
         """The target opening and the error (its centre minus the ship's y), or (None, None) when no
         column is in range or the next column has no opening the ship fits through."""
-        col = self.next_column(player.x + EYE_AHEAD)
+        col = self.next_column(player.x)
         if col is None:
             return None, None
         x0, cells = col
