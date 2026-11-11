@@ -276,19 +276,21 @@ def _column_escape(surface, track, timeline, tick, since, rect):
         _text(surface, gf_label(g), (x0 + 10, y), AMBER, 12)
         _raster(surface, lx, y, lw, lane_h - 4, track.spike_window(g, tick), AMBER)
         y += lane_h
-    # Presses on the same axis, at the tick the game applied them (one tick after the spike).
-    _text(surface, "press", (x0 + 10, y + 2), PRESS, 12)
+    # Presses (cube) or holds (ship) on the same axis, at the tick the game applied them.
+    ship = timeline.ticks[min(tick, timeline.last_tick)].mode == "ship"
+    _text(surface, "hold" if ship else "press", (x0 + 10, y + 2), PRESS, 12)
     step = lw / RASTER_TICKS
     first = track.row(tick) - RASTER_TICKS + 1
     for t in range(max(1, first), min(tick, timeline.last_tick) + 1):
         view = timeline.ticks[t]
         if view.held:
             xs = lx + (t - first) * step
-            colour = PRESS if "jump" in view.events else PRESS_DEAD
+            colour = PRESS if "jump" in view.events or view.mode == "ship" else PRESS_DEAD
             pygame.draw.polygon(surface, colour, [(xs, y + 2), (xs - 4, y + 11), (xs + 4, y + 11)])
             if "jump" in view.events:  # a drawn tick mark (the font has no ✓)
                 pygame.draw.lines(surface, PRESS, False, [(xs - 3, y + 16), (xs - 1, y + 19), (xs + 4, y + 13)], 2)
-    _text(surface, "Last 1 s. ▲ press: ticked = started a jump, grey = mid-air.", (x0 + 10, y0 + h - 16), SMALL, 11)
+    _text(surface, "Last 1 s. ▲ every held tick (ship)." if ship else "Last 1 s. ▲ press: ticked = started a jump, grey = mid-air.",
+          (x0 + 10, y0 + h - 16), SMALL, 11)
 
 
 def _column_rest(surface, track, tick, since, rect):
