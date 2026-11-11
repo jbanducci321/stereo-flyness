@@ -47,6 +47,10 @@ class Controller:
         """What the run summary records about this mode's encoding and rule."""
         return {}
 
+    def bind(self, game) -> None:
+        """Called once before play, for encodings that need more of the game than the player (the
+        ship's floor and ceiling). Does nothing by default."""
+
 
 class CubeController(Controller):
     """The cube as in Steps 2-4: D41's looming encoding (CubeEncoder) and D42's jump rule."""
@@ -70,6 +74,46 @@ class CubeController(Controller):
     def settings(self):
         e = self.encoder
         return {"theta_full_deg": e.theta_full_deg, "rate_hz": e.rate_hz, "mode": e.mode, "rate_scaling": e.rate_scaling}
+
+
+class ShipController(Controller):
+    """The ship, Shannyn's draft (docs/notes/ship_proposals.md §2-§4). **Not a logged design:** it isn't
+    in play_level.py's SHIP_CONTROLLERS until the ship design is in docs/decisions.md.
+
+    - Input: `ShipEncoder`'s pooled image motion, downward onto T4d/T5d ("motion_down"), upward onto
+      T4c/T5c ("motion_up").
+    - Output: if **either DNp22** spikes in frame i, tick i + 1 is **released**; otherwise it's
+      **held**. So silence means hold, and a silent network climbs like "always hold".
+    """
+
+    mode = "ship"
+
+    def __init__(self, encoder, dnp22: dict[str, list[int]]):
+        if not dnp22:
+            raise ValueError("the ship's output rule reads DNp22: pass its IDs")
+        self.encoder = encoder
+        self.groups = {f"motion_{g}": list(ids) for g, ids in encoder.ids.items()}
+        self.watch = dict(dnp22)  # DNp22_R, DNp22_L
+        self._game = None
+
+    def bind(self, game):
+        self._game = game
+
+    def encode(self, player):
+        if self._game is None:
+            raise RuntimeError("ShipController needs bind(game) before play: it reads the ship's floor and ceiling")
+        m = self.encoder.encode(player, self._game.bounds)
+        row = {"omega_deg": m.omega_deg, "omega_self_deg": m.omega_self_deg, "omega_flight_deg": m.omega_flight_deg,
+               "directions_seen": m.seen, "f": m.f, "rate_hz": m.rate_hz, "driven_group": m.group or "none"}
+        return {f"motion_{g}": r for g, r in self.encoder.rates(m).items()}, row
+
+    def output(self, counts):
+        return not any(int(counts[g].sum()) > 0 for g in self.watch)
+
+    def settings(self):
+        e = self.encoder
+        return {"ship_rate_hz": e.rate_hz, "omega_full_deg": e.omega_full_deg, "terms": e.terms, "eyes": list(e.eyes),
+                "output": "release on any DNp22 spike, else hold"}
 
 
 class ShipNotDesigned(Controller):
@@ -116,6 +160,8 @@ def play_modes(game, stepper, controllers: dict[str, Controller], policy=None, s
     rec = FlyRecorder(game, stepper.flyids, "fly" if policy is None else "bot", stuck_ids, meta,
                       stimulated_ids=stimulated, **flag_settings)
     state = _State()
+    for c in controllers.values():
+        c.bind(game)
 
     def see():
         p = game.player
