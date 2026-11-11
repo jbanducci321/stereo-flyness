@@ -67,3 +67,27 @@ Here ω_self(v) is the mean over the 37 directions of −v · d / (d² + Δy²),
 - If B fails its bar, we discuss before changing anything; nothing is tweaked and re-run unlogged. If B passes and C doesn't, B goes ahead and C stays as its control.
 
 **A note on what this tests (Jacob, before the runs):** with the sign-only rule, B's decision reduces to "release when the ship rises faster than v_req" whenever some direction sees a surface ahead (always, in practice: the floor or ceiling). The geometry sets only the *size* of ω, which only the brain uses. So these ideal ships test the steering logic and the game physics, not how strongly the motion pathway would drive the fly.
+
+### Round 2 result (run 2026-11-10, after the bars above were committed)
+
+`uv run python scripts/ideal_ship.py --round 2`, 50 training ship levels. Full table in `results/ideal_ship/training_round2.md` (git-ignored).
+
+| Player | Easy | Medium | Hard | Mean progress | Held | On floor | At ceiling |
+|---|---|---|---|---|---|---|---|
+| **B (relative to the target)** | **19/20** | **12/20** | 0/10 | **74.3%** | 48% | 0% | 0% |
+| C (steering only) | 17/20 | 0/20 | 0/10 | 50.2% | 50% | 0% | 3% |
+| Self-motion only | 0/20 | 0/20 | 0/10 | 7.1% | 48% | 10% | 0% |
+| Never hold | 0/20 | 0/20 | 0/10 | 7.1% | 0% | 100% | 0% |
+| Always hold | 0/20 | 0/20 | 0/10 | 6.7% | 100% | 0% | 59% |
+
+**Against the §8d bars:**
+- **B: 19 of 20 easy levels (95%): reaches the bar.**
+- **C: 17 of 20 easy levels (85%): reaches the bar.**
+- **B against self-motion only: 31 against 0 of 50 levels completed: B completes more.**
+
+**So B goes ahead as the candidate, with C and self-motion only as its controls (§8d).**
+
+Described:
+- **B does better than C** beyond easy: medium 12/20 against 0/20, mean progress on hard 38.8% against 15.3%. With no brain, the ship's own motion term (the stabiliser) clearly helps the steering; whether it helps *with the brain* is the held-out B-against-C comparison.
+- **Every death is a block** (B 19, C 33); B's are 10 hard, 8 medium, 1 easy. Hard levels aren't completed by either.
+- As noted before the runs, these sign-only ships test the steering logic and the game physics, not how strongly the motion pathway drives the fly.
