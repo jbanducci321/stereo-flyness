@@ -1,6 +1,6 @@
 # Opening the Step 4 report: reading order
 
-*For Jacob and Shannyn's joint opening (D33). Everything that decides a reading is already fixed in D51. This only sets the order, so the session answers the fixed questions first and leaves exploring for last.*
+*Changed 2026-11-10 (agreed with Shannyn): this opening is two independent reads, compared on Monday 16 Nov; procedure, the Step 7 order and the verdict sheet in `docs/notes/opening_verdicts.md`. Originally for Jacob and Shannyn's joint opening (D33). Everything that decides a reading is already fixed in D51. This only sets the order, so the session answers the fixed questions first and leaves exploring for last.*
 
 **Open:** `results/step4/report.md`.
 
