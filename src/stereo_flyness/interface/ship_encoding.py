@@ -17,6 +17,16 @@ Every choice here is ours, not the fly's:
 
   The vy term is the ship's own climb or fall ("self-motion"); the vx term comes from flying
   forward ("flight"). `terms="self"` keeps the vy term only: Shannyn's control (§1d).
+- **Options B and C** (Shannyn's §8, after the round 1 ideal ships failed): only the self-motion part,
+  ω_self(v) = mean over the 37 directions of -v · d / (d² + Δy²), fed a different speed:
+  - `terms="B"`: ω_self(vy - v_req), the ship's motion relative to the speed that reaches the next
+    opening (the candidate);
+  - `terms="C"`: ω_self(-v_req), steering only (its control);
+  - `terms="self"`: ω_self(vy), stabiliser only (the other control).
+  v_req = Δy · vx / dx: Δy is the target opening's centre minus the ship's y, dx the eye's distance
+  to that column's front face (at least 30), clipped to +432 / -345.6 units/s (the ship's top climb
+  and fall speeds). No target: v_req = 0. The opening is `ship_opening.OpeningFinder` (§8a). **Our
+  code computes the target; it stands in for edge tracking (Straw et al. 2010) and is labelled ours.**
 - **Pooling:** the plain mean over all 37 directions, in °/s. A direction that sees nothing within
   range counts as zero motion and stays in the mean.
 - **Input:** downward pooled motion drives T4d + T5d, upward drives T4c + T5c, all neurons of each
@@ -29,11 +39,11 @@ Speeds: x moves X_PER_TICK per tick and y moves vy × TICK_DT_Y per tick, at 240
 
 import bisect
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import numpy as np
 
-from stereo_flyness.game.physics import TICK_DT_Y, TICKS_PER_SECOND, X_PER_TICK
+from stereo_flyness.game.physics import PLAYER_SIZE, SHIP_MAX_DOWN, SHIP_MAX_UP, TICK_DT_Y, TICKS_PER_SECOND, X_PER_TICK
 from stereo_flyness.interface.encoding import EYE_AHEAD, obstacles
 
 ELEVATIONS_DEG = np.arange(-90, 91, 5, dtype=float)  # 37 directions, -90 = straight down
@@ -41,7 +51,7 @@ VIEW_AHEAD = 600.0  # level units, horizontally
 OMEGA_FULL_DEG = 30.0  # °/s: T4/T5's optimum (Maisak et al. 2013)
 VX = X_PER_TICK * TICKS_PER_SECOND  # 311.58 units/s
 VY_PER_UNIT = TICK_DT_Y * TICKS_PER_SECOND  # units/s per unit of the engine's vy (54)
-TERMS = ("full", "self")
+TERMS = ("full", "self", "B", "C")
 GROUPS = {"down": ("T4d", "T5d"), "up": ("T4c", "T5c")}
 _EPS = 1e-9
 
@@ -52,6 +62,7 @@ class Hit:
     d: float
     dy: float
     what: str  # "cell", "floor" or "ceiling"
+    cell: object = field(default=None, compare=False)  # the Obstacle seen, for "cell" hits
 
 
 def look(eye_x: float, eye_y: float, floor: float, ceiling: float, cells, elevations_deg=ELEVATIONS_DEG,
@@ -67,20 +78,20 @@ def look(eye_x: float, eye_y: float, floor: float, ceiling: float, cells, elevat
         best = None  # (horizontal distance, dy, what)
         if abs(phi) >= 90 - _EPS:  # straight up or down: x stays at the eye
             up = phi > 0
-            best = (0.0, (ceiling if up else floor) - eye_y, "ceiling" if up else "floor")
+            best = (0.0, (ceiling if up else floor) - eye_y, "ceiling" if up else "floor", None)
             for c in near:
                 if c.x0 <= eye_x <= c.x1:
                     face = c.bottom if up else c.top
                     if (face - eye_y > 0) == up and abs(face - eye_y) < abs(best[1]):
-                        best = (0.0, face - eye_y, "cell")
+                        best = (0.0, face - eye_y, "cell", c)
         else:
             tan = math.tan(math.radians(phi))
             if tan > _EPS:
                 h = (ceiling - eye_y) / tan
-                best = (h, ceiling - eye_y, "ceiling")
+                best = (h, ceiling - eye_y, "ceiling", None)
             elif tan < -_EPS:
                 h = (floor - eye_y) / tan
-                best = (h, floor - eye_y, "floor")
+                best = (h, floor - eye_y, "floor", None)
             for c in near:
                 lo, hi = c.x0 - eye_x, c.x1 - eye_x
                 if abs(tan) <= _EPS:
@@ -91,10 +102,10 @@ def look(eye_x: float, eye_y: float, floor: float, ceiling: float, cells, elevat
                     lo, hi = max(lo, min(a, b)), min(hi, max(a, b))
                 lo = max(lo, 0.0)
                 if lo <= hi + _EPS and (best is None or lo < best[0] - _EPS):
-                    best = (lo, lo * tan, "cell")
+                    best = (lo, lo * tan, "cell", c)
         if best is not None and best[0] > view_ahead + _EPS:
             best = None
-        out.append(None if best is None else Hit(best[0], best[1], best[2]))
+        out.append(None if best is None else Hit(*best))
     return out
 
 
@@ -117,6 +128,11 @@ class Motion:
     f: float
     group: str | None  # "down", "up" or None
     rate_hz: float  # each driven neuron's rate, R_ship × f
+    vy: float = 0.0  # the ship's vertical speed, units/s
+    target_dy: float | None = None  # B/C: target opening's centre minus the ship's y (None: no target)
+    dx: float | None = None  # B/C: the eye's distance to the target column's front face (at least 30)
+    v_req: float = 0.0  # B/C: the vertical speed that reaches the target, units/s
+    omega_req_deg: float = 0.0  # B/C: ω_self(v_req)
 
 
 class ShipEncoder:
@@ -134,8 +150,17 @@ class ShipEncoder:
             raise ValueError("omega_full_deg must be positive")
         self.rate_hz, self.omega_full_deg, self.terms, self.eyes = rate_hz, omega_full_deg, terms, tuple(eyes)
         self.cells = obstacles(level.boxes)
+        self.finder = None
+        if terms in ("B", "C"):
+            from stereo_flyness.interface.ship_opening import OpeningFinder
+            self.finder = OpeningFinder(level)
         self._x0 = [c.x0 for c in self.cells]
         self.ids = {g: [i for side in self.eyes for t in types for i in neurons[t][side]] for g, types in GROUPS.items()}
+
+    def seen(self, player, bounds: tuple[float, float]) -> list[Hit | None]:
+        """What each of the 37 directions sees from the ship's eye (for the death classes)."""
+        eye_x = player.x + EYE_AHEAD
+        return look(eye_x, player.y, bounds[0], bounds[1], self._near(eye_x))
 
     def _near(self, eye_x: float):
         lo = bisect.bisect_left(self._x0, eye_x - 2 * EYE_AHEAD - _EPS)
@@ -150,10 +175,22 @@ class ShipEncoder:
         n = len(hits)
         s = sum(p[0] for p in parts) / n
         fl = sum(p[1] for p in parts) / n
-        omega = s + fl if self.terms == "full" else s
+        dy = dx = None
+        v_req = omega_req = 0.0
+        if self.terms in ("full", "self"):
+            omega = s + fl if self.terms == "full" else s
+        else:
+            per_speed = sum(image_motion(h, 1.0)[0] for h in hits if h is not None) / n  # ω_self(v) = v · this
+            opening, dy = self.finder.find(player, bounds)
+            if opening is not None:
+                dx = max(opening.x0 - eye_x, PLAYER_SIZE)
+                v_req = min(max(dy * VX / dx, -SHIP_MAX_DOWN * VY_PER_UNIT), SHIP_MAX_UP * VY_PER_UNIT)
+            omega_req = per_speed * v_req
+            omega = per_speed * (vy - v_req) if self.terms == "B" else -omega_req
         f = min(1.0, abs(omega) / self.omega_full_deg)
         group = None if omega == 0 else "down" if omega < 0 else "up"
-        return Motion(omega, s, fl, len(parts), f, group, self.rate_hz * f if group else 0.0)
+        return Motion(omega, s, fl, len(parts), f, group, self.rate_hz * f if group else 0.0,
+                      vy, dy, dx, v_req, omega_req)
 
     def rates(self, m: Motion) -> dict[str, np.ndarray]:
         return {g: np.full(len(ids), m.rate_hz if g == m.group else 0.0) for g, ids in self.ids.items()}

@@ -22,7 +22,8 @@ Usage:
 
 Writes results/closed_loop/<network>/[<suite>/]<settings>/<driver>/<level>/ (as play_cube.py), or
 results/stereo_madness/<network>/<settings>/<driver>/stereo_madness/. Settings: θ_full, encoding
-mode and R as play_cube.py, then `_ship-<design>`, then `_seed<n>`, then any `--tag`.
+mode and R as play_cube.py, then `_ship-<design>`, then `_corrected` for the T4/T5-corrected
+connectome (`--signs corrected`, D27; D28's sensitivity check), then `_seed<n>`, then any `--tag`.
 """
 
 import argparse
@@ -45,7 +46,8 @@ from stereo_flyness.game.engine import Game
 from stereo_flyness.game.level import Level
 from stereo_flyness.game.suites import load_level
 from stereo_flyness.interface.encoding import CubeEncoder
-from stereo_flyness.interface.modes import CubeController, ShipNotDesigned, play_modes
+from stereo_flyness.interface.modes import CubeController, ShipController, ShipNotDesigned, play_modes
+from stereo_flyness.interface.ship_encoding import ShipEncoder
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "results" / "closed_loop"
@@ -55,7 +57,23 @@ SM_LEVEL = ROOT / "data" / "gd" / "stereo_madness.json"
 
 # The ship's encoding and output rule, by design name (Step 5). Each entry builds a Controller from
 # (level, cells, args). Only designs logged in docs/decisions.md go here.
-SHIP_CONTROLLERS: dict = {}
+SHIP_TYPES = ("T4c", "T4d", "T5c", "T5d")
+
+
+def d53_ship(terms: str, omega_full_deg: float):
+    """D53's ship: `terms` B (record) or C (control), DNp22 read out, both eyes, R_ship = --ship-rate."""
+    def build(level, cells, args):
+        neurons = {t: {s: cells.ids(t, side=s) for s in ("right", "left")} for t in SHIP_TYPES}
+        enc = ShipEncoder(level, neurons, args.ship_rate, omega_full_deg=omega_full_deg, terms=terms)
+        return ShipController(enc, {"DNp22_R": cells.ids("DNp22", side="right"), "DNp22_L": cells.ids("DNp22", side="left")})
+    return build
+
+
+SHIP_CONTROLLERS: dict = {
+    "B": d53_ship("B", 30.0),  # D53: the design of record
+    "C": d53_ship("C", 30.0),  # D53: control, steering without the stabiliser
+    "B90": d53_ship("B", 90.0),  # D53: the faster-anchor variant, labelled, reported second
+}
 
 
 def modes_of(level: Level) -> set[str]:
@@ -124,6 +142,9 @@ def main() -> None:
     parser.add_argument("--mode", default="collision", choices=["collision", "all"])
     parser.add_argument("--flat", dest="rate_scaling", action="store_false", help="flat R instead of R x f (D45)")
     parser.add_argument("--ship", default=None, help="the ship design (Step 5), as named in SHIP_CONTROLLERS")
+    parser.add_argument("--ship-rate", type=float, default=150.0, help="R_ship, Hz (D53: untuned baseline 150)")
+    parser.add_argument("--signs", default="original", choices=["original", "corrected"],
+                        help="the connectome: original (of record) or T4/T5-corrected (D27, D28's check)")
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--jobs", type=int, default=1)
     parser.add_argument("--bot", action="store_true", help="the bot drives; the brain only watches")
@@ -154,11 +175,14 @@ def main() -> None:
     base = (SM_OUT / args.network if sm else OUT / args.network if args.suite == "training"
             else OUT / args.network / args.suite)
     out = base / (f"{args.theta_full:g}deg_{args.mode}_R{args.rate:g}{'' if args.rate_scaling else '_flat'}"
-                  f"{'' if args.ship is None else f'_ship-{args.ship}'}"
-                  f"{'' if args.seed == 0 else f'_seed{args.seed}'}{args.tag}")
-    path_con = con_paths["original"]
-    extra = {"status": status + (", Stereo Madness final test" if sm else ""),
-             "connectome": {"file": path_con.name, "sha256": file_sha256(path_con)}}
+                  f"{'' if args.ship is None else f'_ship-{args.ship}' + ('' if args.ship_rate == 150 else f'_Rs{args.ship_rate:g}')}"
+                  f"{'' if args.signs == 'original' else '_corrected'}{'' if args.seed == 0 else f'_seed{args.seed}'}{args.tag}")
+    if args.signs not in con_paths:
+        sys.exit(f"Refused, nothing run: no {args.signs} connectivity for {args.network}.")
+    path_con = con_paths[args.signs]
+    extra = {"status": status + (", T4/T5-corrected signs (D28)" if args.signs == "corrected" else "")
+             + (", Stereo Madness final test" if sm else ""),
+             "signs": args.signs, "connectome": {"file": path_con.name, "sha256": file_sha256(path_con)}}
     runs = Parallel(n_jobs=args.jobs, return_as="generator_unordered")(
         delayed(one)(n, lv, path_comp, path_con, cells, patches, gf, stuck_ids, args, out, extra)
         for n, lv in levels.items())

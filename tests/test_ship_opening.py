@@ -54,9 +54,18 @@ def test_the_target_is_the_opening_nearest_the_ship():
 def test_only_the_nearest_column_ahead_of_the_eye_within_range():
     lv = level(block(0, 0), block(300, 0), block(1100, 0))
     f = OpeningFinder(lv)
-    assert f.next_column(15.0)[0] == 300.0  # the block at x 0 is behind the eye (its front face is at 0 < 15)
-    assert f.next_column(400.0) is None  # the next column (1,100) is 700 ahead: out of range
-    assert f.next_column(520.0)[0] == 1100.0  # 580 ahead: in range
+    assert f.next_column(45.0)[0] == 300.0  # ship's back at 30: the block at x 0-30 is fully passed
+    assert f.next_column(385.0) is None  # passed 300 (back at 370); 1,100 is 700 from the eye: out of range
+    assert f.next_column(505.0)[0] == 1100.0  # 580 from the eye: in range
+
+
+def test_the_column_stays_the_target_while_the_ship_is_inside_its_gap():
+    """Shannyn's §8a: no jumping ahead while the ship is still in the gap."""
+    lv = level(block(300, 0), block(900, 0))
+    f = OpeningFinder(lv)
+    assert f.next_column(300.0)[0] == 300.0  # eye (315) past the front face, ship inside the column
+    assert f.next_column(344.0)[0] == 300.0  # back edge at 329: not yet clear of 330
+    assert f.next_column(346.0)[0] == 900.0  # back edge at 331: fully passed; 900 is 539 from the eye
     assert OpeningFinder(level()).find(ship(150.0), (FLOOR, CEILING)) == (None, None)
 
 

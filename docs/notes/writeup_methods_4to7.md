@@ -56,7 +56,7 @@ Fixed before the Step 4 report was opened (D52).
 
 Held-out results are never looked at until the whole batch has finished and the analysis code is ready and checked (D33). Report scripts print only their checks (every run complete, every run replays exactly from its logged inputs, clean commits) until the results are opened.
 - Steps 2 and 3 were opened together.
-- **Steps 4 and 7 are opened as two independent reads** (agreed 2026-11-10): each of us reads the reports alone, in a fixed order, and writes a verdict on every fixed question and prediction before we compare (`docs/notes/opening_verdicts.md`). Differences are settled against the fixed rules.
+- **Steps 4 and 7** were opened on 2026-11-10 by Jacob's Claude Code session at our request, judging every fixed question against D51 and D52's rules; we both reviewed its verdicts. (Two independent reads had been planned, `docs/notes/opening_verdicts.md`; we chose this instead.)
 
 ## 11. The closed loop in any mode, and the ship (Steps 5–6)
 
@@ -107,6 +107,6 @@ Held-out results are never looked at until the whole batch has finished and the 
 
 ## Still to add
 
-- Step 4 and Step 7 **results**, after the opening (16 Nov).
+- Step 4 and Step 7 **results** (now in `step4_report.md` and D51/D52) in write-up form.
 - **Step 5:** the ship design, its checks and its baseline, once logged.
 - **Step 6:** Stereo Madness (N, seeds and the network, fixed before any run) and the showcase replay rule.

@@ -1,6 +1,6 @@
 # Step 6: Stereo Madness runs, a proposal for discussion
 
-*Jacob, 2026-11-10. A draft to settle **before any Stereo Madness run**, after the Step 4/7 opening (16 Nov) and once the ship design is logged. Nothing here is decided. Built from the decision log only; of Stereo Madness itself, only its length was read (26,384 units, 84.7 s at normal speed), never its layout (D7, hard rule 5).*
+*Jacob, 2026-11-10; Shannyn's answers added the same day (end). A draft to settle **before any Stereo Madness run**, after the Step 4/7 opening (16 Nov) and once the ship design is logged. Nothing here is decided. Built from the decision log only; of Stereo Madness itself, only its length was read (26,384 units, 84.7 s at normal speed), never its layout (D7, hard rule 5).*
 
 ## Already fixed (not up for discussion)
 
@@ -47,7 +47,7 @@ All at the same seeds. Changing one setting at a time from the record:
 ### 5. Order and blinding
 
 1. Ship design logged; ship baseline and any tuning done (Step 5).
-2. Optional: a mixed-level held-out check (cube and ship switching at portals) on the same settings, one night, blind.
+2. A mixed-level held-out check (cube and ship switching at portals) on the same settings, one night, blind (agreed: Shannyn, 2026-11-10).
 3. This proposal fixed and logged as a decision.
 4. All variants run in one batch, blind; no result is opened until all are done and the report's checks pass.
 5. Opened the same way as Steps 4 and 7 (two independent reads, then compared).
@@ -56,10 +56,11 @@ All at the same seeds. Changing one setting at a time from the record:
 
 Per variant: completed (k of 10), median and spread of progress, where each run died (cube or ship section, and the object), stuck runs; the ship sections reached and passed; and, for context only, the bot's run (`scripts/bot_stereo_madness.py`).
 
-## Questions for Shannyn
+## Shannyn's answers (2026-11-10)
 
-1. Whole brain for all of Stereo Madness: agreed?
-2. The variants: one change at a time from the record, as above?
-3. N = 10, seeds 0–9?
-4. The showcase rule: closest to the median progress, ties to the lowest seed?
-5. Run the mixed-level held-out check first, or go straight to Stereo Madness?
+All five proposals agreed by Shannyn; to log as a D entry with Jacob once the ship design is logged and before any Stereo Madness run.
+1. **Whole brain** for every Stereo Madness run: yes.
+2. **One change at a time from the record:** yes. The corrected-signs variant matters more for the ship than for the cube, because T4/T5 are the ship's input.
+3. **N = 10, seeds 0–9:** yes.
+4. **Showcase: the run closest to the median progress, ties to the lowest seed:** yes.
+5. **Mixed levels first:** yes. It's the first time the brain switches modes at portals, and better to find a bug there than in the one Stereo Madness batch. So step 2 of §5 is no longer optional.

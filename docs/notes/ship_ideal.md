@@ -48,3 +48,46 @@ Whatever is chosen, the self-motion ship stays as a control.
 - **Full geometry, as predicted:** it starts on the floor, where the floor below streams downward, so it releases on every tick and slides along the floor (100% of ship ticks).
 - **Self-motion only, as predicted:** it holds and releases about half the time each (48% held), hovering just above the floor, where it started. It never climbs away from it, since nothing in its input says where the opening is.
 - **So §1d's third row applies: "the motion encoding can't fly these levels; we discuss before any brain run."** For Shannyn and Jacob to decide; nothing is changed here.
+
+## Round 2: options B and C (Shannyn's §8, `docs/notes/ship_proposals.md` on sc-ship-settled)
+
+*Written and committed **before** the round 2 runs (2026-11-10). The design is Shannyn's §8, agreed by Jacob; the bars are her §8d, copied here unchanged.*
+
+**What runs** (sign-only ideal ships, as in round 1: downward ω releases the next tick, anything else holds), on the same 50 training ship levels:
+- **B (candidate):** ω = ω_self(vy − v_req): the ship's own vertical motion relative to the motion that would reach the next opening.
+- **C (control):** ω = ω_self(−v_req): steering only, no stabiliser.
+- **Self-motion only (control):** ω = ω_self(vy), as in round 1.
+- Never hold and always hold beside them.
+
+Here ω_self(v) is the mean over the 37 directions of −v · d / (d² + Δy²), in °/s (empty directions count as 0); v_req = Δy · vx / dx, with Δy the target opening's centre minus the ship's y, dx the eye's distance to the column's front face (at least 30), clipped to +432 / −345.6 units/s; no target means v_req = 0. The next opening is §8a's: the nearest column the ship hasn't fully passed, within 600 units of the eye; its free stretches at least 30 tall; the one whose centre is nearest the ship's height (ties to the lower).
+
+**The bars (§8d, fixed before the runs):**
+- **B and C each:** ≥ 50% of easy training levels (≥ 10 of 20).
+- **B also:** completes more training levels than self-motion only.
+- If B fails its bar, we discuss before changing anything; nothing is tweaked and re-run unlogged. If B passes and C doesn't, B goes ahead and C stays as its control.
+
+**A note on what this tests (Jacob, before the runs):** with the sign-only rule, B's decision reduces to "release when the ship rises faster than v_req" whenever some direction sees a surface ahead (always, in practice: the floor or ceiling). The geometry sets only the *size* of ω, which only the brain uses. So these ideal ships test the steering logic and the game physics, not how strongly the motion pathway would drive the fly.
+
+### Round 2 result (run 2026-11-10, after the bars above were committed)
+
+`uv run python scripts/ideal_ship.py --round 2`, 50 training ship levels. Full table in `results/ideal_ship/training_round2.md` (git-ignored).
+
+| Player | Easy | Medium | Hard | Mean progress | Held | On floor | At ceiling |
+|---|---|---|---|---|---|---|---|
+| **B (relative to the target)** | **19/20** | **12/20** | 0/10 | **74.3%** | 48% | 0% | 0% |
+| C (steering only) | 17/20 | 0/20 | 0/10 | 50.2% | 50% | 0% | 3% |
+| Self-motion only | 0/20 | 0/20 | 0/10 | 7.1% | 48% | 10% | 0% |
+| Never hold | 0/20 | 0/20 | 0/10 | 7.1% | 0% | 100% | 0% |
+| Always hold | 0/20 | 0/20 | 0/10 | 6.7% | 100% | 0% | 59% |
+
+**Against the §8d bars:**
+- **B: 19 of 20 easy levels (95%): reaches the bar.**
+- **C: 17 of 20 easy levels (85%): reaches the bar.**
+- **B against self-motion only: 31 against 0 of 50 levels completed: B completes more.**
+
+**So B goes ahead as the candidate, with C and self-motion only as its controls (§8d).**
+
+Described:
+- **B does better than C** beyond easy: medium 12/20 against 0/20, mean progress on hard 38.8% against 15.3%. With no brain, the ship's own motion term (the stabiliser) clearly helps the steering; whether it helps *with the brain* is the held-out B-against-C comparison.
+- **Every death is a block** (B 19, C 33); B's are 10 hard, 8 medium, 1 easy. Hard levels aren't completed by either.
+- As noted before the runs, these sign-only ships test the steering logic and the game physics, not how strongly the motion pathway drives the fly.

@@ -135,3 +135,52 @@ def test_bad_settings_are_refused():
         encoder(terms="flight")
     with pytest.raises(ValueError):
         encoder(omega_full_deg=0)
+
+
+# Options B and C (Shannyn's §8)
+
+def wall_level(gap_bottom, gap_top, x0=600.0):
+    """A wall at x0 from floor to ceiling, with one gap."""
+    boxes = [Box("block", x0, y, x0 + 30.0, y + 30.0) for y in range(0, 300, 30) if not gap_bottom <= y < gap_top]
+    return Level("wall", "test", 3000.0, boxes, start_mode="ship")
+
+
+def b_or_c(terms, lv):
+    return ShipEncoder(lv, neurons(), 150.0, terms=terms)
+
+
+def test_b_target_above_holds_target_below_releases():
+    lv = wall_level(210, 270)  # gap centre 240
+    up = b_or_c("B", lv).encode(ship(150.0), (FLOOR, CEILING))
+    assert up.target_dy == pytest.approx(90.0) and up.v_req > 0 and up.group == "up"  # up: no release, hold
+    down = b_or_c("B", wall_level(30, 90)).encode(ship(150.0), (FLOOR, CEILING))  # gap centre 60
+    assert down.v_req < 0 and down.group == "down"
+
+
+def test_v_req_reaches_the_target_by_the_column():
+    m = b_or_c("C", wall_level(210, 270)).encode(ship(150.0), (FLOOR, CEILING))
+    dx = 600.0 - 15.0
+    assert m.dx == pytest.approx(dx)
+    assert m.v_req == pytest.approx(90.0 * VX / dx)
+
+
+def test_b_is_zero_when_moving_at_v_req_and_c_ignores_the_ships_motion():
+    lv = wall_level(210, 270)
+    v_req = b_or_c("B", lv).encode(ship(150.0), (FLOOR, CEILING)).v_req
+    at = b_or_c("B", lv).encode(ship(150.0, vy=v_req / VY_PER_UNIT), (FLOOR, CEILING))
+    assert at.omega_deg == pytest.approx(0.0, abs=1e-9)
+    c0 = b_or_c("C", lv).encode(ship(150.0), (FLOOR, CEILING))
+    c1 = b_or_c("C", lv).encode(ship(150.0, vy=5.0), (FLOOR, CEILING))
+    assert c0.omega_deg == pytest.approx(c1.omega_deg) and c0.omega_deg == pytest.approx(-c0.omega_req_deg)
+
+
+def test_b_without_a_target_is_self_motion_only():
+    flat = Level("flat", "test", 3000.0, [], start_mode="ship")
+    b = b_or_c("B", flat).encode(ship(150.0, vy=3.0), (FLOOR, CEILING))
+    s = b_or_c("self", flat).encode(ship(150.0, vy=3.0), (FLOOR, CEILING))
+    assert b.target_dy is None and b.v_req == 0.0 and b.omega_deg == pytest.approx(s.omega_deg)
+
+
+def test_v_req_is_clipped_and_dx_is_at_least_30():
+    m = b_or_c("C", wall_level(240, 300, x0=20.0)).encode(ship(30.0, x=0.0), (FLOOR, CEILING))  # inside the column's reach
+    assert m.dx == 30.0 and m.v_req == pytest.approx(8.0 * VY_PER_UNIT)
