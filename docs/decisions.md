@@ -873,11 +873,11 @@ Jacob's proposal (`docs/notes/step4_proposal.md`, revision 3) with Shannyn's ans
 
 - **Result (opened 2026-11-10: at Jacob and Shannyn's request, Jacob's Claude Code session read the report and judged every fixed question against the rules; Jacob and Shannyn review the verdicts; full write-up in `docs/notes/step4_report.md`).** All checks passed (660 runs, clean commits `91989c6` and `b8228a6`, every replay exact, connectivity files unchanged, 0 stuck, 0 unclassified).
   - **(a) shuffle and (d) random network: worse than intact** (0 better, 18 worse, 2 equal; p < 0.001, both survive Holm). The Giant Fiber never fires; both play exactly like never press (6.3%). **So the play depends on the real wiring.**
-  - **(b) looming-kept and (c) relay-only: identical to each other** (the shuffled rest of the brain stays silent), 59.4% progress against intact's 29.4%: better at p = 0.013, **not surviving Holm** (0.129). **All three relay bars fail** (first-spike θ 46.5° against 36.6°, beyond the 2.5° seed range; (d1) share 0% against 61%), so neither is a relay of the intact fly. Doing better is read as the late-threshold effect, as fixed.
+  - **(b) looming-kept and (c) relay-only: identical to each other,** because the shuffled rest is never driven, so (b) adds nothing beyond (c) and counts as the same finding, 59.4% progress against intact's 29.4%: better at p = 0.013, **not surviving Holm** (0.129). **All three relay bars fail** (first-spike θ 46.5° against 36.6°, beyond the 2.5° seed range; (d1) share 0% against 61%), so neither is a relay of the intact fly. Doing better is read as the late-threshold effect, as fixed.
   - **E5b and E5c: not specific** (no clear difference against intact or against their recruited-matched controls). E5c moves the first spike to 100°.
   - **Controls:** no clear difference from intact.
   - **Holm (12):** only (a) and (d) survive.
-  - **Predictions:** (a), (d) hit; (b) missed on all three (later, not earlier; it had flagged this in its dated note); E5b in the predicted direction but not significant; E5c hit on all four; the controls hit.
+  - **Predictions:** (a), (d) hit; (b) missed on all three (later, not earlier; it had flagged this in its dated note); E5b a miss (right direction, not significant); E5c hit on all four; the controls hit.
 
 **D52. Step 7: the whole brain against the subcircuit in closed loop, fixed before reading** (2026-11-06)
 Jacob's proposal (`docs/notes/step7_proposal.md`) with Shannyn's answers of 2026-11-06; she leads the comparison. **Fixed before the Step 4 report is opened:** nobody has read any result of the Step 4 intact whole brain, and the report script's dry run printed only its checks. The proposal has the detail; this entry is the binding summary, and where they differ this entry wins.
@@ -905,7 +905,7 @@ Jacob's proposal (`docs/notes/step7_proposal.md`) with Shannyn's answers of 2026
 - **Code:** `scripts/step7_report.py`, `stereo_flyness/experiments/step7_analysis.py`.
 - **Result (opened 2026-11-10: at Jacob and Shannyn's request, Jacob's Claude Code session read the report and judged every fixed question against the rules; Jacob and Shannyn review the verdicts).** Checks passed at both rates (60 pairs each, every replay exact, settings shared, clean commits).
   - **150 Hz: 60 of 60 identical games. PASS.** 50 Hz: **60 of 60. PASS.** No pair split at either rate; per approach, every compared first press matched within ±1 frame (456 of 456 and 776 of 776); per level, 20 of 20 equal at both rates.
-  - **Checked that it isn't the same runs twice:** the subcircuit and whole-brain runs record different networks (33,486 and 138,639 neurons), yet in the pair checked tick by tick the same 154 neurons fired at the same frames. In these games the whole brain's activity stays inside the subcircuit.
+  - **Checked that it isn't the same runs twice:** the subcircuit and whole-brain runs record different networks (33,486 and 138,639 neurons), yet in the one pair checked tick by tick the same 154 neurons fired at the same frames; in that pair, the whole brain's activity stays inside the subcircuit.
   - **Reading, as fixed:** the subcircuit's cube results stand for the whole brain, at 150 Hz and at 50 Hz, in this setting.
 
 ## Open

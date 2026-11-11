@@ -84,7 +84,7 @@
 
 0 stuck (s) and 0 unclassified (u) deaths in every condition.
 
-- **(b) and (c) are identical,** although their connectivity files differ (checked: `Connectivity_783_loomkept_s*` against `Connectivity_783_relay`, different SHA-256). In (b), the shuffled rest of the brain stays silent (about 1 neuron firing per tick besides the inputs, as in (c)), so only the 293 direct connections act; the Giant Fiber spikes match tick for tick in 18 of the 20 pairs checked.
+- **(b) and (c) are identical,** although their connectivity files differ (checked: `Connectivity_783_loomkept_s*` against `Connectivity_783_relay`, different SHA-256). In (b) the shuffled rest of the brain is never driven, so it adds nothing beyond (c): only the 293 direct connections act (about 1 neuron firing per tick besides the inputs in both; the Giant Fiber spikes match tick for tick in 18 of the 20 pairs checked). **So (b) is not a separate result from (c):** they count as one finding.
 
 ### The 12 comparisons (the Holm family)
 
@@ -118,7 +118,7 @@
 - **(a), (d) (Jacob): hit.** Worse than intact, playing exactly like never press (the Giant Fiber never fires).
 - **(b) (Shannyn): miss on all three.** It jumped later, not earlier (46.5° against 36.6°), had no (d1) deaths against 33, and went further, not the same or lower. The dated open-loop note before night 2 pointed this way.
 - **(c): no prediction.** Identical to (b).
-- **E5b (Shannyn): the direction holds, but not significantly.** Slightly earlier first spike (35.8° against 36.6°), more (d1) (39 against 33), lower progress (26.3% against 29.4%); the sign test shows no clear difference (1 better, 5 worse, p = 0.22).
+- **E5b (Shannyn): miss** (scored by Shannyn): the direction holds, but not significantly. Slightly earlier first spike (35.8° against 36.6°), more (d1) (39 against 33), lower progress (26.3% against 29.4%); the sign test shows no clear difference (1 better, 5 worse, p = 0.22).
 - **E5c (Shannyn): hit on all four.** Much later first spike (100.2°), fewer (d1) (3 against 33), more (d2) (15 against 2), higher progress (47.4%; not a clear difference by the sign test, p = 0.45). As fixed, the higher progress is the late-threshold effect.
 - **Random and recruited-matched controls: hit.** No clear difference; the random lesions equal intact on all 20 levels.
 
@@ -130,7 +130,7 @@
 ## What it means (interpretation, labelled as such)
 
 - **Caveat 1, the relay.** The direct looming → Giant Fiber connections alone are enough to make the cube jump at all, and to fly the easy levels. What the rest of the real wiring adds is *when*: it brings the first spike ~10° earlier, to 36.6°, close to the real fly's 39 ± 14°. At R = 150 Hz, firing late plays better on these levels (Step 3's late-threshold effect), so the relay "wins" on progress while being further from the real fly's timing. The honest summary: **the fly's play depends on the wiring, and the wiring's main measurable effect in this game is earlier escape timing, which the game happens not to reward.**
-- **The rest of the brain is nearly silent in these games.** In the relay networks only ~1 neuron per tick fires besides the inputs; in the intact brain, the same 154 neurons fire in a Step 7 pair checked tick by tick, all inside the subcircuit. So the intact brain's extra contribution comes through a small set of neurons, which fits single cell-type lesions moving the timing (E5c a lot, E5b a little) without a clear effect on progress.
+- **The rest of the brain is nearly silent in these games, in the one pair checked.** In the relay networks only ~1 neuron per tick fires besides the inputs; in the intact brain, in the one Step 7 pair checked tick by tick, the same 154 neurons fire in both networks, all inside the subcircuit. So the intact brain's extra contribution comes through a small set of neurons, which fits single cell-type lesions moving the timing (E5c a lot, E5b a little) without a clear effect on progress.
 - **Whole brain against subcircuit:** the intact whole brain's numbers here are identical to the Step 2 subcircuit baseline; Step 7 confirms the games are identical tick for tick (D52, 60 of 60 pairs).
 - **"Involved" is an approximation:** neurons that fired in D46's 70 recruitment runs, not in the held-out games.
 
