@@ -15,6 +15,7 @@ On the **20 held-out ship levels** (easy 8, medium 8, hard 4), closed loop, **wh
 | **B, baseline of record** | ω_self(vy − v_req); ω_full = 30°/s; R_ship = 150 Hz; DNp22 rule (spike → release next tick) | The result |
 | **C, control** | ω_self(−v_req), otherwise identical | Steering without the fly's stabiliser: does the stabiliser help? |
 | **Faster-anchor variant** | B with ω_full = 90°/s (3×, ~3 Hz, active-state range; Strother et al. 2018) | Labelled, always reported second (as D50) |
+| **Corrected signs** | B on the T4/T5-corrected connectome (D27), otherwise identical | D28's sensitivity check, reported alongside the original. Run here, not only on Stereo Madness, because T4/T5 are the ship's input neurons, so the correction acts directly on this pathway. Open-loop checks 1 and 2 are also run on it. Batch 4, last |
 
 **No-brain references** (deterministic, or 10 random draws per level):
 - **Never hold** and **always hold.**
@@ -39,6 +40,27 @@ Read against, in this order:
 2. **B's ideal ship:** how close does a noisy brain get to the encoding's own noiseless use?
 
 **Predictions:** written after the ideal-ship results are in and before the baseline runs, so they can use them. Dated and logged with this plan.
+
+### Predictions (Shannyn, 2026-11-10: after the training-level ideal ships, before any fly-driven ship run, held-out levels unseen)
+
+What they rest on: B's ideal ship (training: 19/20 easy, 12/20 medium, 0/10 hard) and the logged pathway tests (`ship_pathway_check.md`): DNp22 fires at ~100–150 Hz once "down" is driven even at 25 Hz, "up" alone drives nothing and "up" silences DNp22, and the output rule is "any DNp22 spike releases, silence holds". These are guesses with reasons, scored hit or miss.
+
+| # | Prediction | Why |
+|---|---|---|
+| 1 | **Gate:** zero input gives 0 DNp22 spikes | As for the Giant Fiber (D30); DNp22 is silent without input in the pathway tests |
+| 2 | **Open loop:** DNp22 rate rises with downward f and is ~0 for upward f, on both sides, with the left below the right | Pathway tests S1/S2 |
+| 3 | **B against never hold, always hold and random holds: better** than each (p < 0.05) | B's ideal ship completes easy levels; all three references die at the first obstacle |
+| 4 | **B's brain does worse than B's ideal ship** on the held-out levels (fewer completed, lower mean progress), and **completes no hard level** | Noise and a one-tick delay can only add errors to a rule that's already sign-correct; the ideal ship completes no hard training level |
+| 5 | **B completes at least half the easy levels** (≥ 4 of 8 in the median-seed run) **and fewer than half the medium ones** | The ideal ship's 95% easy and 60% medium, minus the brain's errors |
+| 6 | **Most deaths are (d), the fly's control, not (b)** | The ideal ship rarely dies on easy and medium levels, so most of the fly's deaths there are its own |
+| 7 | **Among (d) deaths, more (d↑) too high than (d↓) too low** | Silence = hold: whenever DNp22 is quiet (small f, or between its spikes, ~1 every 2 ticks at 100–150 Hz), the ship climbs. So the fly should release less often than the ideal ship |
+| 8 | **Held share above the ideal ship's** (B ideal: 48%) | Same reason as 7 |
+| 9 | **B against C with the brain: B better** (p < 0.05) | The ideal ships differ sharply beyond easy (medium 12 against 0); the brain keeps the sign of each term |
+| 10 | **The 90°/s variant: same or lower progress than B, with more (d↑)** | f is 3× smaller for the same motion, so DNp22 is driven more weakly and stays quiet more often, which holds |
+| 11 | **Releases come mostly from both DNp22s together;** of one-sided releases, more from the right | Both eyes are driven together; the left side is weaker in v783 |
+| 12 | **0 stuck runs** | As every cube condition |
+
+**Model limits these don't test:** the ideal ships test the steering logic; how strongly the pathway drives DNp22 matters only with the brain (D53).
 
 ## How each death is classified
 
@@ -70,6 +92,7 @@ Every death gets exactly one class, decided by a fixed procedure, in this order:
 
 - **Every comparison:** per level, each condition's median run across the three seeds; D48's "equal" (both completed, or both died on the same object); two-sided sign test across levels, "better" or "worse" only at p < 0.05, otherwise "no clear difference".
 - **Fly against each reference:** never hold, always hold, random holds (each random draw compared, as in D48, plus the mean of the draws).
+- **Corrected signs against the baseline:** read as "does the T4/T5 sign labelling change the ship?" No clear difference means the result doesn't rest on the labelling; a difference is reported as a finding, and the original stays the version of record (D28).
 - **Faster-anchor variant against the baseline:** read as "does the anchor's state matter?", not "which is better tuned". The headline is the baseline whichever does better (as D50).
 - **C against B:** read as "does the fly's stabiliser improve steering?" (B better: yes; no clear difference: the stabiliser adds nothing we can see; C better: it hurts).
 - **Noise line:** seed against seed for the baseline, as context.
@@ -90,5 +113,5 @@ Counted as they played out, also reported with stuck runs left out, plus the stu
 
 1. Random holds drawn from the fly's own hold and release lengths, instead of D48's rate-matched presses: OK to build?
 2. Can the classifier re-play from "first seen" with the ideal ship, and find "first seen" from the 37 directions?
-3. Cost of the three conditions (B, C, B's 3× variant): three overnight batches?
+3. ~~Cost~~ Answered 2026-11-11: ~4–6 h per condition, so the four conditions (B, C, B's 3× variant, corrected signs) take three to four nights; the smoke test pins it down. Order: B first, then C, the 3× variant and corrected signs.
 4. The open-loop checks: about how long on the whole brain?
