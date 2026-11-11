@@ -140,7 +140,7 @@ Whatever is chosen, **the self-motion-only ship stays as a control:** the differ
 3. **Hold unless released:** one line in the output rule.
 4. **DNp22:** no objection; DNp20 stays recorded and shown.
 
-## 8. Redesign after the ideal-ship check (2026-11-10, proposed, to agree with Jacob)
+## 8. Redesign after the ideal-ship check (2026-11-10, agreed, logged as D53)
 
 **Result** (`docs/notes/ship_ideal.md`): neither ideal ship completed any of the 50 training ship levels; both died where never hold does. Full geometry stuck to the floor (the §1d problem); self-motion only stabilised but had nothing to steer by. This is reported as a result in its own right: **a wide-field motion stabiliser alone doesn't navigate**, which fits VS cells' role. Options: `docs/notes/ship_redesign_options.md`.
 
@@ -172,6 +172,7 @@ Both use only the self-motion part of the §1b formula, ω_self(v) = the mean ov
 | **Self-motion only (control)** | ω_self(vy) | As before: stabiliser only, no steering (B with v_req = 0). |
 
 - Then as before: f = min(1, \|ω\| / ω_full) with ω_full = 30°/s; downward ω drives T4d/T5d, upward drives T4c/T5c, both eyes; DNp22 rule unchanged.
+- **Why one motion term, not two added (Jacob's alternative):** clipping a motion term and an error term separately and adding them lets the stabiliser saturate near surfaces and oppose any climb, steering included. B's single term opposes only deviations from v_req.
 - **The three differ in one term each,** so the held-out comparison B against C asks: **does the fly's stabiliser improve steering?**
 - **Logged every tick:** Δy, dx, v_req, vy, ω_self(vy), ω_self(v_req) and the ω used.
 
