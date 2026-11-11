@@ -41,7 +41,11 @@ Read against, in this order:
 
 **Predictions:** written after the ideal-ship results are in and before the baseline runs, so they can use them. Dated and logged with this plan.
 
-### Predictions (Shannyn, 2026-11-10: after the training-level ideal ships, before any fly-driven ship run, held-out levels unseen)
+### Predictions (Shannyn, committed 2026-11-11 00:02: after the training-level ideal ships, before any held-out ship run)
+
+*Corrected 2026-11-11 (Jacob's note): the header first said "before any fly-driven ship run". In fact Jacob's 2-level training smoke test (fly-driven) and the open-loop checks had already run, though Shannyn hadn't seen their results. So **predictions 1 and 2 are not scored**: their results existed before the predictions were committed. Predictions 3–12 concern the held-out runs, which hadn't started.*
+
+*Known before the opening (Jacob, 2026-11-11): the live stuck flag showed 1 stuck run in B, so prediction 12 is a miss for B (C: 0).*
 
 What they rest on: B's ideal ship (training: 19/20 easy, 12/20 medium, 0/10 hard) and the logged pathway tests (`ship_pathway_check.md`): DNp22 fires at ~100–150 Hz once "down" is driven even at 25 Hz, "up" alone drives nothing and "up" silences DNp22, and the output rule is "any DNp22 spike releases, silence holds". These are guesses with reasons, scored hit or miss.
 
