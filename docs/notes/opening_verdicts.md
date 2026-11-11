@@ -1,5 +1,7 @@
 # Step 4 and Step 7 opening: procedure, Step 7 reading order and verdict sheet
 
+**What actually happened (2026-11-10):** Jacob and Shannyn chose instead to have Jacob's Claude Code session open both reports and judge every fixed question against D51 and D52, then review its verdicts together. The results are in `docs/notes/step4_report.md` and the D51 and D52 entries. The sheet below was not used.
+
 *Jacob, 2026-11-10. Prepared **without opening either report**: every question below comes from D51, D52, `step4_proposal.md` §5 and `step4_opening.md`. The Step 7 report was generated blind on 2026-11-10 (only its checks were printed: all pass at both rates).*
 
 ## Procedure (agreed with Shannyn, 2026-11-10)

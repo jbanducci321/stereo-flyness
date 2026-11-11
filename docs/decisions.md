@@ -871,6 +871,14 @@ Jacob's proposal (`docs/notes/step4_proposal.md`, revision 3) with Shannyn's ans
   - **Night 2 is now 480 runs** (~8–10 h): the old random lesions, the recruited-matched controls and (a)–(d).
   - **(b)'s prediction, a dated note (Shannyn):** the open-loop check points the other way. Shannyn predicted (b) would jump earlier, but open loop it fires later: 46.6 ± 4.0° against intact 38.0°, identical to (c) relay-only. So on balance the rest of the brain makes the Giant Fiber fire *earlier*. The prediction stays as recorded. A later threshold also helps at 150 Hz, so **if (b) or (c) does better than intact, it's read as the same late-threshold effect as Step 3 and E5c, not as "a relay plays better"**. With identical open-loop results, (b) and (c) are expected to play alike; both stay as fixed.
 
+- **Result (opened 2026-11-10: at Jacob and Shannyn's request, Jacob's Claude Code session read the report and judged every fixed question against the rules; Jacob and Shannyn review the verdicts; full write-up in `docs/notes/step4_report.md`).** All checks passed (660 runs, clean commits `91989c6` and `b8228a6`, every replay exact, connectivity files unchanged, 0 stuck, 0 unclassified).
+  - **(a) shuffle and (d) random network: worse than intact** (0 better, 18 worse, 2 equal; p < 0.001, both survive Holm). The Giant Fiber never fires; both play exactly like never press (6.3%). **So the play depends on the real wiring.**
+  - **(b) looming-kept and (c) relay-only: identical to each other** (the shuffled rest of the brain stays silent), 59.4% progress against intact's 29.4%: better at p = 0.013, **not surviving Holm** (0.129). **All three relay bars fail** (first-spike θ 46.5° against 36.6°, beyond the 2.5° seed range; (d1) share 0% against 61%), so neither is a relay of the intact fly. Doing better is read as the late-threshold effect, as fixed.
+  - **E5b and E5c: not specific** (no clear difference against intact or against their recruited-matched controls). E5c moves the first spike to 100°.
+  - **Controls:** no clear difference from intact.
+  - **Holm (12):** only (a) and (d) survive.
+  - **Predictions:** (a), (d) hit; (b) missed on all three (later, not earlier; it had flagged this in its dated note); E5b in the predicted direction but not significant; E5c hit on all four; the controls hit.
+
 **D52. Step 7: the whole brain against the subcircuit in closed loop, fixed before reading** (2026-11-06)
 Jacob's proposal (`docs/notes/step7_proposal.md`) with Shannyn's answers of 2026-11-06; she leads the comparison. **Fixed before the Step 4 report is opened:** nobody has read any result of the Step 4 intact whole brain, and the report script's dry run printed only its checks. The proposal has the detail; this entry is the binding summary, and where they differ this entry wins.
 - **The question:** does the final subcircuit (D46) play the cube like the whole brain on unseen levels, in fly-driven closed loop?
@@ -895,6 +903,10 @@ Jacob's proposal (`docs/notes/step7_proposal.md`) with Shannyn's answers of 2026
   - The ship gets its own check (`docs/notes/ship_brief.md` §5).
 - **Order:** the 50 Hz runs first, blind. Then the Step 4 opening (D51), then Step 7 straight after, both pairings together.
 - **Code:** `scripts/step7_report.py`, `stereo_flyness/experiments/step7_analysis.py`.
+- **Result (opened 2026-11-10: at Jacob and Shannyn's request, Jacob's Claude Code session read the report and judged every fixed question against the rules; Jacob and Shannyn review the verdicts).** Checks passed at both rates (60 pairs each, every replay exact, settings shared, clean commits).
+  - **150 Hz: 60 of 60 identical games. PASS.** 50 Hz: **60 of 60. PASS.** No pair split at either rate; per approach, every compared first press matched within ±1 frame (456 of 456 and 776 of 776); per level, 20 of 20 equal at both rates.
+  - **Checked that it isn't the same runs twice:** the subcircuit and whole-brain runs record different networks (33,486 and 138,639 neurons), yet in the pair checked tick by tick the same 154 neurons fired at the same frames. In these games the whole brain's activity stays inside the subcircuit.
+  - **Reading, as fixed:** the subcircuit's cube results stand for the whole brain, at 150 Hz and at 50 Hz, in this setting.
 
 ## Open
 
@@ -906,8 +918,8 @@ Still open:
 - The final subcircuit: built and validated (D46: rules 1–5, the calibration and the time limit pass, on D47's encoding). Step 2 is done: runs, analysis and result in D48 (write-up: `docs/notes/step2_report.md`).
 - Step 3 (tuning R): done, result in D49 (write-up: `docs/notes/step3_report.md`).
 - Which R goes forward: decided in D50 (150 Hz of record; 50 Hz as a labelled variant on Stereo Madness, always reported second).
-- Step 4 (controls and lesions): fixed in D51 (amended before night 2). All 660 runs are done, blind and clean; the report is written and unopened, to open together (`docs/notes/step4_opening.md`). Its replays (D51's rule) are rendered, unwatched.
-- Step 7 (whole brain against the subcircuit): fixed in D52. The 60 whole-brain runs at 50 Hz are done (2026-11-06, commit `03eff81`), blind; the report's checks pass at both rates (60/60 pairs, settings shared, all commits clean) and nothing has been read. Next: the Step 4 and Step 7 opening, now two independent reads (reports sent Sunday 2026-11-15, 8 pm; compared Monday 2026-11-16, agreed 2026-11-10): `docs/notes/opening_verdicts.md`.
+- Step 4 (controls and lesions): **done** (D51, result 2026-11-10): the play depends on the real wiring; the relay networks play further by firing later; neither lesion is specific. Write-up: `docs/notes/step4_report.md`. Its replays (D51's rule) are rendered, still unwatched.
+- Step 7 (whole brain against the subcircuit): **done** (D52, result 2026-11-10): 60 of 60 identical games at 150 Hz and at 50 Hz; the subcircuit's cube results stand for the whole brain.
 - Step 5 (ship): Shannyn's draft is in (`docs/notes/ship_proposals.md`). Agreed with it on 2026-11-10, to log with the design: DNp22 as the readout (any spike releases the next tick, otherwise hold), R_ship the only ship dial (baseline 150 Hz), the whole brain, both eyes with the left–right asymmetry stated. Its first check failed: neither ideal ship completed any training ship level (`docs/notes/ship_ideal.md`), so the encoding is being rethought before any brain run. Also agreed 2026-11-05 (to log at the start of Step 5): ship mode stays in whatever happens in Stereo Madness; whether to tune it is decided after its baseline.
 - Brain panel (R3): version 1 of Shannyn's design is built; her five questions are answered in `docs/notes/brain_panel_design.md`, for her review.
 - **Stereo Madness run N times, not once (changes D7; agreed in principle 2026-11-02, written up at Step 6).** A frozen fly with Poisson input is a distribution, not a single outcome, so one run can't tell luck from typical. Conditions:
