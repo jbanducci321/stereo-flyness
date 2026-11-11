@@ -2,13 +2,12 @@
 
 **Purpose of this document:** bring any Claude Code session (especially Shannyn's) fully up to speed on what this project is, what has been decided, what has been built, and how to work in this repo without contradicting earlier decisions.
 
-**Last updated:** 2026-11-06 (status and plan; first written 2026-10-22). Written by Jacob's Claude Code session, which did the planning and setup with Jacob.
+**Last updated:** 2026-11-10 (status and plan; first written 2026-10-22). Written by Jacob's Claude Code session, which did the planning and setup with Jacob.
 
-**Status (2026-11-06):** Steps 0–3 are done. The untuned fly plays the cube held-out levels (Step 2, D48, `docs/notes/step2_report.md`), and tuning R was checked on held-out levels (Step 3, D49, `docs/notes/step3_report.md`). 150 Hz goes forward (D50).
-- **Step 4:** all 660 runs are done (blind). The report is written and **unopened**, to open together (`docs/notes/step4_opening.md`).
-- **Step 7:** plan fixed (D52). At 150 Hz it reuses existing runs; at 50 Hz it needs 60 new whole-brain runs (blind). Opened right after Step 4.
-- **Step 5 (ship):** waiting on Shannyn's design (`docs/notes/ship_brief.md`). Everything else for it is built: the mode-switching loop, the runner, the ship report and the no-brain references.
-- **Brain panel:** version 1 of Shannyn's design is built (R3).
+**Status (2026-11-10):** Steps 0–3 are done. The untuned fly plays the cube held-out levels (Step 2, D48, `docs/notes/step2_report.md`), and tuning R was checked on held-out levels (Step 3, D49, `docs/notes/step3_report.md`). 150 Hz goes forward (D50).
+- **Steps 4 and 7:** all runs are done, blind and clean (Step 4: 660; Step 7: the 60 new 50 Hz whole-brain runs, with the report's checks passing at both rates). Both reports are written and **unopened**. The opening is now **two independent reads**: reports sent Sunday 15 Nov at 8 pm, verdicts compared Monday 16 Nov (`docs/notes/opening_verdicts.md`).
+- **Step 5 (ship):** Shannyn's draft (`docs/notes/ship_proposals.md`) answers Q1–Q5: image motion from geometry on T4/T5, DNp22 as the readout (any spike releases), one dial R_ship, whole brain. **Its first check failed:** with no brain, neither ideal ship (full geometry, self-motion only) completed any of the 50 training ship levels; both play exactly like never hold (`docs/notes/ship_ideal.md`). So the encoding is being rethought with Shannyn before any brain run (`docs/notes/ship_redesign_options.md`). Built meanwhile: the encoder, the ship controller (not registered until logged), the ideal-ship runner, the v783 check (`ship_neuron_check.md`) and each eye's response from the logged pathway tests (`ship_pathway_check.md`).
+- **Brain panel:** version 1 of Shannyn's design is built (R3), with her tweaks; ship holds are labelled. The ship input column waits for the ship design.
 
 > **To the Claude session reading this:** treat everything under "Decisions" and "Hard rules" as settled. Don't re-litigate, override or "improve" them without the human explicitly asking. If a task seems to need a change to a decision, stop and ask your human first. Shannyn and Jacob decide together, and every change gets logged in `docs/decisions.md`.
 
@@ -115,7 +114,7 @@ The canonical, up-to-date log is **`docs/decisions.md`**. Read it first. Summary
 - **Subcircuit rule:** decided in **D36** (recruited neurons + their ≥ 30-synapse inputs; interim build for T3, final rebuild after T4) and **D37** (cascade trials left out; tuning-time limit; 30 s practice levels).
 - **Brain time, input encoding, output rule, cube dials:** decided in T4 (**D40–D43**). Ship mode is decided in Step 5.
 - **Stereo Madness run N times, not once:** agreed in principle (2026-11-02); N and the seeds are fixed at Step 6, before any run (`docs/decisions.md`, "Open").
-- **Ship design (Step 5):** encoding, output rule, dials and calibration. Shannyn leads (`docs/notes/ship_brief.md`).
+- **Ship design (Step 5):** encoding, output rule, dials and calibration. Shannyn leads. Her draft (`docs/notes/ship_proposals.md`) failed its ideal-ship check, so the encoding is open again (`docs/notes/ship_redesign_options.md`); the readout (DNp22, any spike releases) and whole brain are agreed but not logged.
 - **GPU:** deferred until it's needed.
 - **Closed-loop simulation approach:** resolved for now by D17 (Brian2 with `run_frames`). Our own reimplementation (e.g. PyTorch, validated against Brian2) stays an option for speed or for the GPU phase.
 - **Code LICENSE.**
@@ -301,11 +300,11 @@ Each `step()` call costs ~100–250 ms of Brian2 overhead regardless of network 
 | 1 | Build the game, including a viewer that can replay a recorded run log: **complete** |
 | 2 | Cube baseline with **default, untuned** values. Record this before any tuning; it's a key result. Closed-loop runs log every frame from here on (R1), and the first brain panel appears in the viewer (R2): **complete (D48)** |
 | 3 | Tune at most 2–3 dials on generated levels, evaluate on held-out generated levels: **complete (D49)** |
-| 4 | Controls and lesions (D51): shuffled, looming-kept, relay-only and random networks; E5b/E5c lesions with matched controls. Does performance depend on the real wiring? **Runs done (660, blind); report unopened, to open together** |
-| 5 | Ship pathway: repeat Steps 2–4. Ship mode stays in whatever happens (agreed 2026-11-05); whether to tune it is decided after its baseline. **Waiting on Shannyn's design;** loop, runner (`scripts/play_level.py`), report (`scripts/ship_report.py`) and references are built |
+| 4 | Controls and lesions (D51): shuffled, looming-kept, relay-only and random networks; E5b/E5c lesions with matched controls. Does performance depend on the real wiring? **Runs done (660, blind); report unopened; opened as two independent reads, 15–16 Nov** |
+| 5 | Ship pathway: repeat Steps 2–4. Ship mode stays in whatever happens (agreed 2026-11-05); whether to tune it is decided after its baseline. **Shannyn's draft is in; its ideal-ship check failed (0/50 training levels), so the encoding is being rethought** (`docs/notes/ship_ideal.md`). Loop, runner, report, references, encoder, controller and ideal-ship runner are built |
 | 6 | Mixed levels, then Stereo Madness with everything frozen. Run N times, not once (agreed in principle; see Open decisions), with the replay picked by rule as the showcase. The runner refuses Stereo Madness without `--stereo-madness-final` and always runs it blind |
-| 7 | Whole brain compared with the subcircuit (D52): at 150 Hz from the Step 2 and Step 4 intact runs; at 50 Hz with 60 new whole-brain runs. No GPU needed for it; the GPU decision is deferred |
-| 8 | Write-up: honest README, figures, reproducibility, and the replay viewer showcase (Stereo Madness replay plus an exported video). Methods draft for Steps 0–3: `docs/notes/writeup_methods.md` (for Shannyn to edit) |
+| 7 | Whole brain compared with the subcircuit (D52): at 150 Hz from the Step 2 and Step 4 intact runs; at 50 Hz with 60 new whole-brain runs (**done, blind**). Opened with Step 4. No GPU needed for it; the GPU decision is deferred |
+| 8 | Write-up: honest README, figures, reproducibility, and the replay viewer showcase (Stereo Madness replay plus an exported video). Methods drafts: Steps 0–3 in `docs/notes/writeup_methods.md`, Steps 4–7 setup in `docs/notes/writeup_methods_4to7.md` (for Shannyn to edit) |
 
 **Stretch:** evolutionary search over the dials, or mushroom-body dopamine-gated learning (only KC→MBON synapses plastic).
 
