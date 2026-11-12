@@ -949,6 +949,34 @@ Shannyn's design (`docs/notes/ship_proposals.md`, §1–§5 and §8), agreed wit
 - **Added 2026-11-11, before any held-out ship run** (the training smoke test and the open-loop checks had run): **B on the T4/T5-corrected connectome** runs as a fourth baseline batch (D28's sensitivity check), since T4/T5 are the ship's input neurons; open-loop checks 1 and 2 also run on it. Shannyn's dated baseline predictions are in `ship_analysis_plan.md`.
 - **How the baseline is judged:** `docs/notes/ship_analysis_plan.md`, fixed with this entry: the brain runs B, C and B's faster-anchor variant, and the plan has the references, open-loop checks, death classes and comparisons. **The question B against C asks:** does the fly's stabiliser improve steering?
 - **Model limits to state:** no gap junctions (VS–DNOVS coupling is electrical in the fly), no ocellar input (the largest input to DNp20 and DNp22), spiking VS cells (real ones are mostly graded), DNOVS cells encode rotation while the ship translates (our mapping), and no behavioural state.
+- **Result: the ship baseline (opened 2026-11-11; full write-up in Jacob's results note).** All four batches passed their checks (60/60 runs each, one clean commit, every run replays exactly). A Windows restart and two worker-pool failures interrupted the batches. No run was lost or partial: missing runs were resumed on the same commit. Median run per level, 20 held-out ship levels:
+
+  | | Levels completed (easy / medium / hard) | Mean progress |
+  |---|---|---|
+  | **B (the fly of record)** | **6/20** (5/8, 1/8, 0/4) | **45.6%** |
+  | B, corrected signs | 7/20 (6/8, 1/8, 0/4) | 53.0% |
+  | B, 90°/s anchor | 0/20 | 26.1% |
+  | C (no stabiliser) | 0/20 | 14.9% |
+  | B's ideal ship (no brain) | 14/20 | 81.4% |
+
+  - **The fly flies the ship:** B beats never hold, always hold and random holds on 18–20 of 20 levels, worse on none (p < 0.001 each).
+  - **The fly's stabiliser helps steering:** C is worse than B on 16 levels and better on none (p < 0.001). With the brain, C is no better than random holds (p = 0.50), although its ideal ship completes 9 levels.
+  - **The anchor's state matters:** the 90°/s variant is worse than B on 10 levels, equal on 10 (p = 0.002). The headline stays B at 30°/s (as D50).
+  - **The T4/T5 labelling doesn't change the result:** corrected signs are better on 2 levels, worse on 0 (no clear difference). The original stays the version of record (D28).
+  - **No clear difference between seeds** in any batch. **Stuck runs:** 1 in B, 3 in corrected signs, 0 in C and B90 (counted as played, D38).
+  - **Deaths:** 39 of B's 45 are the fly's control (d), and **all 39 are "too high" (d↑); there are none "too low"** in any batch. 36 of the 39 are the ship hitting the underside of an upper block, a median 72 units above the ideal ship, usually while falling. 3 are borderline: above the ideal path, but hitting a block below it. They count as (d↑) by the plan's rule.
+  - **Why it errs high (Jacob's analysis; the 61% threshold checked against `game/physics.py`):** this comes from **our output rule plus the game's physics, not from tuning**.
+    - In the game, holding while falling pushes up at 0.5 g, while releasing pulls down at only 0.32 g. So a falling ship speeds up its fall only if it releases on more than 0.5 / 0.82 ≈ 61% of ticks.
+    - Each DNp22 tops out near 110 Hz against the 240 Hz game clock. Even at full "down" drive, the two together release on ~67.5% of ticks, so the ship sinks at ~35 units/s against the ideal ship's 345.6.
+    - **So the fly climbs fast but descends slowly,** reaching lower openings too high. B90 drives DNp22 more weakly, so it errs the same way, more. DNp22 is already near its maximum, so R_ship can't fix this. **Any change to the output rule is a new decision, never a tweak after seeing results.**
+    - **For Stereo Madness:** its ship sections will be hardest wherever they need a fast drop. Stated before it runs, not adjusted for.
+  - **How it flies (described):**
+    - It switches about 140 times a second (median hold and release both 1 tick), so its vertical speed is set by the share of ticks it holds.
+    - It tracks the target closely: the median error at each column is 4 units.
+    - DNp22 fires ~5 Hz during "up" input in closed loop (0 open loop), probably carry-over from the "down" drive just before.
+  - **Predictions** (scored by the fixed rules; 1–2 not scored, as the plan says): **8 hits, 2 misses.**
+    - **Hits: 3–10.** **7, flying too high, is the clearest: 39 against 0.** The reason was close but incomplete: silence = hold, and the game's asymmetric gravity. **8 is a hit only by the letter:** held 48.0% against the ideal ship's 47.7%, which the write-up calls "about equal".
+    - **Misses: 11** (releases from both DNp22s at once are only 20%, though right-only beats left-only, 53,556 against 28,110) and **12** (1 stuck run, known before the opening).
 
 ## Open
 
