@@ -1,0 +1,25 @@
+# Stereo Madness, the held-out final test (Step 6; docs/notes/step6_proposal.md).
+#
+# scripts/stereo_madness_runs.py refuses to run until `decision` names a logged entry in
+# docs/decisions.md (e.g. "D54") whose title mentions Stereo Madness. Fill it in, and check the
+# settings below against that entry, at the Step 6 meeting: nothing here is decided until then.
+# Never change anything here after a Stereo Madness run (D7, hard rule 5).
+
+decision = ""                 # the logged Step 6 entry, e.g. "D54"
+network = "whole_brain"       # proposal §1 (agreed 2026-11-10)
+seeds = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]   # N = 10, proposal §3 (agreed 2026-11-10)
+ship_design = "B"             # D53
+ship_rate_hz = 150.0          # D53: R_ship, untuned
+
+# One setting changed at a time from the record (proposal §2). B90 is out: D53 didn't adopt it.
+[variants.record]             # the headline
+rate_hz = 150.0               # D50: 150 Hz is the fly of record
+signs = "original"
+
+[variants.r50]                # D50: labelled variant, reported second
+rate_hz = 50.0
+signs = "original"
+
+[variants.corrected]          # D28: sensitivity check, reported alongside
+rate_hz = 150.0
+signs = "corrected"
