@@ -11,6 +11,9 @@ Before a batch starts, this checks that the tree is clean (every run records its
 `-dirty` run can't be reported) and that the open-loop gate passed on the same connectome (check 1:
 zero input gives 0 DNp22 spikes; `scripts/ship_open_loop.py [--signs corrected]`).
 
+Runs use `--resume`: after a killed batch, running the same command again plays only what's
+missing at this commit (and refuses runs from another commit).
+
 Usage:
     uv run python scripts/ship_baseline_runs.py B --dry-run     # print the commands only
     uv run python scripts/ship_baseline_runs.py B               # tonight's batch
@@ -40,7 +43,7 @@ def commands(design: str, jobs: int, signs: str = "original") -> list[list[str]]
         sys.exit(f"Expected 20 held-out ship levels, found {len(names)}.")
     return [["uv", "run", "python", "-u", "scripts/play_level.py", *names, "--suite", "held_out",
              "--network", "whole_brain", "--ship", design, "--ship-rate", "150", "--signs", signs,
-             "--seed", str(seed), "--jobs", str(jobs), "--quiet"] for seed in SEEDS]
+             "--seed", str(seed), "--jobs", str(jobs), "--quiet", "--resume"] for seed in SEEDS]
 
 
 def gate_passed(path: Path) -> bool:
