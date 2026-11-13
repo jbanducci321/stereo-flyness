@@ -46,6 +46,8 @@ class Timeline:
             self.ticks.append(TickView(int(row.tick), float(row.time), float(row.x), float(row.y),
                                        row.mode, bool(row.held), events, bounds))
         self.death_tick = next((t.tick for t in self.ticks if "death" in t.events), None)
+        if brain is not None and hasattr(brain, "attach"):
+            brain.attach(level, self)  # the ship's targets, recomputed and checked against the log
 
     def _portal_near(self, x: float, mode: str):
         """The portal of `mode` the player was touching at `x` (the closest one by x)."""
