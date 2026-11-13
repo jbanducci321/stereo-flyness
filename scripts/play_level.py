@@ -14,6 +14,10 @@ Stereo Madness is the held-out final test (D7, hard rule 5):
 
 Every frame is logged for the replay viewer, with the mode the fly was shown (hard rule 10).
 
+If joblib's worker pool breaks mid-batch (a Windows error, `experiments/batches.py`), the runs that
+hadn't finished are played again in a new pool, up to 3 tries. After a batch is killed outright (e.g.
+a restart), `--resume` plays only the levels with no finished run at this commit.
+
 Usage:
     uv run python scripts/play_level.py cube-easy-4 --network final          # any training level
     uv run python scripts/play_level.py mixed-easy-0 ship-easy-0 --network final --ship <design>
@@ -40,6 +44,7 @@ from reproduce_sugar import PATH_COMP, PATH_CON
 from run_pathway_tests import CONFIG, git_commit, network
 from stereo_flyness.brain.celltypes import CellTypes
 from stereo_flyness.brain.controls import file_sha256
+from stereo_flyness.experiments.batches import play_with_retries, resumable
 from stereo_flyness.experiments.cascades import load_stuck_state
 from stereo_flyness.experiments.pathway_tests import loom_patches
 from stereo_flyness.game.engine import Game
@@ -150,6 +155,8 @@ def main() -> None:
     parser.add_argument("--bot", action="store_true", help="the bot drives; the brain only watches")
     parser.add_argument("--tag", default="")
     parser.add_argument("--quiet", action="store_true", help="blind (D33): progress and stuck flags only")
+    parser.add_argument("--resume", action="store_true",
+                        help="skip levels already finished at this commit (after a killed batch); clean tree only")
     parser.add_argument("--stereo-madness-final", action="store_true",
                         help="allow Stereo Madness (Step 6 only, once its runs are fixed)")
     args = parser.parse_args()
@@ -183,19 +190,31 @@ def main() -> None:
     extra = {"status": status + (", T4/T5-corrected signs (D28)" if args.signs == "corrected" else "")
              + (", Stereo Madness final test" if sm else ""),
              "signs": args.signs, "connectome": {"file": path_con.name, "sha256": file_sha256(path_con)}}
-    runs = Parallel(n_jobs=args.jobs, return_as="generator_unordered")(
-        delayed(one)(n, lv, path_comp, path_con, cells, patches, gf, stuck_ids, args, out, extra)
-        for n, lv in levels.items())
-    summaries = []
-    for i, s in enumerate(runs, 1):
-        summaries.append(s)
-        if quiet:  # the stuck flag is the one live check allowed (D48)
-            flag = "" if s["stuck_from_frame"] is None else f"; STUCK from frame {s['stuck_from_frame']}"
-            print(f"run {i}/{len(levels)} done{flag}", flush=True)
+    names = list(levels)
+    if args.resume:
+        try:
+            names, done = resumable(names, out / ("bot" if args.bot else "fly"), git_commit())
+        except ValueError as e:
+            sys.exit(f"Refused, nothing run: {e}")
+        print(f"--resume: {len(done)} already done at this commit, {len(names)} to play", flush=True)
+    count = iter(range(1, len(names) + 1))
+
+    def play_batch(todo):
+        """One pool for `todo`; yields each summary as its run finishes. A new pool per call."""
+        runs = Parallel(n_jobs=args.jobs, return_as="generator_unordered")(
+            delayed(one)(n, levels[n], path_comp, path_con, cells, patches, gf, stuck_ids, args, out, extra)
+            for n in todo)
+        for s in runs:
+            if quiet:  # the stuck flag is the one live check allowed (D48)
+                flag = "" if s["stuck_from_frame"] is None else f"; STUCK from frame {s['stuck_from_frame']}"
+                print(f"run {next(count)}/{len(names)} done{flag}", flush=True)
+            yield s
+
+    summaries = play_with_retries(names, play_batch, log=lambda m: print(m, flush=True)) if names else []
     if quiet:
         print(f"Wrote {out.relative_to(ROOT)} (outcomes not shown: blind)")
         return
-    for s in sorted(summaries, key=lambda s: args.levels.index(s["level"])):
+    for s in summaries:
         end = "completed" if s["completed"] else f"died at {100 * s['progress']:.0f}% ({s['death_kind']} at x {s['death_x']:.0f})"
         print(f"{s['level']} [{s['driver']}-driven, modes {', '.join(s['modes'])}]: {end}; {s['presses']} presses in "
               f"{s['seconds']:.1f} s")
