@@ -87,7 +87,7 @@ Held-out results are never looked at until the whole batch has finished and the 
 - **Network:** the whole brain, original signs, with the T4/T5-corrected connectome as D28's sensitivity check.
 
 **What the model can't carry** (stated with every ship result):
-- **No gap junctions:** VS cells are electrically coupled to each other and to DNOVS neurons in the fly; the model has chemical synapses only.
+- **No gap junctions:** VS cells are dye-coupled to DNOVS neurons in *Drosophila* (Suver et al. 2016), and coupled to their VS neighbours through gap junctions in the blowfly *Calliphora* (Haag and Borst 2005); the model has chemical synapses only.
 - **No ocellar input:** ocellar neurons are the largest input to DNp20 and DNp22 in v783, and are never driven.
 - **Spiking VS cells:** real VS cells signal mostly with graded voltage; in the model every neuron spikes.
 - **Rotation, not translation:** DNOVS neurons encode body rotation, while the ship only climbs and falls. Using this pathway for altitude is our mapping.
