@@ -44,6 +44,7 @@ from stereo_flyness.experiments.ship_baseline import (
     release_sides, tracking)
 from stereo_flyness.experiments.step2_analysis import sign_test
 from stereo_flyness.experiments.step4_analysis import ALPHA, median_runs
+from stereo_flyness.experiments.stereo_madness import killing_box
 from stereo_flyness.game.engine import Game
 from stereo_flyness.game.suites import load_level
 
@@ -76,15 +77,8 @@ def levels(suite) -> list[str]:
 
 def death_object(level, game) -> str | None:
     """The killing box, as "x0,y0" (generated levels have no GD object IDs)."""
-    d = game.death
-    if d is None:
-        return None
-    hits = [b for b in level.boxes if b.kind == d.kind and not (
-        d.x + 15 < b.x0 or b.x1 < d.x - 15 or d.y + 15 < b.y0 or b.y1 < d.y - 15)]
-    if not hits:
-        return None
-    b = min(hits, key=lambda b: abs((b.x0 + b.x1) / 2 - d.x) + abs((b.y0 + b.y1) / 2 - d.y))
-    return f"{b.x0:g},{b.y0:g}"
+    b = killing_box(level, game.death)
+    return None if b is None else f"{b.x0:g},{b.y0:g}"
 
 
 def play(level, policy) -> dict:
