@@ -8,6 +8,10 @@ configs/stereo_madness.toml:
   the killing object) and the ship sections reached and passed.
 - **The showcase replay,** picked by the rule fixed before the runs: progress closest to the median,
   ties to the lowest seed.
+- **Checks for Shannyn's predictions** (docs/notes/step6_predictions.md), as measures only, never
+  scored here: (3) per seed, whether the corrected-signs run's game state (x, y, vy) is identical to
+  the record's on every tick before the first ship tick; (5) for record runs that die in a ship
+  section, whether the killing object was above or below the player.
 - **Context only:** the bot's run (scripts/bot_stereo_madness.py), if it's been made.
 
 Order: the record first; the 50 Hz variant second (D50); corrected signs alongside (D28). Blind
@@ -27,7 +31,7 @@ import pandas as pd
 
 from ship_baseline_report import death_object
 from stereo_flyness.experiments.ship_analysis import replay_run
-from stereo_flyness.experiments.stereo_madness import showcase, spread, where
+from stereo_flyness.experiments.stereo_madness import cube_match, death_side, showcase, spread, where
 from stereo_flyness.game.level import Level
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -48,7 +52,7 @@ def folder(cfg, v, seed) -> Path:
 
 
 def collect(cfg, v, level):
-    var, rows, problems = cfg["variants"][v], [], []
+    var, rows, problems, ticks = cfg["variants"][v], [], [], {}
     for seed in cfg["seeds"]:
         d = folder(cfg, v, seed)
         if not (d / "run.json").exists():
@@ -62,7 +66,8 @@ def collect(cfg, v, level):
                 or run.get("connectome", {}).get("file") != CONNECTOME[var["signs"]]:
             problems.append(f"seed {seed} has the wrong settings")
             continue
-        held = pd.read_parquet(d / "ticks.parquet")["held"].to_numpy(bool)
+        t = pd.read_parquet(d / "ticks.parquet")
+        held = t["held"].to_numpy(bool)
         try:
             game = replay_run(level, held, run)
         except ValueError as e:
@@ -71,8 +76,43 @@ def collect(cfg, v, level):
         x = level.length if run["completed"] else float(run.get("death_x") or game.player.x)
         rows.append({"variant": v, "seed": seed, "completed": run["completed"], "progress": run["progress"],
                      "stuck": run.get("stuck_from_frame") is not None, "commit": run.get("commit", ""),
-                     "death_object": death_object(level, game), **where(level, x, run["completed"])})
-    return pd.DataFrame(rows), problems
+                     "death_object": death_object(level, game), "death_side": death_side(level, game.death),
+                     **where(level, x, run["completed"])})
+        ticks[seed] = t
+    return pd.DataFrame(rows), problems, ticks
+
+
+def predictions(cfg, logs) -> list[str]:
+    """Measures for Shannyn's predictions 3 and 5 (docs/notes/step6_predictions.md). Only for
+    variants that passed every check. Scoring is done when the report is opened, by her rules."""
+    out = ["## Checks for the dated predictions (measures only; scored by docs/notes/step6_predictions.md)", ""]
+    if "record" in logs and "corrected" in logs:
+        out += ["**Prediction 3: corrected signs play exactly like the record in cube sections.** Per seed, the game "
+                "state (x, y, vy) on every tick before the first ship tick (or to the end, if a run reaches none).", "",
+                "| Seed | Ticks compared | Identical | First differing tick |", "|---|---|---|---|"]
+        matches = []
+        for seed in cfg["seeds"]:
+            m = cube_match(logs["record"][1][seed], logs["corrected"][1][seed])
+            matches.append(m["identical"])
+            out.append(f"| {seed} | {m['ticks']} | {'yes' if m['identical'] else 'no'} | "
+                       f"{'–' if m['first_diff'] is None else m['first_diff']} |")
+        out += ["", f"- **Identical for every seed: {'yes' if all(matches) else 'no'}** "
+                    f"({sum(matches)} of {len(matches)} seeds).", ""]
+    else:
+        out += ["**Prediction 3:** not measured (the record or corrected variant failed its checks).", ""]
+    if "record" in logs:
+        df = logs["record"][0]
+        ship = df[~df["completed"] & (df["ended_mode"] == "ship")]
+        sides = ship["death_side"].value_counts()
+        out += ["**Prediction 5: record runs that die in a ship section hit an object above them.** The killing "
+                "object's centre against the player's centre at death.", "",
+                f"- Record ship-section deaths: {len(ship)}; above {int(sides.get('above', 0))}, "
+                f"below {int(sides.get('below', 0))}, object not found {int(ship['death_side'].isna().sum())}"
+                + (" (seeds " + ", ".join(f"{r['seed']}: {r['death_side'] or '–'}" for r in ship.to_dict("records")) + ")"
+                   if len(ship) else "") + ".", ""]
+    else:
+        out += ["**Prediction 5:** not measured (the record variant failed its checks).", ""]
+    return out
 
 
 def main() -> None:
@@ -82,9 +122,9 @@ def main() -> None:
     lines = [f"# Stereo Madness, the final test ({cfg.get('decision') or 'decision not logged'})", "",
              f"Whole brain, ship {cfg['ship_design']} at {cfg['ship_rate_hz']:g} Hz, seeds {cfg['seeds'][0]}-{cfg['seeds'][-1]}. "
              "The headline is the count and the median, never the best run.", ""]
-    printed, frames = [], []
+    printed, frames, logs = [], [], {}
     for v in cfg["variants"]:
-        df, problems = collect(cfg, v, level)
+        df, problems, ticks = collect(cfg, v, level)
         need = len(cfg["seeds"])
         commits = sorted(df["commit"].unique()) if len(df) else []
         dirty = [c for c in commits if c.endswith("-dirty")]
@@ -105,11 +145,11 @@ def main() -> None:
         pick = showcase(df.to_dict("records"))
         lines += [f"**Completed {s['completed']} of {s['runs']}; median progress {100 * s['median']:.1f}%** "
                   f"(quartiles {100 * s['q1']:.1f}–{100 * s['q3']:.1f}%, range {100 * s['min']:.1f}–{100 * s['max']:.1f}%).", "",
-                  "| Seed | Completed | Progress | Ended in | Killing object | Ship sections reached / passed | Stuck |",
-                  "|---|---|---|---|---|---|---|"]
+                  "| Seed | Completed | Progress | Ended in | Killing object | Above / below | Ship sections reached / passed | Stuck |",
+                  "|---|---|---|---|---|---|---|---|"]
         for r in df.sort_values("seed").to_dict("records"):
             lines.append(f"| {r['seed']} | {'yes' if r['completed'] else 'no'} | {100 * r['progress']:.1f}% | "
-                         f"{r['ended_in'] or '–'} | {r['death_object'] or '–'} | "
+                         f"{r['ended_in'] or '–'} | {r['death_object'] or '–'} | {r['death_side'] or '–'} | "
                          f"{r['ship_reached']} / {r['ship_passed']} of {r['ship_sections']} | {'yes' if r['stuck'] else ''} |")
         dead = df[~df["completed"]]
         lines += ["", f"- **Deaths by section:** cube {int((dead['ended_mode'] == 'cube').sum())}, "
@@ -117,6 +157,8 @@ def main() -> None:
                   f"- **Showcase replay** (closest to the median, ties to the lowest seed; fixed before the runs): "
                   f"seed {pick['seed']}, {100 * pick['progress']:.1f}%.", ""]
         frames.append(df)
+        logs[v] = (df, ticks)
+    lines += predictions(cfg, logs)
     if BOT.exists():
         bot = json.loads(BOT.read_text(encoding="utf-8"))
         lines += ["## Context only: the bot", "",
