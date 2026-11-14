@@ -978,6 +978,30 @@ Shannyn's design (`docs/notes/ship_proposals.md`, §1–§5 and §8), agreed wit
     - **Hits: 3–10.** **7, flying too high, is the clearest: 39 against 0.** The reason was close but incomplete: silence = hold, and the game's asymmetric gravity. **8 is a hit only by the letter:** held 48.0% against the ideal ship's 47.7%, which the write-up calls "about equal".
     - **Misses: 11** (releases from both DNp22s at once are only 20%, though right-only beats left-only, 53,556 against 28,110) and **12** (1 stuck run, known before the opening).
 
+**D54. Step 6: the Stereo Madness runs, fixed before any run** (2026-11-14)
+Jacob's proposal (`docs/notes/step6_proposal.md`) with Shannyn's answers of 2026-11-10 and 2026-11-14; agreed by both on 2026-11-14, after the ship baseline (D53's result) and the mixed-level check, and before any Stereo Madness run. Of Stereo Madness itself, only its length has been read, never its layout (D7, hard rule 5). **Writes up the "run N times, not once" change to D7** (agreed in principle 2026-11-02, under Open).
+- **The network: the whole brain** for every run, cube and ship sections alike. It's the only network checked for both modes; the subcircuit was never checked on ship inputs.
+- **N = 10 runs per variant, seeds 0–9.** Fixed now; nothing changes between or after runs. **The headline is the full count and the median progress ("k of 10, median X%"), never the best run.**
+- **The variants**, one change at a time from the record, all at the same seeds:
+
+  | Variant | Cube R | Ship | Connectome | Role |
+  |---|---|---|---|---|
+  | **Record** | 150 Hz | B, R_ship 150 Hz | original | **the headline** (D50) |
+  | 50 Hz | 50 Hz | B, R_ship 150 Hz | original | labelled "tuned" variant, **always reported second**, with "outside the range measured in real flies" (D50) |
+  | Corrected signs | 150 Hz | B, R_ship 150 Hz | T4/T5-corrected | sensitivity check, reported alongside; the original stays the version of record (D28) |
+
+  - **B90 is not run:** D53 didn't adopt the faster anchor, and its baseline was worse than B.
+- **No ship tuning** (confirmed by both, 2026-11-14). R_ship stays at D53's untuned 150 Hz. The ship baseline showed the fly descends too slowly because of the output rule against the game's asymmetric gravity, with DNp22 already near its maximum, so R_ship can't fix it. A change to the output rule would be a new decision argued on its own merits, never a fix after seeing results, and none is made here. Ship mode stays in either way (agreed 2026-11-05).
+- **The showcase replay** (R4): the **record** variant's run whose progress is closest to the median of its 10, ties to the lowest seed (always a 150 Hz run, D50). The 50 Hz variant's replay, if shown, is picked by the same rule and labelled. Optional and labelled: the record's furthest run, captioned "the furthest of 10", never as the headline.
+- **Before it runs** (the runner checks each): the decision is logged and named in the config; the tree is clean; the ship open-loop gate passed on both connectomes; the mixed-level check's switching checks passed.
+  - Mixed-level check (2026-11-11): 60/60 held-out runs, one clean commit, exact replays, 0 stuck; switching **PASS** (25 mode switches, 0 mismatches). Plus 50 bot-driven training levels (2026-11-12), every portal crossed (the bot completed all 50): 50/50 runs, one clean commit, exact replays, 11 stuck; switching **PASS** (105 mode switches, 0 mismatches).
+- **How it runs:** all variants in one batch, blind (D33): only progress and stuck flags are printed. `scripts/stereo_madness_runs.py` with `configs/stereo_madness.toml`, 4 games at once, resuming after any interruption on the same commit.
+- **How it's reported** (`scripts/stereo_madness_report.py`): checks first (every run present, settings and connectome right, exact replay, one clean commit, stuck runs counted; a variant failing any check isn't reported). Then per variant: completed (k of 10); median, quartiles and range of progress; per run, where it ended (cube or ship section, and the killing object, above or below the ship) and the ship sections reached and passed; the showcase pick. Then the prediction checks: whether each corrected-signs run matches the record's game state (x, y, vy) tick for tick up to the first ship portal, per seed and for every seed. The bot's run (`bot_stereo_madness.py`) as context only.
+- **How it's opened: together, in one sitting** (Shannyn's answer, 2026-11-14), as the ship baseline (D53), not as two independent reads. The report is opened once, by both, and every fixed question is judged against its rule at that sitting.
+- **Predictions:** Shannyn's six dated predictions, `docs/notes/step6_predictions.md` (2026-11-13), committed before any run. Each is scored a hit or a miss by its own rule when the report is opened, with no partial credit. Stated already, from the ship baseline: its ship sections will be hardest wherever they need a fast drop.
+- **Model limits to state:** as D53 for the ship (no gap junctions, no ocellar input, spiking VS cells, DNOVS rotation against the ship's translation, no behavioural state); for the cube, as before (D41–D47). In ship sections the Giant Fibers still fire through T4/T5 → LPLC2 → GF; the game ignores them there, and the replay shows them as the model's activity.
+- **The killing object is approximate:** it's found from the full 30-unit grid cell, not the smaller hitbox that kills, so next to two objects it can name the wrong one. Accepted as is (Shannyn, 2026-11-14); any odd case is checked in the replay.
+
 ## Open
 
 Still open:
@@ -992,7 +1016,8 @@ Still open:
 - Step 7 (whole brain against the subcircuit): **done** (D52, result 2026-11-10): 60 of 60 identical games at 150 Hz and at 50 Hz; the subcircuit's cube results stand for the whole brain.
 - Step 5 (ship): Shannyn's draft is in (`docs/notes/ship_proposals.md`). Agreed with it on 2026-11-10, to log with the design: DNp22 as the readout (any spike releases the next tick, otherwise hold), R_ship the only ship dial (baseline 150 Hz), the whole brain, both eyes with the left–right asymmetry stated. Its first check failed: neither ideal ship completed any training ship level (`docs/notes/ship_ideal.md`), so the encoding is being rethought before any brain run. Also agreed 2026-11-05 (to log at the start of Step 5): ship mode stays in whatever happens in Stereo Madness; whether to tune it is decided after its baseline.
 - Brain panel (R3): version 1 of Shannyn's design is built; her five questions are answered in `docs/notes/brain_panel_design.md`, for her review.
-- **Stereo Madness run N times, not once (changes D7; agreed in principle 2026-11-02, written up at Step 6).** A frozen fly with Poisson input is a distribution, not a single outcome, so one run can't tell luck from typical. Conditions:
+- Step 6 (Stereo Madness): **fixed in D54** (2026-11-14); runs not started.
+- **Stereo Madness run N times, not once (changes D7; agreed in principle 2026-11-02, written up in D54).** A frozen fly with Poisson input is a distribution, not a single outcome, so one run can't tell luck from typical. Conditions:
   - N and the seeds are fixed before any Stereo Madness run, and nothing changes between or after the runs (D7 still holds: no tuning on it);
   - the headline is the full count and median progress (e.g. "3 of 10, median X%"), never the best run;
   - the replay shown is picked by rule, not by eye (e.g. the lowest seed, or the run closest to the median progress), so the end-goal video is a typical run, not a lucky one.
