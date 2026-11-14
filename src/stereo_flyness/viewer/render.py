@@ -1,7 +1,9 @@
 """Drawing one moment of a run: level, player and camera.
 
 Visuals are deliberately simple (D20: gameplay must be exact, visuals don't need to match).
-Objects are drawn as their real hitboxes, so what you see is what the engine collides with.
+Blocks and slabs are drawn as their real hitboxes. Hazards are drawn as spikes filling their
+30-unit visual cell (the cell the fly's encoding sees, D47), with the smaller hitbox that
+actually kills outlined on top, so the picture looks right and still shows what the engine checks.
 """
 
 import bisect
@@ -11,6 +13,7 @@ import pygame
 
 from stereo_flyness.game import physics as P
 from stereo_flyness.game.level import Box
+from stereo_flyness.game.objects import KIND_SIZES
 from stereo_flyness.viewer.timeline import TickView, Timeline
 
 SIZE = (1280, 720)
@@ -24,7 +27,10 @@ COLOURS = {
     "ground_line": (200, 200, 230),
     "block": (150, 150, 175),
     "slab": (215, 215, 232),
-    "hazard": (255, 77, 77),
+    "hazard": (255, 77, 77),  # hazards in the level overview
+    "hitbox": (190, 60, 75),  # the faint outline of the hitbox that kills
+    "spike": (16, 12, 30),
+    "spike_edge": (230, 230, 245),
     "portal_ship": (255, 77, 255),
     "portal_cube": (77, 255, 136),
     "bounds": (74, 163, 255),
@@ -93,8 +99,10 @@ def render_frame(surface: pygame.Surface, timeline: Timeline, tick: int) -> Came
             _, sy = cam.to_screen(0, yb)
             pygame.draw.line(surface, COLOURS["bounds"], (0, round(sy)), (cam.width, round(sy)), 3)
 
-    for box in _visible_boxes(timeline, cam):
-        _draw_box(surface, cam, box)
+    visible = _visible_boxes(timeline, cam)
+    solids = [b for b in visible if b.solid]
+    for box in visible:
+        _draw_box(surface, cam, box, solids, _sections(timeline))
     for portal in timeline.level.portals:
         if cam.left - 50 < portal.x < cam.right + 50:
             r = cam.rect(portal.x - P.PORTAL_WIDTH / 2, portal.y - P.PORTAL_HEIGHT / 2,
@@ -158,13 +166,65 @@ def _visible_boxes(timeline: Timeline, cam: Camera) -> list[Box]:
     return [b for b in boxes[lo:hi] if b.y1 >= cam.bottom and b.y0 <= cam.bottom + cam.height / cam.scale]
 
 
-def _draw_box(surface, cam: Camera, box: Box) -> None:
+CELL = 30.0  # a grid cell, in level units: a hazard's visual size (as interface/encoding.py)
+_TOUCH = 1.0  # level units: closer than this counts as touching, for which way a spike points
+
+
+def _sections(timeline: Timeline) -> list:
+    if not hasattr(timeline, "_sections"):
+        timeline._sections = timeline.level.sections()
+    return timeline._sections
+
+
+def _rotated(box: Box) -> bool:
+    """True if the hitbox is the kind's size turned 90 degrees (a spike on its side)."""
+    w, h = KIND_SIZES[box.kind]
+    return w != h and abs(box.x1 - box.x0 - h) < 1e-6 and abs(box.y1 - box.y0 - w) < 1e-6
+
+
+def spike_polygons(box: Box, solids=(), sections=()) -> list[list[tuple[float, float]]]:
+    """Triangles (level coordinates) drawn for a hazard: display only, never used by the game.
+
+    The visual cell is CELL x CELL around the hitbox centre, clipped at the ground, as the encoding
+    sees it. A spike points away from what holds it: down if it hangs from a ceiling or a block's
+    underside with nothing below it, sideways if its hitbox is turned (away from a block it touches;
+    else towards the player), otherwise up. A pit (ground spikes) is three small spikes."""
+    cx, cy = (box.x0 + box.x1) / 2, (box.y0 + box.y1) / 2
+    x0, x1, y0, y1 = cx - CELL / 2, cx + CELL / 2, max(cy - CELL / 2, 0.0), cy + CELL / 2
+    if box.kind == "pit":
+        w = CELL / 3
+        return [[(x0 + i * w, y0), (x0 + (i + 1) * w, y0), (x0 + (i + 0.5) * w, y1)] for i in range(3)]
+    overlap_x = [s for s in solids if s.x0 < x1 - _TOUCH and s.x1 > x0 + _TOUCH]
+    overlap_y = [s for s in solids if s.y0 < y1 - _TOUCH and s.y1 > y0 + _TOUCH]
+    if _rotated(box):
+        if any(abs(s.x1 - x0) < _TOUCH for s in overlap_y):
+            return [[(x0, y0), (x0, y1), (x1, cy)]]  # held on its left: points right
+        return [[(x1, y0), (x1, y1), (x0, cy)]]  # points left, at the player
+    floors, ceilings = [0.0], []
+    for mode, a, b, bounds in sections:
+        if mode == "ship" and bounds is not None and a <= cx < b:
+            floors.append(bounds[0])
+            ceilings.append(bounds[1])
+    floors += [s.y1 for s in overlap_x]
+    ceilings += [s.y0 for s in overlap_x]
+    held_above = any(abs(c - y1) < _TOUCH for c in ceilings)
+    held_below = any(abs(f - y0) < _TOUCH for f in floors)
+    if held_above and not held_below:
+        return [[(x0, y1), (x1, y1), (cx, y0)]]  # hangs: points down
+    return [[(x0, y0), (x1, y0), (cx, y1)]]
+
+
+def _draw_box(surface, cam: Camera, box: Box, solids=(), sections=()) -> None:
     r = cam.rect(box.x0, box.y0, box.x1, box.y1)
     if box.solid:
         pygame.draw.rect(surface, SOLID_COLOUR[box.kind], r)
         pygame.draw.rect(surface, COLOURS["outline"], r, width=1)
-    else:
-        pygame.draw.rect(surface, COLOURS["hazard"], r)
+        return
+    for poly in spike_polygons(box, solids, sections):
+        pts = [cam.to_screen(x, y) for x, y in poly]
+        pygame.draw.polygon(surface, COLOURS["spike"], pts)
+        pygame.draw.polygon(surface, COLOURS["spike_edge"], pts, width=2)
+    pygame.draw.rect(surface, COLOURS["hitbox"], r, width=1)  # faint: the hitbox that kills
 
 
 def _draw_player(surface, cam: Camera, view: TickView) -> None:
