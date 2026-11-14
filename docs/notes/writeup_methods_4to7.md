@@ -32,7 +32,17 @@ All rules below were fixed before any Step 4 run (D51), and amended once before 
 
 **Not run, and why** (D51): silencing the Giant Fiber (our output reads its spikes, so it would only test our rule; real flies still escape through the long-mode pathway, von Reyn et al. 2014), and LC4 or LPLC2 alone (with both calibrated together, it acts like lowering R).
 
-**[Shannyn]** The biology of each control and lesion: what a shuffle keeps and destroys, why the inhibitory and excitatory partners, and what "specific" can and can't mean with a recruitment-based "involved".
+**What each control keeps and removes.** In the fly, the Giant Fiber (DNp01) is the descending neuron of the fastest escape take-off, and its main visual drive comes from the looming-sensitive lobula columnar (LC4) and lobula plate–lobula columnar (LPLC2) neurons (von Reyn et al. 2014, 2017). The controls take that wiring apart in steps:
+- **(a) The degree-preserving shuffle** keeps how many partners each neuron has (so hubs stay hubs) and destroys *which* partners. It asks whether the specific wiring matters beyond the network's statistics.
+- **(d) The random network** also destroys each neuron's number of partners, keeping only the neurons, their signs and the total number of connections.
+- **(b) The looming-kept shuffle** keeps the direct route from the looming detectors to the Giant Fiber and shuffles everything else. It asks whether the rest of the brain's specific wiring adds anything to that route.
+- **(c) The relay-only network** keeps only the direct route. It shows what a pure relay plus the Giant Fiber's threshold can do.
+
+**What they can and can't show.** (a) and (d) also shuffle away the 293 direct connections, so they can't separate "the specific wiring matters" from "the Giant Fiber needs its direct looming input": a network in which the Giant Fiber never fires fails either way. **The informative comparison is (b) and (c) against intact:** both keep the direct route, so any difference is what the rest of the real wiring contributes.
+
+**Why these lesions.** The Giant Fiber's input partners include both excitatory and inhibitory cell types (the pathway tests, `docs/pathway_results.md`). Silencing the inhibitory partners (E5b) tests whether inhibition delays or sharpens the Giant Fiber's response; silencing the excitatory partners (E5c) tests whether they add to the drive from LC4/LPLC2. Whole cell types are silenced on both sides, as a genetic silencing experiment would target a cell type rather than single neurons.
+
+**What "specific" can and can't mean.** A lesion counts as specific only if it differs from the intact brain **and** from a control that silences as many "involved" neurons, of the same sign and similar output. "Involved" means the neuron fired in the 70 recruitment runs (D46), not necessarily in the held-out games. So "specific" means: these cell types change play more than silencing an equal number of other active neurons does. It doesn't mean they are the only neurons that matter, and with 20 levels, small effects can't be told apart from none. A lesion can also shift the Giant Fiber's timing clearly while play shows "no clear difference", if the shift helps some levels and hurts others; timing and play are reported separately for that reason.
 
 ## 9. Whole brain against the subcircuit in closed loop (Step 7, D52)
 
@@ -62,9 +72,28 @@ Held-out results are never looked at until the whole batch has finished and the 
 
 **Mode switching.** Stereo Madness has cube and ship sections. Each game mode has its own *controller*: which neurons its encoding drives, and how spikes become the button (`interface/modes.py`). On each tick, the controller for the mode the player is in sets its inputs and every other mode's inputs to 0, and the same controller's rule reads that frame's spikes. A portal switches the mode with the same one-tick delay as every press (D40). Cube runs through this loop match the Step 2–4 loop exactly.
 
-**The ship interface: not fixed yet.** Shannyn's draft (`docs/notes/ship_proposals.md`) used image motion computed from the level's geometry, driving the vertical motion detectors T4/T5, read out at DNp22 (≈ DNOVS2; any spike releases the button). Its first check, with no brain, failed: neither "ideal ship" (the encoding with a fixed rule in place of the brain) completed any of the 50 training ship levels (`docs/notes/ship_ideal.md`). The design is being revised; this section is rewritten once it's logged.
+**The ship's pathway in the fly.** Flies stabilise flight using wide-field optic flow, the motion of the whole scene across the eye as the body moves.
+- **T4 and T5** are the fly's elementary motion detectors, for bright and dark edges respectively. Their subtypes each prefer one direction: **T4d/T5d downward and T4c/T5c upward** motion (Maisak et al. 2013). In resting flies they respond most to a temporal frequency of ~1 Hz (30°/s for a 30° pattern); active states shift tuning toward faster motion (Strother et al. 2018).
+- **VS cells** (vertical system; VS1–VS8 in the FlyWire annotation) are large lobula plate neurons that pool T4/T5 input across the eye and respond to vertical motion: excited by downward motion (from T4d/T5d in lobula plate layer 4) and hyperpolarised by upward motion, which reaches them from T4c/T5c in layer 3 through an inhibitory interneuron, LPi3-4; blocking LPi3-4 removes the hyperpolarisation (Mauss et al. 2015). Their receptive fields match the optic flow of body rotations, so they signal the fly's own rotation for stabilising gaze and flight.
+- **DNOVS neurons** carry VS signals to the thorax. In *Drosophila*, DNOVS1 (our DNp20) doesn't spike and targets neck motor neurons; DNOVS2 spikes, is coupled to VS2 and VS3, and reaches the neck, wing and haltere motor regions (Suver et al. 2016). In v783, DNp22's numbered VS inputs are exactly VS2 and VS3 (plus VSm), so we identify **DNp22 as DNOVS2** and read the ship from it.
+- **How real flies set altitude** (Straw et al. 2010): they track the *position* of horizontal edges, through a circuit nobody has identified, alongside wide-field stabilisation and expansion avoidance.
 
-**[Shannyn]** The ship pathway's biology (VS cells, DNOVS, what the model can and can't carry: no gap junctions, no ocellar input, spiking VS cells), once the design is fixed.
+**The ship interface (D53).** Every choice here is ours, not the fly's.
+- **What the fly sees:** image motion, computed from the level's geometry, in 37 viewing directions (every 5° of elevation, about the fly's interommatidial angle), seeing the nearest surface up to 600 units ahead, pooled as the mean. Downward pooled motion drives all T4d + T5d neurons and upward motion all T4c + T5c, on both eyes, at R_ship × f, with f = |ω| / 30°/s capped at 1.
+- **The first draft failed, and we report it:** following the scene's motion pulls the ship toward any nearby surface. With a fixed rule in place of the brain it completed none of 50 training levels, either with all of the scene's motion or with only the motion from the ship's own climb and fall (`ship_ideal.md`). **A wide-field stabiliser alone doesn't navigate**, consistent with VS cells' role.
+- **The design of record, B:** our code stands in for edge tracking. It finds the next opening ahead and the vertical speed v_req that reaches its centre. The fly is shown its own vertical motion **relative to** that speed: the motion term computed with (vy − v_req), zero when the ship is on course. **The fly stabilises; our code steers**, and the replay labels the target and v_req as our input.
+- **Controls:** C, steering without the stabiliser (the term with −v_req only), and self-motion only, stabilising without steering. Each differs from B by one term.
+- **Output:** any DNp22 spike in a frame releases the button on the next tick; otherwise it's held. One dial, R_ship, left untuned at 150 Hz.
+- **Network:** the whole brain, original signs, with the T4/T5-corrected connectome as D28's sensitivity check.
+
+**What the model can't carry** (stated with every ship result):
+- **No gap junctions:** VS cells are dye-coupled to DNOVS neurons in *Drosophila* (Suver et al. 2016), and coupled to their VS neighbours through gap junctions in the blowfly *Calliphora* (Haag and Borst 2005); the model has chemical synapses only.
+- **No ocellar input:** ocellar neurons are the largest input to DNp20 and DNp22 in v783, and are never driven.
+- **Spiking VS cells:** real VS cells signal mostly with graded voltage; in the model every neuron spikes.
+- **Rotation, not translation:** DNOVS neurons encode body rotation, while the ship only climbs and falls. Using this pathway for altitude is our mapping.
+- **No behavioural state:** the model is neither resting nor flying (no octopamine), so the 30°/s anchor from resting flies is a choice; a 90°/s active-state variant is reported second.
+- **The output's speed limit:** DNp22 fires up to ~110 Hz, but the button runs at 240 Hz, and in the game a falling ship only speeds up its fall if released on more than ~61% of ticks. So the fly climbs fast but descends slowly (D53). This comes from our output rule meeting the game's physics, not from the fly.
+- **Cross-talk to the escape pathway:** in ship sections, the Giant Fiber still fires through T4/T5 → LPLC2 → Giant Fiber (LPLC2 gets ~27,000 synapses from T4/T5). The game ignores it in ship mode, and the replay shows it as the model's own activity.
 
 ## 12. The replay viewer and brain panel (D19, D25, R3)
 
@@ -108,5 +137,5 @@ Held-out results are never looked at until the whole batch has finished and the 
 ## Still to add
 
 - Step 4 and Step 7 **results** (now in `step4_report.md` and D51/D52) in write-up form.
-- **Step 5:** the ship design, its checks and its baseline, once logged.
+- **Step 5:** the ship baseline results (D53; `docs/notes/ship_baseline_results.md`) in write-up form.
 - **Step 6:** Stereo Madness (N, seeds and the network, fixed before any run) and the showcase replay rule.
