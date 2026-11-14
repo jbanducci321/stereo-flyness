@@ -5,7 +5,7 @@
 # settings below against that entry, at the Step 6 meeting: nothing here is decided until then.
 # Never change anything here after a Stereo Madness run (D7, hard rule 5).
 
-decision = ""                 # the logged Step 6 entry, e.g. "D54"
+decision = "D54"              # the logged Step 6 entry (D54, 2026-11-14)
 network = "whole_brain"       # proposal §1 (agreed 2026-11-10)
 seeds = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]   # N = 10, proposal §3 (agreed 2026-11-10)
 ship_design = "B"             # D53
