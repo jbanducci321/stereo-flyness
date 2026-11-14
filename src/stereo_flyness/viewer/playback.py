@@ -16,6 +16,7 @@ import pygame
 from stereo_flyness.game import physics as P
 from stereo_flyness.viewer.brain_panel import HEIGHT as PANEL_HEIGHT, draw_brain_panel
 from stereo_flyness.viewer.render import COLOURS, SIZE, render_frame
+from stereo_flyness.viewer.ship_panel import draw_target
 from stereo_flyness.viewer.timeline import Timeline
 
 FPS = 60
@@ -152,7 +153,8 @@ def draw_screen(surface: pygame.Surface, timeline: Timeline, tick: int, clock: "
     w, h = surface.get_size()
     brain = getattr(timeline, "brain", None)
     game = surface if brain is None else surface.subsurface((0, 0, w, h - PANEL_HEIGHT))
-    render_frame(game, timeline, tick)
+    cam = render_frame(game, timeline, tick)
+    draw_target(game, cam, timeline, tick)  # ship B/C only: the target opening, our input
     if clock is not None:
         draw_overlay(game, timeline, clock, font)
     if brain is not None:

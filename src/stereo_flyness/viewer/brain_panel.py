@@ -5,7 +5,9 @@ A strip under the game in three columns, in the order the signal flows:
    LPLC2, lit when *we drive* that neuron (in patch order, brightness = the rate we send). Under
    them θ, f and the rate, with a gauge marking the calibrated 39° (D43). These are our encoding's
    driven/not-driven states, never the driven neurons' spikes. In a mode with no eye display yet
-   (the ship, until its design is logged), the logged input values are listed instead.
+   the logged input values are listed instead. Ship mode (D53) is `ship_panel.py`: our steering and
+   the motion we drive in column 1, DNp22, holds and releases, VS1-VS8 and DNp20 in column 2, and the
+   target opening on the game, recomputed and checked against the run's log.
 2. **The fly's escape neurons** (the model's activity, amber, filled): both Giant Fibers, which
    light when they spike, with their spike count; a raster of each over the last second, one mark
    per tick with spikes; presses on the same time axis, one tick after the spike that made them
@@ -20,7 +22,8 @@ every spike since the previous drawn frame (4 ticks in video), labelled as such.
 dropped, moved or invented. The rasters and traces draw every tick.
 
 Time axis: brain row k saw the game after k ticks (D40); its spikes are drawn at k and its press
-at k + 1, where the game applied it.
+at k + 1, where the game applied it. Where the window spans a portal, every raster and trace gets a
+vertical line at the mode change, labelled "→ ship" or "→ cube".
 """
 
 import json
@@ -32,6 +35,7 @@ import pandas as pd
 import pygame
 
 from stereo_flyness.game import physics as P
+from stereo_flyness.viewer import ship_panel
 from stereo_flyness.viewer.render import COLOURS, font
 
 HEIGHT = 230
@@ -103,6 +107,8 @@ class BrainTrack:
         self._spikes = {g: b[f"spikes_{g}"].to_numpy() for g in self.groups}
         self._stuck = b["stuck_flag"].to_numpy(bool) if "stuck_flag" in b else np.zeros(len(b), bool)
         self._stuck_since = np.maximum.accumulate(self._stuck) if len(b) else self._stuck
+        self.targets: dict = {}  # ship rows -> target opening, set by attach() (ship_panel.ship_targets)
+        self._modes = b["mode"].to_numpy()
         self.peak_rate = float(self.run.get("rate_hz") or np.nanmax(b.get("rate_hz", pd.Series([1.0]))) or 1.0)
         self._active_setup()
 
@@ -127,6 +133,29 @@ class BrainTrack:
         keep = ~np.isin(flyids[neurons], np.asarray(stim, np.int64))
         self._frames, self._neurons = frames[keep], neurons[keep]
         self.active = np.bincount(self._frames, minlength=n)[:n] if len(self._frames) else np.zeros(n, int)
+
+    def attach(self, level, timeline) -> None:
+        """Recompute the ship's target openings and check them against the log (raises on a mismatch)."""
+        self.targets = ship_panel.ship_targets(level, timeline, self.brain)
+
+    def bin_neurons(self, tick: int, since: int | None = None) -> dict[int, int]:
+        """{FlyWire ID: spikes} for every neuron that fired in the bin, from spikes.npz (empty without it)."""
+        if self.spikes is None:
+            return {}
+        a, b = self.bin(tick, since)
+        f = self.spikes["frame"]
+        lo, hi = np.searchsorted(f, [a + 1, b + 1])
+        out: dict[int, int] = {}
+        for n, c in zip(self.spikes["flyids"][self.spikes["neuron"][lo:hi]], self.spikes["count"][lo:hi]):
+            out[int(n)] = out.get(int(n), 0) + int(c)
+        return out
+
+    def mode_changes(self, tick: int, size: int) -> list[tuple[int, str]]:
+        """(position in the last `size` rows, new mode) for each mode change in that window."""
+        end = self.row(tick) + 1
+        start = end - size
+        m = self._modes
+        return [(k - start, str(m[k])) for k in range(max(1, start), end) if m[k] != m[k - 1]]
 
     def __len__(self) -> int:
         return len(self.brain)
@@ -230,6 +259,8 @@ def _column_input(surface, track, tick, rect):
         _text(surface, "39° (the real fly's average threshold)", (tx + 4, gy + 8), SMALL, 11)
         _text(surface, "Our input, computed by our code from the game.", (x0 + 10, y0 + h - 30), SMALL, 11)
         _text(surface, "Dots are in our patch order, not the eye's real layout.", (x0 + 10, y0 + h - 16), SMALL, 11)
+    elif mode == "ship" and "omega_deg" in r and not pd.isna(r["omega_deg"]):
+        ship_panel.draw_ship_input(surface, track, tick, rect)
     else:
         _text(surface, f"mode: {mode.upper()}", (x0 + 10, y0 + 28), INPUT, 14)
         items = track.input_items(tick)
@@ -243,7 +274,15 @@ def _column_input(surface, track, tick, rect):
 
 def gf_label(group: str) -> str:
     """One name for each Giant Fiber, in the circles and the rasters alike."""
-    return {"GF_L": "GF left", "GF_R": "GF right"}.get(group, group)
+    return {"GF_L": "GF left", "GF_R": "GF right", "DNp22_L": "DNp22 left", "DNp22_R": "DNp22 right"}.get(group, group)
+
+
+def mode_lines(surface, track, tick, x, y, w, h, size=RASTER_TICKS):
+    """A vertical line at each mode change in the window, labelled with the new mode."""
+    for k, mode in track.mode_changes(tick, size):
+        xs = round(x + k * w / size)
+        pygame.draw.line(surface, TEXT, (xs, y - 2), (xs, y + h), 1)
+        _text(surface, f"→ {mode}", (xs + 3, y - 2), TEXT, 10)
 
 
 def _raster(surface, x, y, w, h, counts, colour):
@@ -257,6 +296,10 @@ def _raster(surface, x, y, w, h, counts, colour):
 def _column_escape(surface, track, timeline, tick, since, rect):
     x0, y0, w, h = rect
     pygame.draw.rect(surface, AMBER, rect, width=1, border_radius=6)
+    if str(track.brain["mode"].iloc[track.row(tick)]) == "ship" and any(g.startswith("DNp22") for g in track.groups):
+        _text(surface, "THE FLY'S FLIGHT NEURONS (the model's activity)", (x0 + 8, y0 + 6), AMBER, 13)
+        ship_panel.draw_ship_flight(surface, track, timeline, tick, since, rect)
+        return
     _text(surface, "THE FLY'S ESCAPE NEURONS (the model's activity)", (x0 + 8, y0 + 6), AMBER, 13)
     a, b = track.bin(tick, since)
     for i, g in enumerate(track.gf):
@@ -276,6 +319,7 @@ def _column_escape(surface, track, timeline, tick, since, rect):
         _text(surface, gf_label(g), (x0 + 10, y), AMBER, 12)
         _raster(surface, lx, y, lw, lane_h - 4, track.spike_window(g, tick), AMBER)
         y += lane_h
+    mode_lines(surface, track, tick, lx, y0 + 80, lw, y - (y0 + 80))
     # Presses (cube) or holds (ship) on the same axis, at the tick the game applied them.
     ship = timeline.ticks[min(tick, timeline.last_tick)].mode == "ship"
     _text(surface, "hold" if ship else "press", (x0 + 10, y + 2), PRESS, 12)
@@ -310,6 +354,7 @@ def _column_rest(surface, track, tick, since, rect):
     for k in np.flatnonzero(trace):
         xs = round(tx + k * step)
         pygame.draw.line(surface, AMBER, (xs, ty + th), (xs, ty + th - round(th * trace[k] / top)), 1)
+    mode_lines(surface, track, tick, tx, ty, tw, th, TRACE_TICKS)
     _text(surface, f"per tick (1/240 s), last 2 s (scale 0–{top})", (tx, ty + th + 2), SMALL, 11)
     share = float(track.brain["stuck_share"].iloc[track.row(tick)]) if "stuck_share" in track.brain else 0.0
     by = ty + th + 22
