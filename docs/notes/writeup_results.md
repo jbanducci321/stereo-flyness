@@ -68,7 +68,7 @@ Source: D53 and its result, `docs/notes/ship_baseline_results.md`.
 
 ## R7. Switching modes works (Step 6, mixed levels)
 
-Source: D54 (once logged), `results/mixed_check/` reports.
+Source: D54, `results/mixed_check/` reports.
 - **Held-out mixed levels:** 60 of 60 runs, **25 mode switches, 0 mismatches** (mode, output rule, input encoding). Fly-driven, so later portals were reached only when the fly got there.
 - **Bot-driven training levels,** every portal crossed: 50 of 50 runs, **105 switches, 0 mismatches.**
 - **Described:** our input to each mode is off whenever that mode isn't shown, but LPLC2 still fires in ship sections through ~27,000 synapses from the ship's T4/T5, and so the Giant Fibers fire there too. The game ignores them in ship mode; the replay shows them as the model's activity.
@@ -79,7 +79,7 @@ Source: D54 (once logged), `results/mixed_check/` reports.
 
 *Everything in this section is fixed by D54 before any run. Order: the record first, the 50 Hz variant second, corrected signs alongside. Nothing below changes after the runs except the blanks.*
 
-**Setup (fixed):** whole brain; N = 10 runs per variant, seeds 0–9; ship design B at R_ship 150 Hz, untuned; blind runs (D33); opened by **[D54: how]**. Of Stereo Madness, only its length (26,384 units, ~85 s) was read before the runs; never its layout (D7, hard rule 5).
+**Setup (fixed):** whole brain; N = 10 runs per variant, seeds 0–9; ship design B at R_ship 150 Hz, untuned; blind runs (D33); opened together, in one sitting (D54). Of Stereo Madness, only its length (26,384 units, ~85 s) was read before the runs; never its layout (D7, hard rule 5).
 
 ### R8.1 The headline: the fly of record (150 Hz, original signs)
 
