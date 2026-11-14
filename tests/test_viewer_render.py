@@ -7,7 +7,8 @@ from stereo_flyness.game.engine import Game
 from stereo_flyness.game.level import Box, Level, Portal
 from stereo_flyness.game.objects import hitbox
 from stereo_flyness.game.recorder import play
-from stereo_flyness.viewer.render import COLOURS, SCALE, SIZE, Camera, render_frame, save_still
+from stereo_flyness.viewer.render import (COLOURS, LABEL_STRIP, SCALE, SIZE, Camera, game_area, render_frame,
+                                           save_still)
 from stereo_flyness.viewer.timeline import Timeline
 
 
@@ -85,3 +86,16 @@ def test_brain_runs_are_labelled_with_who_drove_the_cube():
         tl.driver = driver
         render_frame(surface, tl, 0)
         assert (pygame.surfarray.array3d(surface.subsurface(strip)) != before).any(), driver
+
+
+def test_the_driver_label_has_its_own_strip_the_game_never_draws_into():
+    """The label used to sit over the game's bottom edge, where the ship's floor line is."""
+    surface = pygame.Surface(SIZE)
+    tl = make_timeline()
+    tl.driver = "fly"
+    render_frame(surface, tl, 0)
+    strip = pygame.surfarray.array3d(surface.subsurface((0, SIZE[1] - LABEL_STRIP, SIZE[0], LABEL_STRIP)))
+    colours = {tuple(c) for c in strip.reshape(-1, 3)}
+    assert tuple(COLOURS["ground"]) not in colours and tuple(COLOURS["outline"]) in colours
+    assert game_area(surface, tl).get_height() == SIZE[1] - LABEL_STRIP
+    assert game_area(surface, make_timeline()).get_height() == SIZE[1]  # no label, no strip

@@ -47,10 +47,14 @@ def ship_neurons(path=SHIP_NEURONS) -> pd.DataFrame:
     return pd.read_csv(path)
 
 
+@lru_cache(maxsize=None)
 def ids(*types: str, side: str | None = None) -> np.ndarray:
+    """FlyWire IDs of these types (and side), read-only: cached, as the panel asks every frame."""
     t = ship_neurons()
     sel = t["cell_type"].isin(types) & ((t["side"] == side) if side else True)
-    return t.loc[sel, "flywire_id"].to_numpy(np.int64)
+    out = t.loc[sel, "flywire_id"].to_numpy(np.int64)
+    out.flags.writeable = False
+    return out
 
 
 def group_counts() -> dict[tuple[str, str], int]:

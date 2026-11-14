@@ -28,6 +28,7 @@ vertical line at the mode change, labelled "→ ship" or "→ cube".
 
 import json
 from dataclasses import dataclass, field
+from functools import lru_cache
 from pathlib import Path
 
 import numpy as np
@@ -63,15 +64,21 @@ NOT_INPUT = {"frame", "tick_seen", "mode", "fly_press", "held", "active_neurons"
              "stuck_share", "stuck_flag", "backup_flag"}
 
 
+@lru_cache(maxsize=None)
+def _targets(path) -> pd.DataFrame:
+    """The committed v783 target list, read once (the panel asks every frame)."""
+    return pd.read_csv(path)
+
+
 def loom_counts(path=TARGETS) -> dict[tuple[str, str], int]:
     """Neurons per (side, type) for LC4/LPLC2, from the committed v783 target list."""
-    t = pd.read_csv(path)
+    t = _targets(path)
     t = t[t["cell_type"].isin(LOOM_TYPES)]
     return {(s, ty): int(((t["side"] == s) & (t["cell_type"] == ty)).sum()) for s in SIDES for ty in LOOM_TYPES}
 
 
 def loom_ids(path=TARGETS) -> np.ndarray:
-    t = pd.read_csv(path)
+    t = _targets(path)
     return t.loc[t["cell_type"].isin(LOOM_TYPES), "flywire_id"].to_numpy(np.int64)
 
 
@@ -144,11 +151,13 @@ class BrainTrack:
             return {}
         a, b = self.bin(tick, since)
         f = self.spikes["frame"]
-        lo, hi = np.searchsorted(f, [a + 1, b + 1])
-        out: dict[int, int] = {}
-        for n, c in zip(self.spikes["flyids"][self.spikes["neuron"][lo:hi]], self.spikes["count"][lo:hi]):
-            out[int(n)] = out.get(int(n), 0) + int(c)
-        return out
+        # Search with f's own dtype: mixed int types make numpy copy all of f on every call.
+        lo, hi = np.searchsorted(f, np.array([a + 1, b + 1], dtype=f.dtype))
+        if hi <= lo:
+            return {}
+        n, inv = np.unique(self.spikes["flyids"][self.spikes["neuron"][lo:hi]], return_inverse=True)
+        c = np.bincount(inv, weights=self.spikes["count"][lo:hi]).astype(np.int64)
+        return dict(zip(n.tolist(), c.tolist()))
 
     def mode_changes(self, tick: int, size: int) -> list[tuple[int, str]]:
         """(position in the last `size` rows, new mode) for each mode change in that window."""
