@@ -15,7 +15,7 @@ def flaky(breaks_after: list[int]):
         for i, n in enumerate(todo):
             if limit is not None and i == limit:
                 raise BrokenProcessPool("handle is invalid")
-            yield {"level": n}
+            yield n, {"level": n}
     return play_batch, calls
 
 
@@ -31,6 +31,16 @@ def test_gives_up_after_the_last_try():
     with pytest.raises(BrokenProcessPool):
         play_with_retries(["a", "b"], play, tries=3, log=lambda *_: None)
     assert len(calls) == 3
+
+
+def test_runs_are_matched_by_the_name_asked_for_not_the_level_title():
+    """The 2026-11-14 Stereo Madness batch: the run named stereo_madness saves a summary whose
+    "level" is "Stereo Madness", and keying by that raised KeyError after every saved run."""
+    def play(todo):
+        for n in todo:
+            yield n, {"level": "Stereo Madness"}
+    out = play_with_retries(["stereo_madness"], play, log=lambda *_: None)
+    assert out == [{"level": "Stereo Madness"}]
 
 
 def test_other_errors_are_not_retried():

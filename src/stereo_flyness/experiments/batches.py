@@ -19,15 +19,16 @@ TRIES = 3
 
 
 def play_with_retries(names, play_batch, tries: int = TRIES, log=print) -> list[dict]:
-    """Play `names` with `play_batch(names)`, which yields one summary per finished run (with its
-    "level"). If the pool breaks, play the ones without a summary again, up to `tries` times in all.
-    Raises the last error if some still haven't finished."""
+    """Play `names` with `play_batch(names)`, which yields `(name, summary)` per finished run, `name`
+    being the one it was asked to play. (Not the summary's "level", which is the level's own name:
+    "Stereo Madness" for the run named stereo_madness.) If the pool breaks, play the ones without a
+    summary again, up to `tries` times in all. Raises the last error if some still haven't finished."""
     done: dict[str, dict] = {}
     todo = list(names)
     for attempt in range(1, tries + 1):
         try:
-            for s in play_batch(todo):
-                done[s["level"]] = s
+            for n, s in play_batch(todo):
+                done[n] = s
             return [done[n] for n in names]
         except POOL_ERRORS as e:
             todo = [n for n in names if n not in done]
