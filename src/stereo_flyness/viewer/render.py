@@ -72,7 +72,11 @@ class Camera:
 
 
 def render_frame(surface: pygame.Surface, timeline: Timeline, tick: int) -> Camera:
-    """Draw the run at `tick` onto `surface`. Returns the camera used."""
+    """Draw the run at `tick` onto `surface`. Returns the camera used.
+
+    Brain runs keep a strip of LABEL_STRIP pixels at the bottom for the driver label, so it never
+    covers the game (the ship's floor line sits at the bottom of the view in ship sections)."""
+    full, surface = surface, game_area(surface, timeline)
     view = timeline.at_tick(tick)
     cam = Camera.following(view, surface.get_size())
     surface.fill(COLOURS["background"])
@@ -101,7 +105,7 @@ def render_frame(surface: pygame.Surface, timeline: Timeline, tick: int) -> Came
         _draw_death(surface, cam, timeline.at_tick(timeline.death_tick))
     else:
         _draw_player(surface, cam, view)
-    draw_driver_label(surface, timeline)
+    draw_driver_label(full, timeline)
     return cam
 
 
@@ -109,7 +113,16 @@ DRIVER_LABELS = {  # hard rule 10, D19: a replay always says who controlled the 
     "fly": "SIMULATION REPLAY: the player is controlled by the fly brain model",
     "bot": "BOT-DRIVEN: the bot controls the player; the brain only watches. Not the fly playing",
 }
+LABEL_STRIP = 30  # px under the game view, for the driver label only
 _fonts: dict[int, pygame.font.Font] = {}
+
+
+def game_area(surface: pygame.Surface, timeline: Timeline) -> pygame.Surface:
+    """The part of `surface` the game is drawn in: all of it, less the label strip on brain runs."""
+    if DRIVER_LABELS.get(getattr(timeline, "driver", None)) is None:
+        return surface
+    w, h = surface.get_size()
+    return surface.subsurface((0, 0, w, h - LABEL_STRIP))
 
 
 def font(size: int) -> pygame.font.Font:
@@ -124,13 +137,16 @@ def font(size: int) -> pygame.font.Font:
 
 
 def draw_driver_label(surface: pygame.Surface, timeline: Timeline) -> None:
-    """Who controlled the player, drawn on every frame of a brain run (overlay or not)."""
+    """Who controlled the player, drawn on every frame of a brain run (overlay or not), in its own
+    strip at the bottom of `surface` (render_frame keeps the game out of it)."""
     label = DRIVER_LABELS.get(getattr(timeline, "driver", None))
     if label is None:
         return
+    w, h = surface.get_size()
+    surface.fill(COLOURS["outline"], pygame.Rect(0, h - LABEL_STRIP, w, LABEL_STRIP))
     colour = COLOURS["death"] if timeline.driver == "bot" else COLOURS["ground_line"]
     text = font(18).render(label, True, colour)
-    surface.blit(text, (16, surface.get_height() - 30))
+    surface.blit(text, (16, h - LABEL_STRIP + (LABEL_STRIP - text.get_height()) // 2))
 
 
 def _visible_boxes(timeline: Timeline, cam: Camera) -> list[Box]:
