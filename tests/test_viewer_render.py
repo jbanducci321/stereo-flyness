@@ -8,7 +8,7 @@ from stereo_flyness.game.level import Box, Level, Portal
 from stereo_flyness.game.objects import hitbox
 from stereo_flyness.game.recorder import play
 from stereo_flyness.viewer.render import (COLOURS, LABEL_STRIP, SCALE, SIZE, Camera, game_area, render_frame,
-                                           save_still)
+                                           save_still, spike_polygons)
 from stereo_flyness.viewer.timeline import Timeline
 
 
@@ -55,7 +55,10 @@ def test_render_draws_player_blocks_and_hazards():
     view = tl.at_tick(tick)
     assert pixel(surface, cam.to_screen(view.x, view.y)) == COLOURS["cube"]
     assert pixel(surface, cam.to_screen(520, 15)) == COLOURS["block"]
-    assert pixel(surface, cam.to_screen(400, 15)) == COLOURS["hazard"]
+    assert pixel(surface, cam.to_screen(400, 15)) == COLOURS["spike"]  # inside the triangle
+    hx0, hy0, hx1, hy1 = hitbox("spike", 400, 15)
+    assert pixel(surface, cam.to_screen(hx0, 15)) == COLOURS["hitbox"]  # the hitbox's faint outline
+    assert pixel(surface, cam.to_screen(388, 28)) == COLOURS["background"]  # cell corner: outside the spike
 
 
 def test_death_is_drawn_after_it_happens():
@@ -99,3 +102,24 @@ def test_the_driver_label_has_its_own_strip_the_game_never_draws_into():
     assert tuple(COLOURS["ground"]) not in colours and tuple(COLOURS["outline"]) in colours
     assert game_area(surface, tl).get_height() == SIZE[1] - LABEL_STRIP
     assert game_area(surface, make_timeline()).get_height() == SIZE[1]  # no label, no strip
+
+
+def test_spikes_fill_their_visual_cell_and_point_away_from_what_holds_them():
+    ground = Box("spike", *hitbox("spike", 400, 15))
+    assert spike_polygons(ground) == [[(385.0, 0.0), (415.0, 0.0), (400.0, 30.0)]]  # up, on the ground
+    ceiling = [("ship", 0.0, 3000.0, (0.0, 300.0))]
+    hanging = Box("spike", *hitbox("spike", 400, 285))
+    assert spike_polygons(hanging, sections=ceiling) == [[(385.0, 300.0), (415.0, 300.0), (400.0, 270.0)]]
+    under_block = Box("spike", *hitbox("spike", 400, 75))
+    block = Box("block", *hitbox("block", 400, 105))
+    assert spike_polygons(under_block, solids=[block])[0][2] == (400.0, 60.0)  # points down
+    on_block = Box("spike", *hitbox("spike", 400, 45))
+    low = Box("block", *hitbox("block", 400, 15))
+    assert spike_polygons(on_block, solids=[low])[0][2] == (400.0, 60.0)  # points up
+    side = Box("spike", *hitbox("spike", 400, 45, rotation=90))
+    assert spike_polygons(side)[0][2] == (385.0, 45.0)  # turned, nothing beside it: points at the player
+    wall = Box("block", *hitbox("block", 370, 45))
+    assert spike_polygons(side, solids=[wall])[0][2] == (415.0, 45.0)  # held on its left: points right
+    pit = Box("pit", *hitbox("pit", 400, 2))
+    tris = spike_polygons(pit)
+    assert len(tris) == 3 and all(y >= 0 for t in tris for _, y in t)  # clipped at the ground
