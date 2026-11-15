@@ -23,6 +23,8 @@ Usage:
     uv run python scripts/ideal_fly.py                       # the 10 recruitment levels (D43)
     uv run python scripts/ideal_fly.py --all --sweep 20 80 5 # all 50 cube training levels
     uv run python scripts/ideal_fly.py --all --sweep 10 175 5 --by-obstacle   # per obstacle type
+    uv run python scripts/ideal_fly.py --all --iteration2 --sweep 10 175 5 --by-obstacle --spread 20
+        # fix 2's check on the frozen iteration-2 training levels (only once fix 2's note is agreed)
     uv run python scripts/ideal_fly.py --suite held_out --quiet  # Step 2 only: the 20 held-out levels, blind
 
 Writes results/ideal_fly/<name>.csv and .md (git-ignored).
@@ -39,18 +41,20 @@ import pandas as pd
 from analyse_pathway_tests import md_table
 from inspect_encoding import INVISIBLE, LEVELS, SHORT_RUN_UP, THRESHOLD_DEG, job, threshold_fly
 from stereo_flyness.experiments.obstacles import groups, isolated, outcomes, shape_key
+from stereo_flyness.experiments.spread_fly import FLY_MEAN_DEG, FLY_SD_DEG, spread_fly
 from stereo_flyness.game.suites import load_level
 from stereo_flyness.interface.encoding import SIDES, TYPES, CubeEncoder
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "results" / "ideal_fly"
 NO_PATCHES = {s: {t: [] for t in TYPES} for s in SIDES}  # θ doesn't depend on the patches
+LEVELS_DIR = LEVELS  # results/levels, or results/iteration2/levels with --iteration2
 
 
 def run(names, thresholds, modes, suite="training") -> pd.DataFrame:
     rows = []
     for name in names:
-        level, _ = load_level(LEVELS, job(name, suite))
+        level, _ = load_level(LEVELS_DIR, job(name, suite))
         for mode in modes:
             enc = CubeEncoder(level, NO_PATCHES, 180.0, 150.0, mode)
             for th in thresholds:
@@ -67,7 +71,7 @@ def per_group(df: pd.DataFrame, suite: str = "training") -> pd.DataFrame:
     """Each run's outcome at each obstacle group of its level (from the runs already made)."""
     rows = []
     for name, runs in df.groupby("level"):
-        level, _ = load_level(LEVELS, job(name, suite))
+        level, _ = load_level(LEVELS_DIR, job(name, suite))
         gs = groups(level)
         for r in runs.to_dict("records"):
             death_x = None if pd.isna(r["death_x"]) else r["death_x"]
@@ -82,7 +86,7 @@ def alone(names, thresholds, modes, suite="training") -> pd.DataFrame:
     """Every distinct obstacle shape in the levels, alone after a full run-up, at each threshold."""
     shapes = {}
     for name in names:
-        level, _ = load_level(LEVELS, job(name, suite))
+        level, _ = load_level(LEVELS_DIR, job(name, suite))
         for g in groups(level):
             key = shape_key(g)
             if key in shapes:
@@ -145,6 +149,36 @@ def obstacle_report(pg: pd.DataFrame, lone: pd.DataFrame, thresholds) -> list[st
     return lines
 
 
+def run_spread(names, means, draws, suite="training") -> pd.DataFrame:
+    """The spread-aware ideal fly (fix 2): each approach draws its threshold from N(mean, 7.3°)."""
+    rows = []
+    for name in names:
+        level, _ = load_level(LEVELS_DIR, job(name, suite))
+        enc = CubeEncoder(level, NO_PATCHES, 180.0, 150.0, "collision")
+        for m in means:
+            for seed in range(draws):
+                r = spread_fly(enc, level, seed, mean=m, sd=FLY_SD_DEG)
+                rows.append({"level": name, "mode": "collision", "threshold": m, "draw": seed,
+                             "completed": r.completed, "progress": round(r.progress, 3), "death": r.death,
+                             "death_x": r.death_x, "class": None, "approaches": len(r.thresholds)})
+    return pd.DataFrame(rows)
+
+
+def spread_report(sp: pd.DataFrame, pg: pd.DataFrame, draws: int) -> list[str]:
+    lines = ["", f"## Spread-aware ideal fly (fix 2): thresholds drawn per approach, s.d. {FLY_SD_DEG:g}°\n",
+             f"{draws} draws per level. No brain; a check of the fly's spread against the obstacles, not a model result.\n",
+             "**Levels completed (mean over draws), by the spread's mean:**\n"]
+    done = (sp.groupby("threshold")["completed"].sum() / draws).reset_index()
+    done.columns = ["spread mean (°)", "levels completed"]
+    lines.append(md_table(done, 2))
+    at = pg[(pg["threshold"] == FLY_MEAN_DEG) & (pg["outcome"] != "not reached")]
+    rows = [{"type": t, "reached": len(d), "cleared": int((d["outcome"] == "cleared").sum()),
+             "cleared %": round(100 * (d["outcome"] == "cleared").mean(), 1)} for t, d in at.groupby("type")]
+    lines += ["", f"**Per obstacle type, at the fly's own spread ({FLY_MEAN_DEG:g} ± {FLY_SD_DEG:g}°), over all draws:**\n",
+              md_table(pd.DataFrame(rows), 1)]
+    return lines
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--all", action="store_true", help="all 50 cube training levels, not just the 10")
@@ -153,17 +187,30 @@ def main() -> None:
     parser.add_argument("--suite", default="training", choices=["training", "held_out"],
                         help="held_out: Step 2 only, all 20 cube levels at 39° (D44)")
     parser.add_argument("--quiet", action="store_true", help="blind runs (D48, D33): write the files, show nothing")
+    parser.add_argument("--iteration2", action="store_true",
+                        help="the frozen iteration-2 levels (results/iteration2/levels; training only)")
+    parser.add_argument("--spread", type=int, metavar="DRAWS",
+                        help="also run the spread-aware ideal fly (fix 2) with this many draws per level")
+    parser.add_argument("--spread-means", type=float, nargs=3, metavar=("FROM", "TO", "STEP"),
+                        help="with --spread: also shift the spread's mean over this range (fix 2's rule for (b))")
     parser.add_argument("--by-obstacle", action="store_true",
                         help="also report results per obstacle type, in the levels and in isolation (training only)")
     args = parser.parse_args()
     sys.stdout.reconfigure(encoding="utf-8")
+    global LEVELS_DIR
+    if args.iteration2:
+        if args.suite != "training":
+            sys.exit("Iteration 2's held-out suite is opened once, at the end (D55); training only here.")
+        LEVELS_DIR = ROOT / "results" / "iteration2" / "levels"
+    if args.suite == "held_out" and args.spread:
+        sys.exit("No spread-aware runs on the held-out suite: it's for designing fixes, on training levels only.")
     if args.suite == "held_out" and args.sweep:
         sys.exit("No threshold sweep on the held-out suite: it's run at 39 degrees only, with the Step 2 baseline (D44).")
     if args.suite == "held_out" and args.by_obstacle:
         sys.exit("No per-obstacle check on the held-out suite: it's for designing fixes, on training levels only.")
 
     if args.all or args.suite == "held_out":
-        names = sorted(p.stem for p in (LEVELS / args.suite).glob("cube-*.json") if not p.stem.endswith(".meta"))
+        names = sorted(p.stem for p in (LEVELS_DIR / args.suite).glob("cube-*.json") if not p.stem.endswith(".meta"))
     else:
         names = tomllib.loads((ROOT / "configs" / "recruitment.toml").read_text())["levels"]
     thresholds = [THRESHOLD_DEG]
@@ -175,7 +222,9 @@ def main() -> None:
         tag = f"held_out{len(names)}"
     else:
         tag = (("all50" if args.all else "recruitment10") + ("_sweep" if args.sweep else "")
-               + ("_obstacles" if args.by_obstacle else ""))
+               + ("_obstacles" if args.by_obstacle else "") + ("_spread" if args.spread else ""))
+        if args.iteration2:
+            tag = "it2_" + tag.replace("all50", "all")
     OUT.mkdir(parents=True, exist_ok=True)
     df.to_csv(OUT / f"{tag}.csv", index=False)
 
@@ -212,6 +261,16 @@ def main() -> None:
         pg.to_csv(OUT / f"{tag}_groups.csv", index=False)
         lone.to_csv(OUT / f"{tag}_isolated.csv", index=False)
         lines += obstacle_report(pg, lone, thresholds)
+    if args.spread:
+        means = [FLY_MEAN_DEG]
+        if args.spread_means:
+            a, b, step = args.spread_means
+            means += [float(m) for m in np.round(np.arange(a, b + step / 2, step), 3)]
+        sp = run_spread(names, means, args.spread, args.suite)
+        sp.to_csv(OUT / f"{tag}_spread_runs.csv", index=False)
+        sp_groups = per_group(sp, args.suite)
+        sp_groups.to_csv(OUT / f"{tag}_spread_groups.csv", index=False)
+        lines += spread_report(sp, sp_groups, args.spread)
     (OUT / f"{tag}.md").write_text("\n".join(lines), encoding="utf-8")
     print(f"Wrote {(OUT / tag).relative_to(ROOT)}.csv and .md (outcomes not shown: --quiet)" if args.quiet
           else "\n".join(lines))
