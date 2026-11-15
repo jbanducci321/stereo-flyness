@@ -10,12 +10,14 @@ Every choice here is ours, not the fly's (PROJECT_BRIEF §2):
 - **Which objects loom:** by default only those on a collision course, i.e. overlapping the
   cube's current vertical extent (`mode="collision"`). So ceilings don't loom, and obstacles
   below the cube stop looming mid-jump. `mode="all"` is D43's "every object looms" comparison.
-- **Iteration 2, fix 1 (`path="no_press"`, off by default; docs/notes/fix1_design.md, not yet
-  agreed):** while the cube stands on something raised, an object is also on course if the cube's
+- **Iteration 2, fix 1 (`path="no_press"`, off by default; docs/notes/fix1_design.md, agreed
+  2026-11-15):** while the cube stands on something raised, an object is also on course if the cube's
   **no-press path** (where it would go if the fly never pressed again, in the game's own physics)
   runs into it. Such an object, on course only because of the fall, is shown in the
   **landing-level view**: θ from an eye at the object's base level (its bottom + 15), as a cube
-  down at that level would see it, at the true horizontal distance. Objects already on course
+  down at that level would see it, at the true horizontal distance. (The base level, not the first
+  surface the path lands on: they differ only after a step down, where the path first lands on the
+  lower step and then falls into pits at floor level; the pits are shown from the floor.) Objects already on course
   keep their usual θ. In the air and on the floor nothing changes, so landing stays invisible.
   `view="eye"` is option (i), reported alongside (Shannyn's condition): the same objects come on
   course, but θ is true optics from the current eye (a pit below a platform peaks at 7-14°).
@@ -53,7 +55,7 @@ PATHS = ("current", "no_press")
 VIEWS = ("landing", "eye")  # fix 1's (ii) landing-level view and (i) true optics
 PREDICTED_LABELS = {  # replay text for frames where Loom.predicted is set (hard rule 10)
     "landing": "θ shown from landing level, our construction",  # Shannyn's wording, 2026-11-15
-    "eye": "on course via our predicted fall; θ from the eye (true optics)",
+    "eye": "on course via our predicted fall (our construction); θ from the eye (true optics)",  # Shannyn's
 }
 MAX_PATH_TICKS = 2400  # 10 s of prediction at most; paths normally end far sooner (floor, death)
 

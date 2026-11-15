@@ -138,5 +138,18 @@ def test_true_optics_puts_the_pits_on_course_but_they_stay_small(height, peak):
 def test_views_and_labels():
     assert set(VIEWS) == set(PREDICTED_LABELS) and _enc(_platform()).view == "landing"
     assert PREDICTED_LABELS["landing"] == "θ shown from landing level, our construction"
+    assert PREDICTED_LABELS["eye"] == "on course via our predicted fall (our construction); θ from the eye (true optics)"
     with pytest.raises(ValueError):
         _enc(_platform(), view="parallax")
+
+
+def test_after_a_step_down_the_pits_are_shown_from_their_own_level():
+    """2-block step, 1-block step, then pits: from the upper step the path first lands on the lower
+    step, but the pits are shown from the floor (their base level), not from one block up."""
+    objs = [("block", 600 + 30 * i + 15, 15 + 30 * j) for i in range(3) for j in range(2)]
+    objs += [("block", 690 + 30 * i + 15, 15) for i in range(3)] + [("pit", 780 + 30 * i + 15, 2) for i in range(3)]
+    level = _level(objs)
+    loom = _enc(level).encode(Player(x=640.0, y=75.0, on_ground=True))
+    assert loom.predicted and loom.obstacle.bottom == 0 and loom.obstacle.x0 >= 780
+    gap = loom.obstacle.x0 - (640.0 + 15)
+    assert loom.theta_deg == pytest.approx(math.degrees(angular_size(gap, 0.0, 17.0, 15.0)))
