@@ -1034,6 +1034,7 @@ Jacob's proposal (`docs/notes/step6_proposal.md`) with Shannyn's answers of 2026
 **D55. Iteration 2: fixing the interface where Stereo Madness found its limits, exploratory** (2026-11-15)
 
 Iteration 1 ends with D54's result and the `v1.0-research` tag. Iteration 2 is reported as an exploratory Part 2, after Part 1 and never mixed with it.
+- **The tag** (2026-11-15): `v1.0-research` was first made on the #63 merge (`89fee20`), before Shannyn's discussion point 5 was in. It was moved to the #66 merge (`7939848`), where Part 1 ends, before anything in iteration 2 ran.
 - **Frozen:** the connectome (hard rule 1, unchanged) and everything iteration 1 reported.
 - **What may change:** the interface only (`src/stereo_flyness/interface/`), one fix at a time, each with a dated design note and Shannyn's biology argument written before it's run. At most 2–3 new dials across iteration 2, set on training levels only.
 - **Stereo Madness is spent as a held-out test.** Hard rule 5 is lifted for iteration 2 only: we may look at it, and say so. No fix is ever judged on it; it shows only how far the fly then gets, on fresh seeds (100 onwards) with N fixed before each set of runs.
