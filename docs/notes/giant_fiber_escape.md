@@ -57,7 +57,7 @@ Our cube jumps when the model's Giant Fiber (DNp01) spikes (D42), and its loomin
 - **"Giant Fiber spike = jump" models only the short-mode escape.** Real flies also escape through other pathways (long mode), which our cube doesn't have. This is caveat 3 in the PROJECT_BRIEF.
 - **The calibration target is approximate:** it was read off a plot, it's a mean over a wide spread, and their threshold is the retinal size at a fixed delay *before takeoff*, which we treat as the size at which the Giant Fiber pathway triggers.
 - **Head-fixed recordings** only showed Giant Fiber spikes in about a third of flies, so spike counts per loom come from a subset.
-- **The paper doesn't identify the Giant Fiber's visual inputs.** LC4 was shown as a direct looming input in von Reyn et al. 2017 (below); LPLC2 later (Ache et al. 2019, not yet read).
+- **The paper doesn't identify the Giant Fiber's visual inputs.** LC4 was shown as a direct looming input in von Reyn et al. 2017 (below); LPLC2 later (Ache et al. 2019, read 2026-11-14: LPLC2 and LC4 are the Giant Fiber's primary direct visual inputs).
 
 ## Follow-up: von Reyn et al. 2017
 
@@ -79,7 +79,7 @@ Our cube jumps when the model's Giant Fiber (DNp01) spikes (D42), and its loomin
 | Finding | Bearing on the project |
 |---|---|
 | LC4 = angular velocity | Supports D41's later option (drive LC4 by dθ/dt, the size inputs by θ). Not needed before Step 2. |
-| Size input unidentified in 2017; LPLC2 only a candidate | D45's background line ("LC4 tracks angular velocity and LPLC2 angular size, von Reyn et al. 2017") is half right: cite 2017 for LC4 only; LPLC2's size role needs Ache et al. 2019. No code change, since we drive LC4 and LPLC2 together. |
+| Size input unidentified in 2017; LPLC2 only a candidate | D45's background line ("LC4 tracks angular velocity and LPLC2 angular size, von Reyn et al. 2017") is half right: cite 2017 for LC4 only; LPLC2's size role is from Ache et al. 2019 (checked 2026-11-14: silencing LPLC2 removes the size component). No code change, since we drive LC4 and LPLC2 together. |
 | Size input peaks at ~42° | A second, independent estimate within 3° of our 39° calibration target (D43). |
 | Size-dependent inhibition onto the Giant Fiber | Fits E5b: silencing its inhibitory partners raised the model Giant Fiber's rate ~13%. |
 | Medial dendrite with contralateral input | A real route consistent with the model's left Giant Fiber firing to right-side input via midline-crossing neurons (`docs/pathway_results.md`). Proposed in the paper, not shown. |
@@ -88,6 +88,6 @@ Our cube jumps when the model's Giant Fiber (DNp01) spikes (D42), and its loomin
 ## Still open (S3)
 
 - **LC4/LPLC2 firing rates during a loom,** to put the model's 25–200 Hz input range in context. Not in von Reyn 2017; next: Klapoetke et al. 2017 (LPLC2), Ache et al. 2019.
-- **Which neurons carry angular size to the Giant Fiber:** Ache et al. 2019 (LPLC2).
+- ~~Which neurons carry angular size to the Giant Fiber~~ Done: LPLC2 (Ache et al. 2019, checked 2026-11-14).
 - **Whether opposite-side looms drive the Giant Fiber more weakly** in real flies: possibly in this paper's Fig. 4 or Supplementary Fig. 5.
 - **Where in the visual field LC4/LPLC2 synapses matter most:** Dombrovski et al. 2023, for a position-based patch order (D41's later refinement).
