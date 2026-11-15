@@ -129,12 +129,21 @@ The search bot completes the level in our engine: it's playable, which says noth
 
 ## D. Discussion
 
-**[Shannyn]** leads. Points 1–4 and 6 are drafted from R1–R7, before the Stereo Madness results were read into them; point 5 waits for R8.
+**[Shannyn]** leads. Points 1–4 and 6 are drafted from R1–R7, before the Stereo Madness results were read into them; point 5 was written after R8 (2026-11-15), against the limits and predictions already on record.
 1. **What the connectome does here:** the escape circuit's wiring sets *when* the jump happens (R4); random wiring never jumps. The direct looming → Giant Fiber route is enough to jump at all; the rest of the real wiring moves the first spike to ~37°, near the real fly's ~39°. That timing is the clearest thing the connectome contributes to play, and it emerges from the wiring: we calibrated one dial, not the timing of each jump.
 2. **What our code does:** looming, collision course, the patch, the output rules and mode switching are ours (README "the fly vs our code"). The fly never "decides to play".
 3. **Threshold, not skill:** in the cube, firing later helps at 150 Hz (R3, R4), so better play isn't more fly-like play. The game rewards a later jump than the escape reflex is built for. A real Giant Fiber escape is meant to get the fly airborne before a predator arrives, not to clear a row of spikes, so a calibrated fly playing "too early" is the expected result of putting an escape reflex into a timing game.
 4. **The ship's asymmetry** (R6): a limit of our output rule against the game's physics, not evidence about real descending control. The positive finding is that the fly's own stabilising term makes steering work: a wide-field motion stabiliser (VS cells' role) is needed, but can't navigate by itself (the failed first draft).
-5. **Stereo Madness:** **[after the runs]**, read against R2 and R6 and the predictions, never re-explained after the fact.
+5. **Stereo Madness** (R8; read against R2 and R6 and the predictions, never re-explained after the fact):
+   - **The blind test gives a clear, modest answer:** the calibrated fly of record completes 0 of 10 and reaches a median 9.2%, every run ending in the first cube section. The test was fixed before any run (D54), so 9.2% is a fair measure of this fly with this interface, not a best case.
+   - **It matches R2, not a new failure mode.** On held-out cube levels the untuned fly completed only 2 of 8 easy levels (median run per level). Stereo Madness is a long, human-designed level, so failing early in its first section is what R2 predicted (predictions 1 and 4, both hits).
+   - **Both walls are limits we had already named, not explanations found afterwards:**
+     - **The pits after the raised platform** are the limit listed before the runs among our encoding's choices (README; D47): "collision course" uses the cube's current height, so from on top of a platform the pits below never loom. The fly gets no warning. This is our encoding, not the fly.
+     - **The double spike** is the timing pattern R2 describes: the Giant Fiber fires at its normal ~37°, and a jump from there clears the first spike and lands on the second. The fly does what it does on every level; this obstacle needs a different moment.
+   - **The tuned 50 Hz variant did worse** (median 6.5%; prediction 2, a miss). Firing later helped on the held-out cube levels (R3) but hurt here, where most 50 Hz runs died earlier, at pits after a block. So which threshold plays "better" depends on the level, which supports point 3: better play isn't more fly-like play, and the calibrated fly stays the headline.
+   - **Corrected signs played identically** to the record, tick for tick (prediction 3, a hit): the correction acts only through T4/T5, which stay silent in cube mode, and no run reached a ship section.
+   - **What it leaves untested:** no run reached a ship section, so R6's ship results (and prediction 5) say nothing about Stereo Madness's ship parts.
+   - **The 90 further runs** (not pre-specified; footnote to R8) died at the same two places, so the picture isn't an accident of the 10 seeds; they aren't part of the result.
 6. **What we'd do next:** **[Shannyn / Jacob]**
    - **A ship output rule argued on its own merits,** e.g. reading DNp22's rate as a graded command, as real descending control is graded.
    - **Gap junctions,** which the escape and steering circuits both use.
