@@ -101,6 +101,7 @@ No run has reached a ship section yet. Iteration 1 already showed the ship can't
 **Jacob's notes on (c) and (e), to settle in D55:**
 - **Power for (c):** held-out suites so far have been 20 levels with many ties. A gap fix only changes levels that *have* gaps where the fly dies, so a 20-level suite may not reach p < 0.05 even if the fix works. The fresh suite should be sized for it, e.g. 40 cube levels, all with the feature in its fixed ranges, plus the usual mix.
 - **"No worse on the old ones"** needs a definition fixed in advance. Proposed: on the iteration-1 held-out cube levels, *not clearly worse* by the same paired test (no significant drop at p < 0.05), with the count of completed runs reported beside it.
+  - *Settled by Shannyn (2026-11-15), now in the D55 draft:* the main measure is "gets past the feature" (median of 3 seeds per level, sign test against iteration 1), and "no worse" is a no-harm check: no significant drop, and worse on no more levels than better.
 - **Seeds for (e):** 0–99 are used (D54 and the 90 extra runs), so iteration 2's Stereo Madness runs use 100 onwards, e.g. 100–109 for N = 10.
 
 ## Draft D55 (to log once Shannyn agrees the wording, after D54's result and the v1.0-research tag)
@@ -112,7 +113,8 @@ Iteration 1 ends with D54's result and the `v1.0-research` tag. Iteration 2 is r
 - **What may change:** the interface only (`src/stereo_flyness/interface/`), one fix at a time, each with a dated design note and Shannyn's biology argument written before it's run. At most 2–3 new dials across iteration 2, set on training levels only.
 - **Stereo Madness is spent as a held-out test.** Hard rule 5 is lifted for iteration 2 only: we may look at it, and say so. No fix is ever judged on it; it shows only how far the fly then gets, on fresh seeds (100 onwards) with N fixed before each set of runs.
 - **New levels:** training levels and a **fresh held-out suite** (its own seed range) with each fix's feature (gaps and drops; close pairs of obstacles) in ranges fixed **before** Stereo Madness is studied further, not centred on its spacings. The fresh held-out suite is opened **once, at the end of iteration 2.**
-- **A fix counts** only if it's better on the fresh held-out levels (paired test, p < 0.05) and not clearly worse on iteration 1's held-out cube levels, as defined in its design note before it's run.
+- **The main measure for each fix is "gets past the feature"** (Shannyn, 2026-11-15): for each level, whether the median run over 3 seeds gets past the fix's feature, compared with iteration 1 (the unfixed fly) by a **sign test** across levels. Progress and completions are reported beside it.
+- **A fix counts** only if it's better on the fresh held-out levels by that measure (sign test, p < 0.05) and passes the **no-harm check** on iteration 1's held-out cube levels: **no significant drop, and worse on no more levels than better.** Since those levels have been seen, this is described as a **no-harm check, not a test**. Both are fixed in each fix's design note before it's run.
 - **At most one revision per fix,** logged with its reason.
 - **Extra runs** on any held-out levels or Stereo Madness are agreed by both of us before they're run.
 - **Labels:** Part 2 and any video from it say "exploratory: interface adjusted after seeing this level; brain wiring unchanged."
