@@ -1,6 +1,6 @@
 # Iteration 2: fixing the walls Stereo Madness found, a proposal for discussion
 
-*Jacob, 2026-11-14. A draft for Shannyn; **nothing here is decided.** Iteration 1 (Steps 0–7 and D54's blind Stereo Madness test) is finished and isn't changed by anything below. Iteration 2 starts only once the D54 result is logged, the write-up's Part 1 is done and the code is tagged `v1.0-research`.*
+*Jacob, 2026-11-14; Shannyn's answers and a draft D55 added the same day (end). **Nothing here is logged yet.** Iteration 1 (Steps 0–7 and D54's blind Stereo Madness test) is finished and isn't changed by anything below. Iteration 2 starts only once the D54 result is logged, the write-up's Part 1 is done and the code is tagged `v1.0-research`.*
 
 ## Where iteration 1 ended
 
@@ -55,8 +55,10 @@ Stills of both are in `results/replays/for_shannyn/` (not committed: Stereo Madn
 **What we already know:** a later threshold isn't free. The 50 Hz variant fires later and died *earlier* in Stereo Madness, at the pits after the block (6%). So I don't expect a one-dial fix, and I'd rather find out cheaply before designing one.
 
 **Possible directions, for after that check (Shannyn's views wanted):**
-- the looming signal for a close pair of obstacles treated as one wider object (our encoding already merges objects that touch vertically; this would be the horizontal case);
+- ~~the looming signal for a close pair of obstacles treated as one wider object~~ (withdrawn: a bigger object reaches threshold sooner, Ache et al. 2019, so the fly would jump *earlier*, and it already jumps too early here);
 - something about when the jump is released, not just when the Giant Fiber fires.
+
+If no single threshold works, the default is to report it as **a limit of a one-shot escape reflex**, not to invent a mechanism: real escape timing selects the take-off mode; it doesn't aim the jump (Shannyn, below).
 
 ## Fix 3: the ship
 
@@ -81,3 +83,40 @@ No run has reached a ship section yet. Iteration 1 already showed the ship can't
 2. Fix 1: A, B, or something else? Is A defensible enough, as "our encoding's idea of what's in the way, corrected"?
 3. Fix 2: anything from the biology on timing a jump over two close obstacles, or on when an escape is released?
 4. Anything in the proposed rules you'd tighten?
+
+---
+
+## Shannyn's answers (2026-11-14)
+
+1. **Split and rule 5:** yes to the split, and to lifting hard rule 5 for iteration 2 only, **with Part 2 always labelled exploratory**.
+2. **Fix 1: A is defensible,** framed as *correcting our collision course*: looming already means "what you'll hit if you carry on", and adding gravity makes that right. **We don't claim flies use looming for gaps:** gap crossing is slow, parallax-based and driven by the central complex (Pick & Strauss 2005; she's checking the citation). **B goes to future work.**
+3. **Fix 2:** run the ideal-fly threshold check first. Treating the pair as one wider object would make the fly jump earlier (Ache et al. 2019), the wrong way. If no single threshold works, report it as a limit of a one-shot escape reflex rather than invent a mechanism.
+4. **Tightened rules:**
+   - (a) a **fresh held-out suite** for iteration 2, opened **once, at the end**;
+   - (b) the new levels' **ranges fixed before** we study Stereo Madness further, not centred on its exact spacings;
+   - (c) a **"fix counts" bar fixed in advance:** better on the new held-out levels, p < 0.05, and no worse on the old ones;
+   - (d) **at most one revision per fix,** logged;
+   - (e) **fresh Stereo Madness seeds,** with N fixed in advance.
+
+**Jacob's notes on (c) and (e), to settle in D55:**
+- **Power for (c):** held-out suites so far have been 20 levels with many ties. A gap fix only changes levels that *have* gaps where the fly dies, so a 20-level suite may not reach p < 0.05 even if the fix works. The fresh suite should be sized for it, e.g. 40 cube levels, all with the feature in its fixed ranges, plus the usual mix.
+- **"No worse on the old ones"** needs a definition fixed in advance. Proposed: on the iteration-1 held-out cube levels, *not clearly worse* by the same paired test (no significant drop at p < 0.05), with the count of completed runs reported beside it.
+- **Seeds for (e):** 0–99 are used (D54 and the 90 extra runs), so iteration 2's Stereo Madness runs use 100 onwards, e.g. 100–109 for N = 10.
+
+## Draft D55 (to log once Shannyn agrees the wording, after D54's result and the v1.0-research tag)
+
+**D55. Iteration 2: fixing the interface where Stereo Madness found its limits, exploratory** (2026-11-__)
+
+Iteration 1 ends with D54's result and the `v1.0-research` tag. Iteration 2 is reported as an exploratory Part 2, after Part 1 and never mixed with it.
+- **Frozen:** the connectome (hard rule 1, unchanged) and everything iteration 1 reported.
+- **What may change:** the interface only (`src/stereo_flyness/interface/`), one fix at a time, each with a dated design note and Shannyn's biology argument written before it's run. At most 2–3 new dials across iteration 2, set on training levels only.
+- **Stereo Madness is spent as a held-out test.** Hard rule 5 is lifted for iteration 2 only: we may look at it, and say so. No fix is ever judged on it; it shows only how far the fly then gets, on fresh seeds (100 onwards) with N fixed before each set of runs.
+- **New levels:** training levels and a **fresh held-out suite** (its own seed range) with each fix's feature (gaps and drops; close pairs of obstacles) in ranges fixed **before** Stereo Madness is studied further, not centred on its spacings. The fresh held-out suite is opened **once, at the end of iteration 2.**
+- **A fix counts** only if it's better on the fresh held-out levels (paired test, p < 0.05) and not clearly worse on iteration 1's held-out cube levels, as defined in its design note before it's run.
+- **At most one revision per fix,** logged with its reason.
+- **Extra runs** on any held-out levels or Stereo Madness are agreed by both of us before they're run.
+- **Labels:** Part 2 and any video from it say "exploratory: interface adjusted after seeing this level; brain wiring unchanged."
+- **Fix 1 (gaps), option A:** the collision course includes falling under gravity, so obstacles the cube would fall into loom. Framed as correcting our collision course; **no claim that flies use looming for gaps** (gap crossing is parallax-based and central-complex driven; option B is future work).
+- **Fix 2 (double spike):** first a no-brain check with the ideal fly across thresholds on the new levels. If no single threshold works, it's reported as a limit of a one-shot escape reflex.
+- **Fix 3 (ship):** a new output rule, argued on its own merits, only after fixes 1 and 2.
+
