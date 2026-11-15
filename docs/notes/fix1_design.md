@@ -1,0 +1,95 @@
+# Iteration 2, fix 1: let the fly see the drop (option A), a design note for discussion
+
+*Jacob, 2026-11-15. A draft for Shannyn; **nothing here is decided, built or run.** Under the iteration-2 rules (`docs/notes/iteration2_proposal.md`, draft D55), each fix needs a dated design note with Shannyn's biology argument and predictions, written before it's run. This is fix 1's. Shannyn's sections are marked **[Shannyn]**. Nothing in it uses Stereo Madness beyond what the proposal already records.*
+
+## The problem, in one paragraph
+
+The encoding only shows the fly objects that overlap the cube's **current** height ("collision course", `interface/encoding.py`). Standing on a raised platform, the pits past its edge are below the cube, so they never loom: the fly gets no warning, walks off and falls in. In iteration 1, this was the second wall in Stereo Madness (33 of the 90 extra runs). Shannyn's framing (proposal, answer 2): looming already means "what you'll hit if you carry on", and adding gravity makes our collision course match that. **We don't claim flies use looming for gaps** (gap crossing is slow, parallax-based and driven by the central complex; option B, showing the edge, is future work).
+
+## The change, in two parts
+
+### Part 1: which objects are "on course" (the predicted path)
+
+**Now:** an object is on course if it overlaps the cube's current vertical extent.
+
+**Proposed:** an object is on course if it overlaps the cube's **no-press path**: where the cube would go if the fly never pressed again, under the game's exact physics (walking on, falling off edges, landing on solids). An object counts if the predicted cube overlaps the object's visual cell at any point while passing it.
+
+- **Only while the cube is on the ground.** In the air, the current rule stays. This keeps the decision that **objects the cube lands onto are invisible** (agreed 2026-10-31: landing is a different behaviour from the escape, and a press in mid-air does nothing). Using the predicted path in the air would reverse that decision, which isn't part of this fix.
+- **On the ground at floor level (y = 0) nothing changes.** The floor is solid everywhere (pits are hazards lying on it), so the no-press path is flat and covers exactly what the current rule covers. The only ticks that change are those with the cube **standing on something raised**: a platform, a block top, a slab, a stair step.
+- **Plain edges stay silent.** Walking off a platform onto empty ground puts nothing on the path, so nothing looms. This is the `platform_step_down` control (levels note), true by construction, and checked anyway.
+
+### Part 2: how big an on-course object looks (θ). This is the main question.
+
+Computing θ honestly from where the eye is now **doesn't work**. From on top of a platform, the pit is below the eye, so its angular size stays small (pit visual cell 0–17 units, `angular_size` in `encoding.py`):
+
+| Where the eye is | Largest θ the pit ever reaches |
+|---|---|
+| On the ground (eye at 15), as now | 177° (passes 39° at a gap of 22 units) |
+| On a 1-block platform (eye at 45) | **13.5°** |
+| On a 2-block platform (eye at 75) | **7.3°** |
+| Falling, cube just touching the pit (eye at 32) | 21.2° |
+
+The fly's threshold is ~39°, so with true optics the pits would loom **without ever triggering a jump.** That fits D44's finding that a spike seen from above reaches only ~11°. Three options:
+
+| | θ of an on-course object | For | Against |
+|---|---|---|---|
+| **(i) True optics** | From the current eye, as now | No construction, honest geometry | Peaks at 7–14°: the fix changes almost nothing. Worth reporting as the reason (ii) is needed. |
+| **(ii) Landing-level view** (proposed) | From an eye at the height the cube will **land at** on its no-press path (that surface + 15), at the true horizontal distance. A pit past a platform's edge then looks as it would from the ground beside it. | Simple, no new dial. Matches "what you'll hit if you carry on": the warning arrives as if the cube were already down at that level. Equal to the current θ wherever the cube is on the ground at y = 0. | A construction, not optics. It has to be described as our encoding's choice, never as what the fly sees. |
+| **(iii) Time to contact** | Replace θ with a looming signal derived from time to contact along the path | Closer to what looming really encodes | A new signal and a new calibration: much bigger than a fix to "in the way". Future work. |
+
+**Proposal: (ii).** No new number is introduced: θ_full, the patch order, the rates and the 39° calibration all stay as they are. So fix 1 uses **none** of iteration 2's 2–3 dials.
+
+**What (ii) does on a platform:**
+- Pits right at the edge (k = 0–1 ground cells first) now loom at ground-level θ as the cube nears the edge. A fly that fires at ~39° jumps from the platform at the moment it would jump at a ground pit.
+- Obstacles further past the edge (k ≥ 2) also loom earlier, from the platform rather than after landing. This could help (no short run-up after landing) or hurt (a jump from higher up flies further), and the ideal-fly check below measures which.
+- A jump from 1–2 blocks up flies further than one from the ground, so wide pit strips may still not be cleared. That would be a limit of the jump, not of the warning.
+
+## What doesn't change
+
+- The connectome, the brain and the output rule (press while the Giant Fiber fires).
+- θ_full, R, rate scaling, the patch order and the 39° calibration.
+- Everything in iteration 1. The new behaviour sits behind an encoder option (e.g. `CubeEncoder(path="no_press")`), off by default, so iteration 1's code and results are untouched.
+- Ship mode (nothing looms there yet).
+
+## What it may not fix (for honesty up front)
+
+The per-obstacle sweep (`scripts/ideal_fly.py --by-obstacle`, 50 cube training levels, 39°) found three walls:
+- **Triple spikes** (0/10): a timing limit, not a visibility one. Fix 1 can't help.
+- **Slab bridges and slab hops** (0/17): from the ground, the slab above isn't on the no-press path, so it still never looms. The fly reacts to the pits under it instead. (ii) only helps once the cube is **on** a slab, by warning it about the slab's far end. Getting **onto** a slab is a landing problem, outside this fix.
+- **Pits after a raised platform:** the case fix 1 is for. The v3 levels never have them, so the new `platform_drop` chunk (levels note) is needed to test it.
+
+## How it's checked, in this order (fixed before anything runs)
+
+1. **Code tests** (no fly):
+   - with the option off, the encoding is identical to now on every tick of the bot's path through all iteration-1 training levels;
+   - with it on, θ is identical on every tick where the cube is in the air or on the ground at y = 0;
+   - a platform followed by pits makes the pits loom from the platform; a plain step-down makes nothing loom.
+2. **Ideal-fly check (no brain), training levels only:** `ideal_fly.py --by-obstacle` at 39°, current encoding vs (i) vs (ii). First on the iteration-1 training levels (allowed now), then on the iteration-2 training levels once they're built. Reported per obstacle type, including `platform_drop` (split by k and pit width) and `platform_step_down`.
+3. **Fly runs on the iteration-2 training levels** (whole brain, 150 Hz, the record settings). This is where the design can be revised, **at most once, logged with its reason** (rule d).
+4. **Once, at the end of iteration 2:** the iteration-2 held-out suite (40 cube levels, opened once) and the iteration-1 held-out cube levels, with and without the fix.
+5. **Then Stereo Madness** on fresh seeds (100 onwards, N fixed beforehand, agreed by both of us), reported only as how far the fly gets.
+
+**Fix 1 counts** (rule c) if, on the iteration-2 held-out suite, the fixed fly does better than the unfixed one (paired test, p < 0.05), and on the iteration-1 held-out cube levels it is not clearly worse (no significant drop by the same test), with completed counts reported beside both. **Also reported, not part of the bar:** jumps at `platform_step_down` edges, which should stay at zero.
+
+## [Shannyn] Biology argument
+
+*To fill in: why (ii), the landing-level view, is a defensible way to correct the collision course, and how the write-up should word it. E.g. "looming encodes an approaching collision; the encoding shows the fly the collision its current course leads to, at the size it would have at that level".*
+
+## [Shannyn] Predictions (written before step 2 runs)
+
+| | Prediction | Confidence |
+|---|---|---|
+| Ideal 39° fly, `platform_drop` with k = 0–1: cleared with (ii)? | | |
+| Same, k = 2–3 (the control): better, same or worse than now? | | |
+| `platform_step_down`: any jumps at the edge? | | |
+| Slab bridges/hops: any change? | | |
+| Iteration-1 training levels overall (ideal fly): better, same or worse? | | |
+| Real fly, iteration-2 held-out: does fix 1 pass the bar? | | |
+| Real fly, Stereo Madness: furthest point reached (median of N) | | |
+
+## Questions for Shannyn
+
+1. Is (ii), the landing-level view, defensible, or would you rather we report (i) and stop there?
+2. Keeping the predicted path for **grounded ticks only** (so landing stays invisible): agreed?
+3. Slabs: report "getting onto a slab" as a separate limit (landing, not escape), or is there a fix you'd consider for later?
+4. Anything to add to the checks, or to the "fix counts" bar?
