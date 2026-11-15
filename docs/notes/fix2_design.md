@@ -1,6 +1,6 @@
 # Iteration 2, fix 2: close obstacles (the double spike), a design note for discussion
 
-*Jacob, 2026-11-15; **Shannyn's argument, predictions and answers added the same day** (end). The plan is agreed except the choosing rule for (b), marked below; **nothing is run.** Under D55, fix 2 starts with a no-brain check: the ideal fly across thresholds on the new levels. That check is a run, so this note, with Shannyn's argument and predictions, comes first, as fix 1's did. Shannyn's sections are marked **[Shannyn]**. Nothing in it uses Stereo Madness beyond what D54 records.*
+*Jacob, 2026-11-15; **Shannyn's argument, predictions and answers added the same day** (end). The plan, including (b)'s choosing rule, is agreed; **nothing is run.** Under D55, fix 2 starts with a no-brain check: the ideal fly across thresholds on the new levels. That check is a run, so this note, with Shannyn's argument and predictions, comes first, as fix 1's did. Shannyn's sections are marked **[Shannyn]**. Nothing in it uses Stereo Madness beyond what D54 records.*
 
 ## What we already know (no new runs)
 
@@ -50,7 +50,12 @@ Reported, per threshold (fixed) and over the draws (spread-aware):
 
 **Read against the fly's spread** (37.1 ± 7.3° closed loop; 39 ± 14° in real flies):
 - **If a window lies inside the real range and costs nothing elsewhere:** (b) is designed, as a labelled variant.
-  - **The choosing rule, proposed for Shannyn to fix before the sweep is read:** run the spread-aware fly with its mean shifted, m = 38–53° in 1° steps, the spread kept at 7.3°. Pick the m that completes the most iteration-2 training levels (averaged over the 20 draws), ties to the lowest. (b) goes ahead only if that m beats m = 37.1° by at least **[Shannyn: N]** levels.
+  - **The choosing rule (agreed, Shannyn 2026-11-15), fixed before the sweep is read:**
+    - **"Completes a level"** means at least half of its 20 draws complete it (10 of 20).
+    - Run the spread-aware fly with its mean shifted, m = 38–53° in 1° steps, the spread kept at 7.3°. Pick the m that completes the most iteration-2 training levels, ties to the lowest.
+    - **The margin N** = the larger of **3 levels** or **twice the noise**. The noise is the difference in levels completed between two independent sets of 20 draws at 37.1° (seeds 0–19 and 20–39), measured before the sweep is read, like Step 3's tie margin. Picking the best of 16 means is biased upward, so the margin has to beat the noise with room to spare. The floor of 3 is because iteration 1's best fixed threshold beat 39° by only 1 level (D47).
+    - (b) goes ahead only if the chosen m beats m = 37.1° by at least N levels.
+    - **Passing N only earns (b) a design note, as a labelled variant.** It still has to pass D55's held-out bar.
   - The variant keeps the fly's spread and moves only its mean, which is what re-calibrating θ_full would do.
 - **Otherwise:** report the double spike, the triple spike and the 1-cell spaced pair as the limit of a one-shot escape reflex, with the geometry table as context.
 
@@ -90,7 +95,9 @@ Reported, per threshold (fixed) and over the draws (spread-aware):
 3. **The long-mode take-off is future work:** a new readout and output rule, a new mechanism, not an interface fix.
 4. **Added to the check:** the spread-aware ideal fly (above).
 
-**Still open:** the choosing rule's N (above).
+5. **The choosing rule's margin** (2026-11-15): N = the larger of 3 levels or twice the noise between two independent sets of 20 draws at 37.1°; "completes a level" = at least half of its draws; passing N only earns (b) a design note, and it still has to pass D55's held-out bar.
+
+**Nothing is open.** The check runs once this note is merged.
 
 ## The original questions (kept for the record)
 
