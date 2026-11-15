@@ -167,5 +167,5 @@ Not dials: brain time (fixed, real time), the output rule (one spike), which obj
 - `docs/pathway_results.md` (E1–E3, E2 offsets, S3); `docs/game_physics.md` §2–3; `docs/game_engine.md`; `docs/cascades.md`; `docs/notes/t4_engineering_answers.md`; D23, D27, D36, D37, D38.
 - von Reyn CR et al. (2014). A spike-timing mechanism for action selection. *Nat Neurosci* 17:962–970.
 - von Reyn CR et al. (2017). Feature integration drives probabilistic behavior in the *Drosophila* escape response. *Neuron* 94:1190–1204. (Not yet read; cited for LC4's role; check citation details.)
-- Ache JM et al. (2019). Neural basis for looming size and velocity encoding in the *Drosophila* giant fiber escape pathway. *Curr Biol* 29:1073–1081. (Not yet read; cited for LPLC2's role; check citation details.)
+- Ache JM et al. (2019). Neural basis for looming size and velocity encoding in the *Drosophila* giant fiber escape pathway. *Curr Biol* 29:1073–1081. doi:10.1016/j.cub.2019.01.079. (Read 2026-11-14; citation details checked.)
 - Dombrovski M et al. (2023). Synaptic gradients transform object location to action. *Nature* 613:534–542. (Not yet read; cited for position-dependent synapse strength; check citation details.)
