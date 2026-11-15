@@ -83,20 +83,32 @@ The per-obstacle sweep (`scripts/ideal_fly.py --by-obstacle`, 50 cube training l
 
 ## [Shannyn] Biology argument
 
-*To fill in: why (ii), the landing-level view, is a defensible way to correct the collision course, and how the write-up should word it. E.g. "looming encodes an approaching collision; the encoding shows the fly the collision its current course leads to, at the size it would have at that level".*
+*Shannyn, 2026-11-15.*
+
+**What looming is in the fly.** LPLC2 and LC4 respond to an object expanding on the eye, which signals an approaching collision; LPLC2 carries the object's angular size to the Giant Fiber and LC4 its angular velocity (Ache et al. 2019). A fly that is actually falling toward a surface does see it loom, so the moment the cube drops off the edge, the pits looming is ordinary optics.
+
+**What no fly's eye does.** Nothing in the fly's visual system computes "if I keep walking, I'll fall off this edge and land in that pit". Before the fall, the pits are below the eye and stay small (true optics: 7–14° at most, option (i)), and real flies don't use the Giant Fiber escape to cross gaps: gap crossing in walking *Drosophila* is slow and deliberate, judged from parallax, and depends on the central complex (Pick & Strauss 2005; citation still to check).
+
+**So (ii) is our construction, and is framed like ship design B:** **our code supplies the foresight, the fly supplies the timing.** The encoding predicts the collision the cube's current course leads to and shows it at the size it would have from the level the cube will land at. The brain still decides *when* to jump, at its own threshold, with nothing tuned: θ_full, the rates, the patch order and the 39° calibration are unchanged. This extends the meaning the encoding already has: an obstacle ahead on the ground only looms because the cube will keep moving forward into it; (ii) adds gravity to "keep moving".
+
+**How the write-up words it:** "From on top of a platform, pits below the edge never loom with true optics (they peak at 7–14°, below the ~39° threshold). We therefore show on-course objects as they would look from the level the cube will land at. This is our encoding's prediction, not something the fly's eye computes; the fly's contribution is when it jumps." The replay labels it ("θ shown from landing level, our construction"), and (i) is reported alongside.
+
+**What it doesn't claim:** that flies use looming to cross gaps, or that the Giant Fiber pathway anticipates falls.
 
 ## [Shannyn] Predictions (written before step 2 runs)
 
-| | Prediction | Confidence |
-|---|---|---|
-| Ideal 39° fly with (ii), fix-case drops: share cleared (gate: ≥ 50%) | | |
-| Ideal 39° fly with (i), true optics: any change from now? | | |
-| Ideal 39° fly with (ii), control drops: better, same or worse than now? | | |
-| `platform_step_down` (no-harm): more edge jumps than the unfixed fly? | | |
-| Slab bridges/hops: any change? | | |
-| Iteration-1 training levels overall (ideal fly): better, same or worse? | | |
-| Real fly, iteration-2 held-out: does fix 1 pass the bar? | | |
-| Real fly, Stereo Madness: furthest point reached (median of N) | | |
+*Shannyn, 2026-11-15, before step 2 and before any iteration-2 level exists. Scored hit or miss when each step's results are opened; confidence is how sure I am, not part of the score.*
+
+| | Prediction | Why | Confidence |
+|---|---|---|---|
+| Ideal 39° fly with (ii), fix-case drops: share cleared (gate: ≥ 50%) | **Passes the gate: ≥ 50% cleared.** Drops with the pits right at the edge are cleared more often than those set back from it | With (ii) the pits reach 39° at the same distance as from the ground (~22 units before the first pit), and a jump from 1–2 blocks up flies further than one from the ground, so most strips are cleared. When the pits are set back, that trigger point can come after the cube has left the edge, where it can't jump | Medium |
+| Ideal 39° fly with (i), true optics: any change from now? | **No change** | The pits peak at 7–14°, never reaching 39° | High |
+| Ideal 39° fly with (ii), control drops: better, same or worse than now? | **Same** | The trigger point (~22 units before the pits) comes after the cube has landed on the ground, where (ii) equals the current view | Medium-high |
+| `platform_step_down` (no-harm): more edge jumps than the unfixed fly? | **No: zero extra** | Nothing is on the path past a plain edge, by construction | High |
+| Slab bridges/hops: any change? | **No change in levels cleared** | Getting onto a slab is a landing problem, and (ii) only acts once on a slab | Medium |
+| Iteration-1 training levels overall (ideal fly): better, same or worse? | **Same, within ±1 level** | v3 levels have no pits after platforms, so (ii) only changes rare raised-surface cases | Medium |
+| Real fly, iteration-2 held-out: does fix 1 pass the bar? | **Yes** | Every level has a drop, and the ideal fly should clear most fix cases; the risk is runs dying earlier at other features, which makes ties | Medium-low |
+| Real fly, Stereo Madness: furthest point reached (median of N) | **Median unchanged at ~9.2%**; the furthest run passes 10.9% | 7 of 10 record runs die at the double spike, before the pits, and fix 1 doesn't change the double spike. Only runs that get past it reach the pits | High for the median, medium for the furthest run |
 
 ## Shannyn's answers (2026-11-15)
 
