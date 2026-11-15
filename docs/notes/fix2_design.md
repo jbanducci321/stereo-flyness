@@ -1,6 +1,6 @@
 # Iteration 2, fix 2: close obstacles (the double spike), a design note for discussion
 
-*Jacob, 2026-11-15. A draft for Shannyn; **nothing here is decided or run.** Under D55, fix 2 starts with a no-brain check: the ideal fly across thresholds on the new levels. That check is a run, so this note, with Shannyn's argument and predictions, comes first, as fix 1's did. Shannyn's sections are marked **[Shannyn]**. Nothing in it uses Stereo Madness beyond what D54 records.*
+*Jacob, 2026-11-15; **Shannyn's argument, predictions and answers added the same day** (end). The plan is agreed except the choosing rule for (b), marked below; **nothing is run.** Under D55, fix 2 starts with a no-brain check: the ideal fly across thresholds on the new levels. That check is a run, so this note, with Shannyn's argument and predictions, comes first, as fix 1's did. Shannyn's sections are marked **[Shannyn]**. Nothing in it uses Stereo Madness beyond what D54 records.*
 
 ## What we already know (no new runs)
 
@@ -33,19 +33,25 @@ The rules (D55): interface only, at most 2–3 new dials across iteration 2, eac
 | **(c) Tune R again** | The rate dial, as in iteration 1's Step 3 | One dial. Already tried: 50 Hz fires at ~84° (outside the real range), helped on held-out cube levels (not significantly) and did worse on Stereo Madness (D49, D50, D54) | Leaves the real fly's range |
 | **(d) A release rule** | When a Giant Fiber spike becomes a press (e.g. only once θ has also stopped growing slowly) | A new output rule and at least one dial; needs its own argument | Speculative; there's no measured "release" step after the Giant Fiber in a short-mode escape |
 
-**My lean:** (a) as the default, with (b) as the only option worth testing, and only if the check below shows a window inside the real fly's range that clears double spikes **without** costing other features. (c) repeats iteration 1. (d) invents a mechanism, which Shannyn has already argued against.
+**Agreed (Shannyn, 2026-11-15): (a) is the default.** (b) is tested only if the check shows a window, and then **only as a labelled variant, never as the fly of record**: one D55 dial, labelled "a late-threshold fly, inside the range measured in real flies", reported beside the record, chosen by a rule fixed before the sweep is read (below). (c) repeats iteration 1. (d) invents a mechanism. The long-mode take-off is future work: it needs a new readout and output rule.
 
 ## The check (step 1), fixed before it runs
 
 **The ideal fly across thresholds on the frozen iteration-2 training levels** (50 levels, `ideal_fly.py --sweep 10 175 5 --by-obstacle`, collision course, both with and without fix 1's (ii) once fix 1 is settled). No brain.
 
-Reported, per threshold:
+**Two ideal flies, both without a brain:**
+1. **Spread-aware (the main one; Shannyn, 2026-11-15):** each approach's threshold is drawn from the model fly's own first-spike distribution, normal with mean 37.1° and s.d. 7.3° (R2, closed loop), instead of fixed. A new approach starts whenever a different object becomes the nearest looming one (D45's rule: the next column of the same object isn't a new approach). Draws below 1° are set to 1°. 20 draws per level (seeds 0–19). It answers the real question: how often a fly with this spread clears each obstacle.
+2. **Fixed thresholds (10–175° in 5° steps, plus 39°):** shows where each obstacle's edges are.
+
+Reported, per threshold (fixed) and over the draws (spread-aware):
 - **per obstacle type:** spike1/2/3, spaced pairs **by gap** (1, 2, 3; a 4-cell gap counts as two single spikes), drops (fix case and control), stairs, slabs;
 - **whole levels completed**;
 - **the window:** the thresholds at which every double spike is cleared in isolation, and how many levels each threshold completes.
 
 **Read against the fly's spread** (37.1 ± 7.3° closed loop; 39 ± 14° in real flies):
-- **If a window lies inside the real range and costs nothing elsewhere:** (b) is worth a design of its own, written before it's set.
+- **If a window lies inside the real range and costs nothing elsewhere:** (b) is designed, as a labelled variant.
+  - **The choosing rule, proposed for Shannyn to fix before the sweep is read:** run the spread-aware fly with its mean shifted, m = 38–53° in 1° steps, the spread kept at 7.3°. Pick the m that completes the most iteration-2 training levels (averaged over the 20 draws), ties to the lowest. (b) goes ahead only if that m beats m = 37.1° by at least **[Shannyn: N]** levels.
+  - The variant keeps the fly's spread and moves only its mean, which is what re-calibrating θ_full would do.
 - **Otherwise:** report the double spike, the triple spike and the 1-cell spaced pair as the limit of a one-shot escape reflex, with the geometry table as context.
 
 **Spaced pairs with 2–4 empty cells** need two jumps: land between, jump again. After landing, the second spike is close and often already past 39° (a short run-up, D45's class (c)). The ideal fly presses on the next tick; the real fly has a response delay. The check reports how often the ideal fly clears them; a real-fly comparison needs fly runs, which come later.
@@ -77,7 +83,16 @@ Reported, per threshold:
 | Does any single threshold complete more iteration-2 training levels than 39°? By how many? | **Yes, a later one (40–55°), but by only a few levels (≤ 3)** | On iteration-1 training, 45–50° completed 22/50 against 21 at 39° (D47's check) | Medium |
 | Outcome: (a) report as a limit, or (b) worth designing? | **(a), report as a limit** | A window will exist, but I expect its gain to be small and to cost elsewhere (as 50 Hz did on Stereo Madness) | Medium-high |
 
-## Questions for Shannyn
+## Shannyn's answers (2026-11-15)
+
+1. **(a) is the right default:** it's the spread, not the threshold, and real flies vary even more (39 ± 14°), so a real fly would fail this about as often. (b) is tested only if a window shows up.
+2. **(b) is defensible only as a labelled variant, never as the fly of record.** ±14° is variability, not a range of equally good means, so a later target is tuning. If done: one D55 dial, labelled "a late-threshold fly, inside the range measured in real flies", with the choosing rule fixed before the sweep is read.
+3. **The long-mode take-off is future work:** a new readout and output rule, a new mechanism, not an interface fix.
+4. **Added to the check:** the spread-aware ideal fly (above).
+
+**Still open:** the choosing rule's N (above).
+
+## The original questions (kept for the record)
 
 1. Is (a), reporting the limit, the right default, with (b) tested only if a window shows up inside the real range?
 2. Is moving the calibration target (b) defensible at all, given the fly of record is calibrated to the mean real-fly threshold?
