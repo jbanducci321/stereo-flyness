@@ -22,7 +22,7 @@ Source: D48, `docs/notes/step2_report.md`.
 - **6 of 60 runs completed, all on easy levels; mean progress 29%** (20 held-out levels × seeds 0–2, final subcircuit, R = 150 Hz).
 - **Further than random pressing on 18 of 20 levels** (against the mean of 10 random draws per level). On the other 2, the first object is a raised slab, which kills every player including the ideal 39° fly.
 - **How it dies:** mostly early jumps (d1); most of the rest are the encoding's limits (things it can't see, D47).
-- *Figure R2:* progress per level: fly, never press, random presses, ideal 39° fly. **[to make]**
+- *Figure R2:* progress per level: fly, never press, random presses, ideal 39° fly (`results/figures/R2_cube_progress.png`).
 - **[Shannyn]** early jumps against the real fly's ~39° threshold and its variability (D46: first-spike s.d. 8.5° against 14° in the fly).
 
 ## R3. Tuning helps only by leaving the real fly's range (Step 3)
@@ -83,17 +83,22 @@ Source: D54, `results/mixed_check/` reports.
 
 ### R8.1 The headline: the fly of record (150 Hz, original signs)
 
-**[after the runs]** Completed **k of 10; median progress X%** (quartiles, range).
-- Per run: where it ended (cube or ship section, and the object), and the ship sections reached and passed.
-- Deaths by section: cube **[ ]**, ship **[ ]**.
+Completed **0 of 10; median progress 9.2%** (quartiles 9.1–9.2%, range 3.8–10.9%).[^extra]
+- Per run: every run ended in the first cube section (of 5), and none reached a ship section (0 of 3 reached, 0 passed).
+  - 7 runs (seeds 0, 1, 2, 4, 5, 7, 9) died at the double spike, at 9.1–9.2%.
+  - 2 runs (seeds 6, 8) died in the pits after the raised platform, at 10.9%.
+  - 1 run (seed 3) died at a spike, at 3.8%, after an early jump.
+- Deaths by section: cube **10**, ship **0**. Stuck runs: 0.
+
+[^extra]: Deviations from D54, listed in its result. After the opening, 90 further runs with the record's settings (seeds 10–99), not pre-specified, were run at the same commit (e72c2d7): 0 of 90 completed, the furthest reached 10.9%, and every death was at one of the places above. They aren't part of the result; the headline is the pre-registered 10. Where the runs died was looked at before the report was opened, and the report wasn't opened in one sitting. Stereo Madness is now spent as a held-out test.
 
 ### R8.2 The tuned variant (50 Hz), reported second
 
-**[after the runs]** Completed **k of 10; median X%**. Always labelled: *a tuned variant, outside the range measured in real flies* (D50). Whichever does better, the headline stays R8.1.
+Completed **0 of 10; median 6.5%** (quartiles 6.0–6.5%, range 6.0–10.9%). All 10 ended in the first cube section: 9 in the pits after a block (seeds 0, 1, 5, 8 at 6.0%; 2, 4, 6, 7, 9 at 6.5%), 1 (seed 3) in the pits after the raised platform at 10.9%. Stuck runs: 0. Always labelled: *a tuned variant, outside the range measured in real flies* (D50). Whichever does better, the headline stays R8.1.
 
 ### R8.3 Corrected signs (sensitivity check)
 
-**[after the runs]** Completed **k of 10; median X%.** Reported alongside, never as the result (D28).
+Completed **0 of 10; median 9.2%** (quartiles 9.1–9.2%, range 3.8–10.9%), every seed ending where the record's did. Stuck runs: 0. Reported alongside, never as the result (D28).
 
 ### R8.4 Shannyn's dated predictions (`docs/notes/step6_predictions.md`)
 
@@ -101,16 +106,18 @@ Scored by her rules, a hit or a miss each, no partial credit:
 
 | # | Prediction | Hit or miss | From the report |
 |---|---|---|---|
-| 1 | No variant completes Stereo Madness | **[ ]** | |
-| 2 | 50 Hz gets further than the record (median) | **[ ]** | |
-| 3 | Corrected signs play exactly like the record in cube sections | **[ ]** | "Identical for every seed" line |
-| 4 | ≥ 6 of 10 record runs end in a cube section | **[ ]** | |
-| 5 | Every record ship-section death is on an object above | **[ ]** | (not scored if none) |
-| 6 | At least one stuck run across the 30 | **[ ]** | |
+| 1 | No variant completes Stereo Madness | **Hit** | 0 of 10 completed in each variant |
+| 2 | 50 Hz gets further than the record (median) | **Miss** (6.5% vs 9.2%) | Medians: 50 Hz 6.5%, record 9.2% |
+| 3 | Corrected signs play exactly like the record in cube sections | **Hit** (10/10 identical; no run reached a ship section, so it covers whole runs) | "Identical for every seed: yes" (10 of 10 seeds) |
+| 4 | ≥ 6 of 10 record runs end in a cube section | **Hit** (10/10) | 10 of 10 ended in a cube section |
+| 5 | Every record ship-section death is on an object above | **Not scored** (no ship-section deaths) | 0 record ship-section deaths (not scored if none) |
+| 6 | At least one stuck run across the 30 | **Miss** (0 stuck) | 0 stuck of 30 |
+
+**Total: 3 hits, 2 misses, 1 not scored** (scored by Shannyn, 2026-11-15).
 
 ### R8.5 The showcase replay
 
-The record run whose progress is closest to its median, ties to the lowest seed (picked by rule, D54): **seed [ ], [ ]%.** Video: **[ ]**. Optional, captioned "the furthest of 10", never as the headline: **seed [ ]**.
+The record run whose progress is closest to its median, ties to the lowest seed (picked by rule, D54): **seed 5, 9.2%.** Video: `results/replays/showcase_record_seed5.mp4` (Stereo Madness replays aren't committed, D9). Optional, captioned "the furthest of 10", never as the headline: **seed 6** (10.9%; tied with seed 8, lowest seed).
 
 ### R8.6 Context only: the bot
 
@@ -136,12 +143,14 @@ Kept in one place, from the README ("Limits of the model", "Choices we made that
 
 **[after the runs]** Status line → the Stereo Madness headline (R8.1 in its fixed wording), then the steps' one-liners from R1–R7. The plan list is marked done. The showcase video is linked, labelled as a replay of a simulation, our input shown separately from the fly's spikes (hard rule 10).
 
-## Figures (to make)
+## Figures
+
+Made by `scripts/make_figures.py` from the reports' own results files, into `results/figures/` (not committed: R8 is drawn from Stereo Madness, D9). Every level or run is a dot.
 
 | Figure | Shows | Source |
 |---|---|---|
 | R2 | Cube progress per level: fly, never press, random, ideal | Step 2 report |
 | R4 | Control networks and lesions against intact | Step 4 report |
-| R6 | Ship: B, C, B90, corrected, ideal per level; the descent limit | Ship baseline report |
-| R8 | Stereo Madness progress per run, per variant, with section boundaries | **[after the runs]** |
-| Replay | Stills from the showcase at a cube jump and in a ship section | **[after the runs]** |
+| R6 | Ship: B, corrected, B90, C per level (median run); the ideal ship's totals in the caption, as it isn't saved per level | Ship baseline report |
+| R8 | Stereo Madness progress per run, per variant, with section boundaries | `results/stereo_madness/runs.csv` |
+| Replay | Stills from the showcase (seed 5) at its first jump and at its death; no run reached a ship section | `results/replays/showcase_seed5_*.png` |
