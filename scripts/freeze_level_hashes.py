@@ -8,10 +8,17 @@ per level, with the attempt the bot accepted, to tests/data/v3_level_hashes.json
 Run it once, when the freeze is set up. Never rerun it to make a failing freeze test pass: a
 failure means the generator changed the old levels, which is the bug.
 
+It also freezes the iteration-2 suites (`--iteration2`: configs/iteration2/level_suites.toml,
+cached in results/iteration2/levels/, written to tests/data/v4_level_hashes.json), before any run
+(Shannyn, 2026-11-15). It prints only counts, never anything about a level's content, so the
+held-out suite stays unopened.
+
 Usage:
     uv run python scripts/freeze_level_hashes.py
+    uv run python scripts/freeze_level_hashes.py --iteration2
 """
 
+import argparse
 import json
 import sys
 from pathlib import Path
@@ -21,12 +28,18 @@ from stereo_flyness.game.generator import BUILDERS
 from stereo_flyness.game.level import Level
 
 ROOT = Path(__file__).resolve().parents[1]
-CONFIG = ROOT / "configs" / "level_suites.toml"
-CACHE = ROOT / "results" / "levels"
-OUT = ROOT / "tests" / "data" / "v3_level_hashes.json"
+SETS = {
+    "iteration1": (ROOT / "configs" / "level_suites.toml", ROOT / "results" / "levels",
+                   ROOT / "tests" / "data" / "v3_level_hashes.json"),
+    "iteration2": (ROOT / "configs" / "iteration2" / "level_suites.toml", ROOT / "results" / "iteration2" / "levels",
+                   ROOT / "tests" / "data" / "v4_level_hashes.json"),
+}
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--iteration2", action="store_true", help="freeze the iteration-2 suites instead")
+    CONFIG, CACHE, OUT = SETS["iteration2" if parser.parse_args().iteration2 else "iteration1"]
     config = suites.load_config(CONFIG)
     frozen, problems = {}, []
     for job in suites.jobs(config):

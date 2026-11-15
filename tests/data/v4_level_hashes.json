@@ -1,0 +1,455 @@
+{
+ "seconds": 30.0,
+ "levels": {
+  "training/cube-easy-500000": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "919a666f51d278576dbce514c3bcf6625828765e54392d1192ba134555a91a16"
+  },
+  "training/cube-easy-500001": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "0252d0fe82b23469b73bb2f21b50ea703f053485d7b0570119aeb532326471b6"
+  },
+  "training/cube-easy-500002": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "134b855d81c783f11be72775dd950adeef7389b74b52e2398f11fc4a033b961c"
+  },
+  "training/cube-easy-500003": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "656d9c409c4b2612b7d24a95e800569e21db4d02cd2301848585e0a715ff8fa6"
+  },
+  "training/cube-easy-500004": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "c2761ec33174a95d08b2c199f4eef8efbab56fe34f58014abd380afdd45e501c"
+  },
+  "training/cube-easy-500005": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "dbc73e89ab03e0f9e7c083f668ce6647d6c0497f816e2ea82592faf22f14feb1"
+  },
+  "training/cube-easy-500006": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "8e1d846a28a765a514546c0018b567d417283492fa5bd605063a9a563ea58954"
+  },
+  "training/cube-easy-500007": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "694eb5e93eb0e838652089acbb434199696686341d8d7814686e744cb3cac7e2"
+  },
+  "training/cube-easy-500008": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "6705411cc10222e79fc3c0c068eafba763bb3533694faa6008b2ea525812df49"
+  },
+  "training/cube-easy-500009": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "131249fa27476a75a3c8c5b0d8e7f4a27ca5e8ad34c7edd92c165dec34a30dc3"
+  },
+  "training/cube-easy-500010": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "4e682a7c30470db1d04423c286a32f5a32debd9d1b15cabb54430bfe111c82ed"
+  },
+  "training/cube-easy-500011": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "701865a1a01dfe81fe1a709193f82372a6e674b55bb9dac02c212055a8ca7cb2"
+  },
+  "training/cube-easy-500012": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "0a633a3aa280ad5694610044746be4c03a0fd104d86f0506ea63ab657c724072"
+  },
+  "training/cube-easy-500013": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "0e39778370ac1d7bb174af5c5e2547b1df710d03db0fa50203d0d7027a8b6587"
+  },
+  "training/cube-easy-500014": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "981540fd86e061091d95f8dc518af722cd5648870bd1bf018d7dfa70f9aa8888"
+  },
+  "training/cube-easy-500015": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "6b5f3c85ae483eda212777a8512b50460f179658d7dfac4eaf44927b660c049b"
+  },
+  "training/cube-easy-500016": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "381b606b2acff7f9e6b5064a37bad2df71dc3f6c8900fe466b2b0234bbfb7c6a"
+  },
+  "training/cube-easy-500017": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "7bc6bdb945ed2ca0a6c75b1d27aa7596b27413c8f8d1b30d4f1e5505c86c71c0"
+  },
+  "training/cube-easy-500018": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "6ad19b2a516219ee7c970f600233b75e64cf6a5684db7ab467fa63f71aca9e7a"
+  },
+  "training/cube-easy-500019": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "887e69f52f85f3c8e11284b96f162b1b039d570a5020aef4b296a1e7e1761e60"
+  },
+  "training/cube-medium-500000": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "c18eb864dd0b0dda686255e4e7886cf2c0acbd63e55a7d3d9ae706442f4ea996"
+  },
+  "training/cube-medium-500001": {
+   "generator_version": 4,
+   "attempt": 1,
+   "sha256": "76f39d4349522da6be3c0976824d254bfffc2c8172d609775c9704faaf955fd8"
+  },
+  "training/cube-medium-500002": {
+   "generator_version": 4,
+   "attempt": 1,
+   "sha256": "24939dd7bda73d8f4bff025ff9670a7e594adf86280d73920aee50be132c991a"
+  },
+  "training/cube-medium-500003": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "b7920cc84f0106a26e53cdea183920650aca3d749094baf995cf3363e2b5d680"
+  },
+  "training/cube-medium-500004": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "80fd59ab76d84b0eef1ccc13f39ed55172731371adc99ef3c563b02c802b8c59"
+  },
+  "training/cube-medium-500005": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "3dbcf1699a26a8221ffb970db68ae3f9662bdf82c4f111fa7af80f6b17dced76"
+  },
+  "training/cube-medium-500006": {
+   "generator_version": 4,
+   "attempt": 2,
+   "sha256": "e9991377548ef668e5016188b2abf72f562efef92523c26a6bdc2e33df6b967f"
+  },
+  "training/cube-medium-500007": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "aec235333149f594de79ab35d38a27e5acdf0d2901211bf58bf103d49bbbe48e"
+  },
+  "training/cube-medium-500008": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "994059cf17e4e1f9bf68f4d3d0307df37072d66d51f5b52e219c52c3dc9904d5"
+  },
+  "training/cube-medium-500009": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "efbab4943269fa4aa5be8070fbd450c229feda9f704d935e368372b2d2338a7c"
+  },
+  "training/cube-medium-500010": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "1671adad4fe952f6b49b0c2243276d7ba054574543def9e0581c27574f54e82a"
+  },
+  "training/cube-medium-500011": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "ad6755df5b34d50c7a7bf5cc5c33a056541cf6a1245c000a4defce71e6680f1d"
+  },
+  "training/cube-medium-500012": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "c325455b6eb96583fa597f9a2f7551626f1827b189f59e73e8d97d27c3f8b9de"
+  },
+  "training/cube-medium-500013": {
+   "generator_version": 4,
+   "attempt": 1,
+   "sha256": "7e38ead35b292cd4a23680a3853d98e6bcaa775736e4e898da09d0c2bad3c5d7"
+  },
+  "training/cube-medium-500014": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "8178b1a653ef68dba222380de3890db24adfe44fd0113c41547674314653cb80"
+  },
+  "training/cube-medium-500015": {
+   "generator_version": 4,
+   "attempt": 1,
+   "sha256": "17a1ed0eb399fef559a62083c55c5ada827348367acb152e4ec5652b8c8e9eca"
+  },
+  "training/cube-medium-500016": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "d61523f7f863ed0b7c7ba6364be462aea13182a6c2c248794f5e9aa87130cb3d"
+  },
+  "training/cube-medium-500017": {
+   "generator_version": 4,
+   "attempt": 2,
+   "sha256": "10996c8faeca80e96a542ee90977d571df7c80644b16655022dd0d6387688f5a"
+  },
+  "training/cube-medium-500018": {
+   "generator_version": 4,
+   "attempt": 1,
+   "sha256": "4df850e5346e4ae5532e9fc1708827120c6447f6cd0321ffbc16a042ed4d58a2"
+  },
+  "training/cube-medium-500019": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "8bd6b84d32c78d22dff1bed353122517a55777d971d15ced1c2c355857114659"
+  },
+  "training/cube-hard-500000": {
+   "generator_version": 4,
+   "attempt": 5,
+   "sha256": "b8fbfe24ee6a8afb724c7d6b53f04b8feb7a4fcb2ac4fb3d74dd7eb1d86b1d40"
+  },
+  "training/cube-hard-500001": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "e2f1bba51d74c39b301f68928c041e0947bb69c78ab00ab6d103bbd8ef3ea535"
+  },
+  "training/cube-hard-500002": {
+   "generator_version": 4,
+   "attempt": 11,
+   "sha256": "e40005707e4135e74fc7379a5604e52041f793267cd4640b0fbfcc353c12a474"
+  },
+  "training/cube-hard-500003": {
+   "generator_version": 4,
+   "attempt": 2,
+   "sha256": "5a0868cb9112ac57fc619b76868573437594303a75f97e90c6fdd4d26b0b065b"
+  },
+  "training/cube-hard-500004": {
+   "generator_version": 4,
+   "attempt": 3,
+   "sha256": "f74b508dd80b0854757622cf0ee4e2c320efa8e49e98690fcc43399cdfa7583d"
+  },
+  "training/cube-hard-500005": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "f6dfb966922543b030199518e540e99c09088876b666168b3612a6250b05ba7d"
+  },
+  "training/cube-hard-500006": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "1ca5512ededdbdeeaa2a9e25083cc83ffa7593e00994b7ccbd48ebc5607684e3"
+  },
+  "training/cube-hard-500007": {
+   "generator_version": 4,
+   "attempt": 1,
+   "sha256": "06853e0b62af1e6d5a08d1bfaa9e00c0120db7c39f361b3aaec48f2a0fccc654"
+  },
+  "training/cube-hard-500008": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "848efc9cd5f3480cf188784c7c8506f0062ee94d17c9c6d1fa5909c348c89f74"
+  },
+  "training/cube-hard-500009": {
+   "generator_version": 4,
+   "attempt": 8,
+   "sha256": "f19d19259df450bed9e2ce355f4dfdd6dcc67e7fe0014011c7303049c769c492"
+  },
+  "held_out/cube-easy-2000000": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "5ef94aec82b999505539cf59e870c66b6fdfed523967343da7856db625cf28f4"
+  },
+  "held_out/cube-easy-2000001": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "aa56bc4828bf7a4114184e8b04dea87ee77eac52e13c050860b3044ff6ae4055"
+  },
+  "held_out/cube-easy-2000002": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "f64d065520b9d33d06b2f291c5f72a312a5242e999b3337988390d9d6f630bde"
+  },
+  "held_out/cube-easy-2000003": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "8ee35c63792c170e340831d10b80f670f7c42d8af371fffb175cd162a42b8953"
+  },
+  "held_out/cube-easy-2000004": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "4cf1d4259d0d00936def5d2d84bf408d731f76c6bdf83e50044e156506cbd5a8"
+  },
+  "held_out/cube-easy-2000005": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "26df2546e4be37c5288e31075cced7dc8d1a078cebabc7a47e22b1b753809c68"
+  },
+  "held_out/cube-easy-2000006": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "8adaca56f2d4c40c46501f425437a143027498380b32b4175bf6fb29656810b9"
+  },
+  "held_out/cube-easy-2000007": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "0515a7282a244195e7fd88fd82bc4a07414e2a962b2ba70f3e5f3bf0ce4d463b"
+  },
+  "held_out/cube-easy-2000008": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "c9fa766fe9a5199a2973e6092d6e1b6fe2754fa7f86ae504ac1e2973e9c89628"
+  },
+  "held_out/cube-easy-2000009": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "212359b048f2715f6bc6ceae616492ee14d5fb945bfd8f2c64ab0b8b40b90740"
+  },
+  "held_out/cube-easy-2000010": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "ba99a2c0908e4694f2289abcf4e80722b7a5369890b9909536fedc9b7e86d53b"
+  },
+  "held_out/cube-easy-2000011": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "1519ce95dc6b08f12d07fff322f5888b866b458c4d5985ed55588ea8b2ccdcce"
+  },
+  "held_out/cube-easy-2000012": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "78bb59174f3ef173b6a3c9b670597ceda33d971f794889c5292b0efe220c9d4b"
+  },
+  "held_out/cube-easy-2000013": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "88836da7dc8f5b5709312352b95c88a6a3050e7b6edce8219c57a4d60f1f2b24"
+  },
+  "held_out/cube-easy-2000014": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "d5fb0c0c9b78102d997b691f159d09441046d20df3c505178df5d4bc31ce3cc8"
+  },
+  "held_out/cube-easy-2000015": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "0a3af71e951c04eb64a0b1f0253c6311ddfc46814946f695f29d03e15d5d83fb"
+  },
+  "held_out/cube-medium-2000000": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "b3d09d2309c7c673e9d5e82b74893b2140b8f08f91923aa3a912b1cf2c59606f"
+  },
+  "held_out/cube-medium-2000001": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "8784bed290478a68747f6b5ad54537b995723915ec049ef6738db2ffc00394e9"
+  },
+  "held_out/cube-medium-2000002": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "e1db3db00cf647c8305085fa17edce028705817172acec5797335511d38024ff"
+  },
+  "held_out/cube-medium-2000003": {
+   "generator_version": 4,
+   "attempt": 1,
+   "sha256": "7978a658b2cc5a6c4cbbc7eedf7b9d16d4a48d31b09d7247a1617ed1a001f532"
+  },
+  "held_out/cube-medium-2000004": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "789d1d09529a5647459e1765b2d187fde3286258cff0bb5862b2919758afb3e1"
+  },
+  "held_out/cube-medium-2000005": {
+   "generator_version": 4,
+   "attempt": 1,
+   "sha256": "edfdc3dc9863f4fd6e47a258c7e0c3819a8f558876256abe8c5a42e03fad0325"
+  },
+  "held_out/cube-medium-2000006": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "4c890e641550418d89050100dd7f80e019aacc7fd388043d8f98954569a21384"
+  },
+  "held_out/cube-medium-2000007": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "0cdefea5434aaf76e95fdbe6eb75e9a066974a03311b116690b855f670816295"
+  },
+  "held_out/cube-medium-2000008": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "85f9e82abbd01533651496e4c4a51813819f91999a7246f50eb8510594d1f65e"
+  },
+  "held_out/cube-medium-2000009": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "3e5bd6a693f6d1498c4ac756488ef1dd59a804c07f2c192921d32be63be82b8b"
+  },
+  "held_out/cube-medium-2000010": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "7a2d2a867b48401dd19de4c52346693c61d51c56b861a34b776825b0206c6061"
+  },
+  "held_out/cube-medium-2000011": {
+   "generator_version": 4,
+   "attempt": 1,
+   "sha256": "b90431a2166830274e86d4c20e4c3781588fe21256edd711073460ca9a786ff9"
+  },
+  "held_out/cube-medium-2000012": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "70914d98fdb858aae21859fb908f3bc8b6ae5d0fc1bf0d3d21581fefca3490bc"
+  },
+  "held_out/cube-medium-2000013": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "798b8bfa4691fa11314680ebd4d3d837599e7a26f176486b3d46d563ee41f906"
+  },
+  "held_out/cube-medium-2000014": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "5eb9c4640e3fc80c0e5533c5f5d3108240e61105dcbdb29e1c1597c218b06313"
+  },
+  "held_out/cube-medium-2000015": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "2d32480bb1965c74679867b7511c9af6bc09ce25f437aea346395ae1a57f1b8c"
+  },
+  "held_out/cube-hard-2000000": {
+   "generator_version": 4,
+   "attempt": 1,
+   "sha256": "6bef3f4b7670eefe5f2ff78b5b739f15280694954a58e50ce717b0dcbeec765e"
+  },
+  "held_out/cube-hard-2000001": {
+   "generator_version": 4,
+   "attempt": 3,
+   "sha256": "178104a36487dc853947b416b5b34e38052d99440c7ff0e69c223418b7dae468"
+  },
+  "held_out/cube-hard-2000002": {
+   "generator_version": 4,
+   "attempt": 1,
+   "sha256": "2552a949d8f206178530edb94407cf2aabed33f5e239a19306ab9692d56bd051"
+  },
+  "held_out/cube-hard-2000003": {
+   "generator_version": 4,
+   "attempt": 0,
+   "sha256": "6b6b3526029bba36680d15c2a22d5ef5389a9f86738bfaf3970bf8be7bb10877"
+  },
+  "held_out/cube-hard-2000004": {
+   "generator_version": 4,
+   "attempt": 1,
+   "sha256": "a2ba742dc73836f09db540c858c2032fc4443c075fc832382f56d8d37bb5acbf"
+  },
+  "held_out/cube-hard-2000005": {
+   "generator_version": 4,
+   "attempt": 1,
+   "sha256": "1bee425abee4137706fcf67b8e9a2ac04e7ff84a8c484a59653e9875d1fa0f30"
+  },
+  "held_out/cube-hard-2000006": {
+   "generator_version": 4,
+   "attempt": 1,
+   "sha256": "05ef06fd204ea4e4965747e9b20cbaa2370c30353d4f0e26dc063fe6b30dbe59"
+  },
+  "held_out/cube-hard-2000007": {
+   "generator_version": 4,
+   "attempt": 2,
+   "sha256": "5e1c3ebf8a54d60654298ba98b949ad26f7578ff9e4272bc4ad05d4016304039"
+  }
+ }
+}
