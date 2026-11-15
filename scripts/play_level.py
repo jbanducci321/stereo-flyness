@@ -14,6 +14,12 @@ Stereo Madness is the held-out final test (D7, hard rule 5):
 
 Every frame is logged for the replay viewer, with the mode the fly was shown (hard rule 10).
 
+Iteration 2 (D55): `--fix1 i|ii` turns on fix 1's encoding (docs/notes/fix1_design.md: the no-press
+path with (i) true optics or (ii) the landing-level view); frames shown via the no-press path are
+flagged and labelled in replays. `--iteration2` plays the frozen iteration-2 levels and writes to
+results/iteration2/closed_loop/ (rule 7). Their held-out suite only runs with `--iteration2-final`,
+once, at the end of iteration 2 (D55).
+
 If joblib's worker pool breaks mid-batch (a Windows error, `experiments/batches.py`), the runs that
 hadn't finished are played again in a new pool, up to 3 tries. After a batch is killed outright (e.g.
 a restart), `--resume` plays only the levels with no finished run at this commit.
@@ -85,12 +91,26 @@ def modes_of(level: Level) -> set[str]:
     return {mode for mode, *_ in level.sections()}
 
 
-def get_level(name, suite) -> Level:
-    return Level.load(SM_LEVEL) if name == SM_NAME else load_level(LEVELS, job(name, suite))[0]
+IT2_LEVELS = ROOT / "results" / "iteration2" / "levels"
+IT2_OUT = ROOT / "results" / "iteration2" / "closed_loop"
+FIX1_VIEWS = {"i": "eye", "ii": "landing"}
+
+
+def levels_dir(args):
+    return IT2_LEVELS if getattr(args, "iteration2", False) else LEVELS
+
+
+def get_level(name, suite, args=None) -> Level:
+    return Level.load(SM_LEVEL) if name == SM_NAME else load_level(levels_dir(args), job(name, suite))[0]
 
 
 def refuse(args, levels: dict[str, Level]) -> str | None:
     """Why these runs can't start, or None. Checked before any brain is built."""
+    if getattr(args, "iteration2", False) and args.suite == "held_out" and not args.iteration2_final:
+        return ("Iteration 2's held-out suite is opened once, at the end of iteration 2 (D55). "
+                "It only runs with --iteration2-final.")
+    if getattr(args, "iteration2", False) and SM_NAME in levels:
+        return "Stereo Madness isn't part of the iteration-2 level suites; play it without --iteration2."
     if SM_NAME in levels:
         if not args.stereo_madness_final:
             return ("Stereo Madness is the held-out final test (D7, hard rule 5). It only runs with "
@@ -112,7 +132,8 @@ def refuse(args, levels: dict[str, Level]) -> str | None:
 def controllers_for(level, cells, patches, gf, args) -> dict:
     out = {}
     if "cube" in modes_of(level):
-        enc = CubeEncoder(level, patches, args.theta_full, args.rate, args.mode, args.rate_scaling)
+        fix1 = {} if args.fix1 is None else {"path": "no_press", "view": FIX1_VIEWS[args.fix1]}
+        enc = CubeEncoder(level, patches, args.theta_full, args.rate, args.mode, args.rate_scaling, **fix1)
         out["cube"] = CubeController(enc, gf)
     if "ship" in modes_of(level):
         out["ship"] = ShipNotDesigned() if args.ship is None else SHIP_CONTROLLERS[args.ship](level, cells, args)
@@ -128,7 +149,7 @@ def one(name, level, path_comp, path_con, cells, patches, gf, stuck_ids, args, o
     st = BrainStepper(path_comp, path_con, inputs=inputs, watch=watch, seed=args.seed)
     policy = None
     if args.bot:
-        frames = load_level(LEVELS, job(name, args.suite))[1].tick_inputs
+        frames = load_level(levels_dir(args), job(name, args.suite))[1].tick_inputs
         policy = lambda game: frames[game.ticks] if game.ticks < len(frames) else False  # noqa: E731
     meta = {"suite": "stereo_madness" if name == SM_NAME else args.suite, "network": args.network, "seed": args.seed,
             "commit": git_commit(), "ship_design": args.ship, **extra}
@@ -157,6 +178,11 @@ def main() -> None:
     parser.add_argument("--quiet", action="store_true", help="blind (D33): progress and stuck flags only")
     parser.add_argument("--resume", action="store_true",
                         help="skip levels already finished at this commit (after a killed batch); clean tree only")
+    parser.add_argument("--fix1", choices=list(FIX1_VIEWS), default=None,
+                        help="iteration 2, fix 1: the no-press path with (i) true optics or (ii) the landing-level view")
+    parser.add_argument("--iteration2", action="store_true", help="the frozen iteration-2 levels (D55)")
+    parser.add_argument("--iteration2-final", action="store_true",
+                        help="allow iteration 2's held-out suite: once, at the end of iteration 2 (D55)")
     parser.add_argument("--stereo-madness-final", action="store_true",
                         help="allow Stereo Madness (Step 6 only, once its runs are fixed)")
     args = parser.parse_args()
@@ -165,7 +191,12 @@ def main() -> None:
     if args.theta_full is None:
         args.theta_full = tomllib.loads((ROOT / "configs" / "recruitment.toml").read_text())["theta_full_deg"]
 
-    levels = {n: get_level(n, args.suite) for n in args.levels}
+    if args.iteration2 and args.suite == "held_out" and not args.iteration2_final:  # before any level is loaded
+        sys.exit("Refused, nothing run: iteration 2's held-out suite is opened once, at the end (D55); "
+                 "it only runs with --iteration2-final.")
+    if args.fix1 is not None and args.mode != "collision":
+        sys.exit("Refused, nothing run: --fix1 applies to the collision-course encoding only.")
+    levels = {n: get_level(n, args.suite, args) for n in args.levels}
     why = refuse(args, levels)
     if why:
         sys.exit(f"Refused, nothing run: {why}")
@@ -179,16 +210,21 @@ def main() -> None:
     path_comp, con_paths, _ = network(None if args.network == "whole_brain" else args.network)
     stuck_ids = load_stuck_state(ROOT / cfg["cascade"]["stuck_state"])  # restricted to the network (D38)
     status = {"final": "subcircuit (D46)", "whole_brain": "whole brain"}.get(args.network, f"{args.network} network")
-    base = (SM_OUT / args.network if sm else OUT / args.network if args.suite == "training"
-            else OUT / args.network / args.suite)
-    out = base / (f"{args.theta_full:g}deg_{args.mode}_R{args.rate:g}{'' if args.rate_scaling else '_flat'}"
+    root_out = IT2_OUT if args.iteration2 else OUT
+    base = (SM_OUT / args.network if sm else root_out / args.network if args.suite == "training"
+            else root_out / args.network / args.suite)
+    out = base / (f"{args.theta_full:g}deg_{args.mode}{'' if args.fix1 is None else f'_fix1-{args.fix1}'}"
+                  f"_R{args.rate:g}{'' if args.rate_scaling else '_flat'}"
                   f"{'' if args.ship is None else f'_ship-{args.ship}' + ('' if args.ship_rate == 150 else f'_Rs{args.ship_rate:g}')}"
                   f"{'' if args.signs == 'original' else '_corrected'}{'' if args.seed == 0 else f'_seed{args.seed}'}{args.tag}")
     if args.signs not in con_paths:
         sys.exit(f"Refused, nothing run: no {args.signs} connectivity for {args.network}.")
     path_con = con_paths[args.signs]
     extra = {"status": status + (", T4/T5-corrected signs (D28)" if args.signs == "corrected" else "")
-             + (", Stereo Madness final test" if sm else ""),
+             + (", Stereo Madness final test" if sm else "")
+             + (", iteration 2 (exploratory: interface adjusted after seeing Stereo Madness; brain wiring unchanged)"
+                if args.iteration2 or args.fix1 else "")
+             + ("" if args.fix1 is None else f", fix 1 ({args.fix1})"),
              "signs": args.signs, "connectome": {"file": path_con.name, "sha256": file_sha256(path_con)}}
     names = list(levels)
     if args.resume:
