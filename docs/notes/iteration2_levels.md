@@ -82,16 +82,16 @@ Measured in our engine on hand-made obstacles, with the cube driven by a script 
 - **The suites are frozen before any run** (Shannyn, 2026-11-15): seeds, counts and generator version in the config, and every level's hash recorded and tested, as for the v3 levels.
 - **Ship and mixed suites** for fix 3 come later, in fix 3's own note.
 
-## How v4 builds them (2026-11-15; choices to confirm before the suites are frozen)
+## How v4 builds them (2026-11-15; all five choices confirmed by Shannyn the same day)
 
 Built in `generator.py` as version 4, used only by `configs/iteration2/level_suites.toml`. The v3 levels rebuild unchanged (freeze test). Choices the note didn't fix, for Shannyn to confirm:
 1. **`step_down_pits` shape:** a 2-block run then a 1-block run, each 2–4 cells; medium and hard only (easy has 1-block drops only).
 2. **The landing platform after pits** (the 50/50 "same-height platform" case): 3–5 cells long.
 3. **The guarantee:** each level's guaranteed drop (`platform_drop` or `step_down_pits`, 50/50 where both exist) and spaced pair are placed among its first 6 chunks; all later chunks are random.
 4. **A spaced pair with a 4-cell gap** reads as two single spikes in the per-obstacle results, since chunks in hard levels can be just 4 cells apart and the shapes are then identical.
-5. **Easy levels are harder than v3's easy levels:** their tightest press windows drop to 8–21 ms (v3 easy kept out anything under ~50 ms). That's the new features doing their job, but it means "easy" isn't comparable across iterations.
+5. **Easy levels are harder than v3's easy levels:** their tightest press windows drop to 8–21 ms (v3 easy kept out anything under ~50 ms). That's the new features doing their job, but it means "easy" isn't comparable across iterations. **For the write-up (Shannyn):** say that iteration-2 "easy" isn't comparable with iteration 1's.
 
-**The 50 training levels are built** (results/iteration2/levels/training, not committed; 6 min). Hard levels needed 4 attempts on average (bot re-rolls). They contain 114 fix-case drops and 45 controls, with pit widths covering every tier's range (including 4–5-cell strips in medium and hard), spaced pairs in every tier, and 2-high plain step-downs in medium and hard. **The held-out suite isn't built**, and neither suite is frozen yet.
+**The 50 training levels are built** (results/iteration2/levels/training, not committed; 6 min). Hard levels needed 4 attempts on average (bot re-rolls). They contain 114 fix-case drops and 45 controls, with pit widths covering every tier's range (including 4–5-cell strips in medium and hard), spaced pairs in every tier, and 2-high plain step-downs in medium and hard. **Both suites are frozen** (2026-11-15, before any run): the 40 held-out levels were built without being opened (only a count was printed), and every level's hash in both suites is recorded in `tests/data/v4_level_hashes.json` and checked by `tests/test_generator_freeze.py`. A checksum file of the held-out level files sits next to them (`results/iteration2/levels/held_out_sha256.txt`, not committed), as for iteration 1.
 
 ## Engineering constraint
 
