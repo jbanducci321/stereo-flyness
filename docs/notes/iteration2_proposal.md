@@ -4,7 +4,7 @@
 
 ## Where iteration 1 ended
 
-The fly of record (150 Hz, whole brain, seeds 0–9) reached a **median 9.2%** of Stereo Madness; none of the 30 D54 runs got further than 10.9%, and 90 extra record runs out of curiosity (seeds 10–99, outside D54, never reported as results) hit the same two places:
+The fly of record (150 Hz, whole brain, seeds 0–9) reached a **median 9.2%** of Stereo Madness; none of the 30 D54 runs got further than 10.9%, and 90 extra record runs hit the same two places. Those were run after the opening and weren't pre-specified (seeds 10–99), so they're a deviation from D54: logged there as one, kept, and given one footnote in the paper. The headline stays the pre-registered 10.
 
 | Wall | Where | Runs (of the 90) | What happens |
 |---|---|---|---|
@@ -25,11 +25,12 @@ Stills of both are in `results/replays/for_shannyn/` (not committed: Stereo Madn
 
 1. **The connectome stays frozen**, as now.
 2. **Interface changes only**, each with its own short design note and Shannyn's biology argument, written and dated before it's run (like ship design B).
-3. **Hard rule 5 is lifted for iteration 2 only.** We may look at Stereo Madness and say so openly. Iteration 1's D54 runs and report are never rerun or changed.
-4. **Every fix is tested on general levels first.** New training and held-out levels with that feature in many sizes (gaps, close double obstacles), **not copies of Stereo Madness's**. A fix counts only if it helps there; if it helps only on Stereo Madness, we report it as fitted to the level.
-5. **Few dials.** At most 2–3 new numbers across iteration 2, each set on training levels, never on Stereo Madness.
-6. **Separate folders and configs** (`results/iteration2/`, `configs/iteration2/`), so no run can mix with iteration 1's.
-7. **Everything is labelled.** The write-up and any video say "interface adjusted after seeing this level; brain wiring unchanged."
+3. **Stereo Madness is spent as a held-out test** (agreed 2026-11-14, to go in D54's result). Hard rule 5 is lifted for iteration 2 only: we may look at it and say so openly, but no design change is ever judged on it. Iteration 1's D54 runs and report are never rerun or changed.
+4. **Every fix is judged on general levels.** New training and held-out levels with that feature in many sizes (gaps, close double obstacles), **not copies of Stereo Madness's**. A fix counts only if it helps there. Stereo Madness only shows how far the fly then gets, and if a fix helps only there, we report it as fitted to the level.
+5. **Extra runs are agreed first.** Any run on held-out levels or Stereo Madness beyond what a decision fixes is agreed by both of us before it's run (agreed 2026-11-14).
+6. **Few dials.** At most 2–3 new numbers across iteration 2, each set on training levels, never on Stereo Madness.
+7. **Separate folders and configs** (`results/iteration2/`, `configs/iteration2/`), so no run can mix with iteration 1's.
+8. **Everything is labelled.** The write-up and any video say "interface adjusted after seeing this level; brain wiring unchanged."
 
 ## Fix 1: let the fly see the gap
 
