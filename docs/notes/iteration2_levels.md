@@ -1,8 +1,12 @@
-# Iteration 2: the new levels' ranges, a proposal for discussion
+# Iteration 2: the new levels' ranges
 
-*Jacob, 2026-11-14. A draft for Shannyn; **nothing here is decided or built.** Shannyn's rule (b) for iteration 2 (`docs/notes/iteration2_proposal.md`): the new levels' ranges are fixed **before** we study Stereo Madness further, and not centred on its spacings. So this note uses only the game's physics, our existing generator and our existing suites. **No Stereo Madness data was read for it.** It sets the ranges for the two features iteration 2 needs, and the suites built from them.*
+*Jacob, 2026-11-14; **Shannyn's answers folded in 2026-11-15** (end). The ranges are agreed, to be logged with D55; nothing is built yet.*
+
+*Shannyn's rule (b) for iteration 2 (`docs/notes/iteration2_proposal.md`): the new levels' ranges are fixed **before** we study Stereo Madness further, and not centred on its spacings. So this note uses only the game's physics, our existing generator and our existing suites. **No Stereo Madness data was read for it.** It sets the ranges for the two features iteration 2 needs, and the suites built from them.*
 
 ## What the game's geometry allows (measured, not fly results)
+
+**Label wherever this is shown (agreed): "game geometry, scripted cube, our encoding's θ; not a fly result".**
 
 Measured in our engine on hand-made obstacles, with the cube driven by a script (no brain). θ is the looming angle of the first obstacle at take-off, as the encoding computes it (eye at the cube's front face and centre height, obstacle cell 30 units tall).
 
@@ -40,22 +44,30 @@ Measured in our engine on hand-made obstacles, with the cube driven by a script 
 ### `platform_drop`: a raised platform, then pits
 - **Platform height:** 1 or 2 blocks (easy: 1 only).
 - **Platform length:** 4–8 cells, as the existing platform.
-- **Ground between the platform's end and the pits:** k = 0, 1, 2 or 3 cells. This spans the case that matters:
-  - k = 0–1: the pits catch a cube that walks off, and from on top they never loom (fix 1's case);
-  - k = 2–3: the cube lands on the ground first, and the pits loom as they do now (a built-in control).
+- **Ground between the platform's end and the pits:** k = 0, 1, 2 or 3 cells.
+- **Fix case or control, computed per level, not by k alone** (Shannyn, 2026-11-15). Each drop is simulated with a cube that walks off the edge without pressing:
+  - **fix case:** the walk-off cube lands in the pits (from on top they never loom today);
+  - **control:** it lands on the ground first, so the pits loom as they do now.
+  - Why not k alone: a walk-off lands ~45 units out from a 1-block platform but ~64 from a 2-block one, so k = 2 after a 2-block platform can still be a fix case.
+  - The label is stored with each level, so results are always split by it.
 - **Pit strip width:** 2–5 cells (easy 2–3, medium 2–4, hard 2–5).
 - **After the pits:** plain ground, or a platform of the same height (50/50).
 - Every level stays bot-checked (D24): a combination the bot can't beat is re-rolled, as now.
 
-### `platform_step_down`: a raised platform ending on plain ground (control)
+### `platform_step_down`: a raised platform ending on plain ground (no-harm control)
 - The same platform, no pits.
-- Fix A must **not** make the fly jump here: with gravity in the collision course, the cube falls onto empty ground, so nothing should loom. If the fixed fly jumps at these edges, fix A is doing something it shouldn't.
+- **A no-harm condition** (Shannyn, 2026-11-15): the fixed fly jumps at these plain edges **no more often than the unfixed fly**. With gravity in the collision course, the cube falls onto empty ground, so nothing should loom.
+
+### `step_down_pits`: a step down onto lower raised ground, then pits (Shannyn: yes)
+- A 2-block run, then a 1-block run, each 2–4 cells long, then pits as in `platform_drop` (k = 0–3, the same widths per tier). *This exact shape is Jacob's proposal (2026-11-15) for Shannyn to confirm; she agreed the idea.*
+- Unlike `platform_drop`, the cube reaches the lower level by walking off the higher one, so the no-press path crosses two drops.
+- Fix case or control is computed per level, as above.
 
 ### `spaced_pair`: two spikes with empty cells between them
 - **Gap:** 1–4 empty cells (easy 2–4, medium 1–4, hard 1–4). A gap of 0 is the existing `spike2`.
 - **Second obstacle:** a spike, or a block (1 in 3), so it isn't always the same pattern.
 
-**Tier weights** follow the existing pattern. Each new chunk appears at about the frequency of the existing platform chunk, and every iteration-2 level is guaranteed at least one `platform_drop` and one `spaced_pair`, so each level tests both fixes.
+**Tier weights** follow the existing pattern. Each new chunk appears at about the frequency of the existing platform chunk, and every iteration-2 level is guaranteed at least one `platform_drop` (or `step_down_pits`) and one `spaced_pair`, so each level tests both fixes.
 
 ## The suites
 
@@ -67,15 +79,16 @@ Measured in our engine on hand-made obstacles, with the cube driven by a script 
 
 - **40 held-out levels, not 20,** so the "better at p < 0.05" bar can detect a real fix: a fix only changes levels where the fly would die at that feature, and our 20-level suites had many ties.
 - Iteration-2 levels are 30 s long, like the others.
+- **The suites are frozen before any run** (Shannyn, 2026-11-15): seeds, counts and generator version in the config, and every level's hash recorded and tested, as for the v3 levels.
 - **Ship and mixed suites** for fix 3 come later, in fix 3's own note.
 
 ## Engineering constraint
 
 **Iteration 1's levels must rebuild exactly as they were.** The generator seeds every level with its version number, so simply bumping it to v4 would change every old level. The new chunks go behind a new version used only by the iteration-2 suites. A test checks that v3 levels are unchanged, tick for tick, for both old suites.
 
-## Questions for Shannyn
+## Shannyn's answers (2026-11-15)
 
-1. Are the ranges right? In particular, pit widths 2–5, the k = 0–3 ground cells after the edge, and pair gaps 1–4.
-2. Should the `platform_step_down` control count toward the "fix counts" bar ("the fly doesn't jump at plain edges"), or only be reported?
-3. Is the geometry table fair to include in the write-up as context for fix 2, clearly labelled as not a fly result?
-4. Anything you'd add, e.g. drops without platforms (a step down onto lower ground with pits)?
+1. **Ranges:** right, with one change: fix case vs control is decided per level by whether a walk-off cube lands in the pits, not by k alone (now in `platform_drop`).
+2. **The plain-edge control is a no-harm condition:** the fixed fly jumps at plain edges no more often than the unfixed one.
+3. **The geometry table:** yes, as context, labelled "game geometry, scripted cube, our encoding's θ; not a fly result".
+4. **Step-down with pits:** yes (now `step_down_pits`). **Freeze the suites before any run.**
