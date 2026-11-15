@@ -59,3 +59,18 @@ def test_overview_draws_level_and_path_headless(tmp_path):
     surface = draw_overview(level, replay(level, bot))
     assert surface.get_width() == 1800 and surface.get_height() > 300
     assert len(set(pygame.image.tobytes(surface, "RGB"))) > 3  # more than a blank background
+
+
+def test_a_suite_can_set_its_own_generator_version(tmp_path):
+    text = CONFIG.read_text().replace("first_seed = 1_000_000", "first_seed = 1_000_000\ngenerator_version = 99")
+    path = tmp_path / "suites.toml"
+    path.write_text(text)
+    with pytest.raises(ValueError, match="held_out"):
+        suites.load_config(path)  # an unsupported version in one suite is caught by name
+
+
+def test_jobs_carry_their_suite_s_generator_version():
+    config = suites.load_config(CONFIG)
+    config["suites"]["held_out"]["generator_version"] = 4  # as an iteration-2 suite would
+    versions = {j.suite: j.generator_version for j in suites.jobs(config)}
+    assert versions == {"training": GENERATOR_VERSION, "held_out": 4}
