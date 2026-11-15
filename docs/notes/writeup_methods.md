@@ -26,7 +26,9 @@
 - All frames run inside one Brian2 run, with a callback at each frame boundary that reads spikes and sets the next frame's rates (D17).
 - **Brain time equals game time:** one brain frame per 240 Hz game tick, exactly 1000/240 ms (Brian2 alternates 42, 42 and 41 steps of 0.1 ms, with no drift) (D40).
 
-**[Shannyn] The two pathways and why we used them:** LC4/LPLC2 → Giant Fiber (DNp01) for the cube's jump; for the ship, T4/T5 → VS cells → DNp20/DNp22 is **planned, pending Step 5**: the ship design isn't fixed yet. Cell counts and synapses are in `docs/FEASIBILITY.md` (target-neuron table).
+**The two pathways and why we used them.** We needed, for each game mode, a circuit whose real job resembles the game's action, whose neurons are identified in v783, and which ends in one descending neuron we can read as the button. Cell counts and synapses are in `docs/FEASIBILITY.md` (target-neuron table).
+- **The cube's jump: LC4/LPLC2 → Giant Fiber (DNp01).** The Giant Fiber is the descending neuron of the fly's fastest escape take-off, triggered by a looming object (von Reyn et al. 2014). Its primary direct visual inputs are LC4, which carries the object's angular velocity, and LPLC2, which carries its angular size (von Reyn et al. 2017; Ache et al. 2019). A one-shot escape is the closest real behaviour to the cube's jump over an approaching obstacle.
+- **The ship: T4/T5 → VS cells → DNp22 (DNOVS2)** (D53). T4/T5 are the elementary motion detectors; VS cells pool their vertical motion across the eye and help stabilise flight; DNOVS2 spikes and reaches the neck, wing and haltere motor regions (Suver et al. 2016). We first planned to read DNp20 (DNOVS1), but it doesn't spike and targets only neck motor neurons, so the ship reads DNp22. The match is looser than the cube's: DNOVS neurons encode body rotation, and the ship climbs and falls (§11).
 
 ## 2. Pathway tests (Step 0)
 
@@ -36,7 +38,7 @@ Before any game, we tested whether the model carries the signals the game needs,
 - **Recording:** every neuron that fires, frame by frame, stored sparsely (D34).
 - **Data rules** (D33): no analysis before a round finishes, frozen code during a round, every file records its git commit.
 
-**[Shannyn]** One paragraph on what GO does and doesn't mean (D39: the model can carry the signals; not yet evidence the fly can play).
+**What GO does and doesn't mean** (D39). GO means the model's wiring carries the signal from the neurons we stimulate to the descending neuron we read, in the right direction, growing with input, fast and reliable enough for a 240 Hz game, and from the side that's driven. That is a necessary condition for play, and nothing more. It doesn't show that the fly would respond to a real visual scene, because we stimulate LC4/LPLC2 and T4/T5 directly and skip the eye; it doesn't show the right timing in closed loop, where the input changes with the fly's own actions; and it doesn't make the circuit "a player". The tests are open loop, with our Poisson input and predicted transmitter signs (tested both ways for T4/T5). The steering GO was judged on DNp20; the ship's readout, DNp22, was checked from the same runs later (`ship_pathway_check.md`).
 
 ## 3. The subcircuit
 
@@ -69,11 +71,17 @@ Every value is cited in `docs/game_physics.md`, and no code is copied from the r
 - **Practice levels** (D26): seeded, generated from a physics-based chunk library, in easy, medium and hard tiers. Difficulty is measured in reaction time and press windows, never taken from Stereo Madness's layout (D7).
   - **Suites:** training, 50 cube, 50 ship and 50 mixed levels; held out, 20 of each from a separate seed range, never used for tuning.
   - Tuning levels are 30 s long (D37).
-- **Stereo Madness** is converted from the official main-level data and cross-checked against an archived server copy (all 1,399 gameplay objects identical, D21). The bot beats it (D24). **It is the held-out final test: never tuned on, run once with everything frozen** (D7). The level data stays local (D9).
+- **Stereo Madness** is converted from the official main-level data and cross-checked against an archived server copy (all 1,399 gameplay objects identical, D21). The bot beats it (D24). **It is the held-out final test: never tuned on, run blind once at the end with everything frozen, as 10 pre-specified runs per variant** (D7, D54). The level data stays local (D9).
 
 ## 5. The cube interface
 
-**[Shannyn]** The biological rationale for each choice below (the Giant Fiber's takeoff response, the angular-size threshold, LC4/LPLC2 tuning).
+**The biology behind the choices below.**
+- **A Giant Fiber spike stands in for a take-off.** In real flies, a Giant Fiber spike drives the fast, "short-mode" escape take-off; without it, flies can still take off more slowly ("long mode"), through other neurons (von Reyn et al. 2014). The model has no ventral nerve cord, so the Giant Fiber's spike is the last step we can see, and we read it as the press.
+- **The fly jumps at an angular-size threshold.** Giant Fiber–driven take-offs happen when the looming object reaches a mean of 39° (s.d. 14°; von Reyn et al. 2014, at r/v = 40 ms), and the size component of the Giant Fiber's response peaks near 42° (Ache et al. 2019). So we calibrate one number, θ_full, so that the model's first Giant Fiber spike comes at 39°, rather than tuning it for play.
+- **LC4 and LPLC2 are driven together.** In the fly, LC4 carries how fast the object grows and LPLC2 how big it is (Ache et al. 2019). We drive the same fraction f of both, at a rate that grows with θ: a simplification that gives the Giant Fiber both a size-like and a speed-like rise without coding them separately.
+- **Only objects on a collision course loom.** Looming detectors respond to an object expanding on the eye, which is what an object heading straight for the fly does; an object passing by produces sideways motion, not expansion. Our collision-course rule approximates that.
+- **Objects the cube lands onto are invisible.** The escape is a response to approaching threats; landing is a different behaviour, so it isn't driven through this pathway.
+- **Which neurons an object drives is approximated.** We don't have visual-field positions for LC4/LPLC2, so the growing patch is built from neurons that share inputs, a stand-in for neighbouring receptive fields.
 
 **Input: what the fly sees** (D41, D45, D47).
 - **The eye** sits at the cube's front face, at its centre height.
@@ -111,7 +119,7 @@ Every value is cited in `docs/game_physics.md`, and no code is copied from the r
 Each run also records its seed, settings and git commit. A run is checked by replaying its logged presses, which must rebuild it exactly.
 
 **Rules fixed before the results** (D33, D48, D49).
-- Every analysis plan was agreed in writing before the runs it judges, and held-out results stayed unseen until both of us opened them together.
+- Every analysis plan was agreed in writing before the runs it judges, and held-out results stayed unseen until they were opened as each decision records (together for Steps 2 and 3; for Steps 4, 5, 7 and Stereo Madness, as recorded in D51–D54).
 - Held-out runs print only progress and stuck flags while they run.
 - Analysis code is checked on training runs that don't count.
 
@@ -130,11 +138,11 @@ Each run also records its seed, settings and git commit. A run is checked by rep
 
 ## 7. Model properties we report, not fix
 
-**[Shannyn]** Short framing for each:
-- **The stuck state** (D37, D38): flagged when ≥ 50% of the 8,189 stuck-state neurons fire over ~100 ms. Stuck runs are kept and counted, and also reported with them left out, with no reruns.
-- **Unrealistic rates:** the model's Giant Fiber fires at 100–200 Hz while driven, against one or two spikes per loom in the fly (D42).
-- **Carry-over:** with no adaptation, ~15–20% of approaches start while the Giant Fiber is still firing from the previous object (D48).
-- **The model is less variable than the fly:** first-spike s.d. 8.5° against 14° (D46).
+These are properties of the model or of our input, not of the fly. We report them instead of fixing them, because fixing them would mean changing the frozen model or adding parameters nobody has measured.
+- **The stuck state** (D37, D38): flagged when ≥ 50% of the 8,189 stuck-state neurons fire over ~100 ms. Stuck runs are kept and counted, and also reported with them left out, with no reruns. Real brains stop such runaway activity with adaptation, synaptic depression and neuromodulation, none of which the model has; our untested guess is that this is why it happens.
+- **Unrealistic rates:** the model's Giant Fiber fires at 100–200 Hz while driven, against one or two spikes per loom in the fly (D42). The press uses only whether it spiked, so the excess matters mainly through carry-over.
+- **Carry-over:** with no adaptation, ~15–20% of approaches start while the Giant Fiber is still firing from the previous object (D48). A real Giant Fiber would have fallen silent; here leftover firing can press early for the next object. We measure it and split it out (D48).
+- **The model is less variable than the fly:** first-spike s.d. 8.5° against 14° (D46). Its only noise is our Poisson input; a real fly also varies with state, history and between individuals. So the model's consistency is, if anything, optimistic.
 - **Our input builds in the eye's processing:** looming and direction selectivity are given, not computed by the fly's earlier visual system (D39).
 
 ## Still to add
