@@ -6,10 +6,15 @@ measures its difficulty, and writes three files to `<out>/<suite>/`:
     <name>.bot.txt     the bot's winning per-frame inputs ("0"/"1"), for replay
     <name>.meta.json   generator version, attempts and difficulty statistics
 
-A job whose meta file already exists with the current generator version is skipped, so suites are
+A job whose meta file already exists with the job's generator version is skipped, so suites are
 built once and reused.
+
+Generator versions: the config's top-level `generator_version` is the default, and a suite may set
+its own. Old suites stay on the version they were built with, so adding a newer generator version
+never changes them.
 """
 
+import hashlib
 import json
 import tomllib
 from dataclasses import asdict, dataclass
@@ -17,7 +22,7 @@ from pathlib import Path
 
 from stereo_flyness.game.bot import BotResult
 from stereo_flyness.game.difficulty import measure
-from stereo_flyness.game.generator import BUILDERS, GENERATOR_VERSION, generate
+from stereo_flyness.game.generator import BUILDERS, GENERATOR_VERSION, SUPPORTED_VERSIONS, generate
 from stereo_flyness.game.level import Level
 
 KINDS = tuple(BUILDERS)  # cube, ship, mixed
@@ -30,6 +35,7 @@ class Job:
     kind: str
     difficulty: str
     seed: int
+    generator_version: int = GENERATOR_VERSION
 
     @property
     def name(self) -> str:
@@ -38,9 +44,13 @@ class Job:
 
 def load_config(path: Path) -> dict:
     config = tomllib.loads(Path(path).read_text(encoding="utf-8"))
-    if config.get("generator_version") != GENERATOR_VERSION:
-        raise ValueError(f"{path} is for generator v{config.get('generator_version')}, "
-                         f"but the code is v{GENERATOR_VERSION}. Update the config deliberately.")
+    versions = {"default": config.get("generator_version")}
+    versions |= {name: spec["generator_version"] for name, spec in config["suites"].items()
+                 if "generator_version" in spec}
+    for where, v in versions.items():
+        if v not in SUPPORTED_VERSIONS:
+            raise ValueError(f"{path} ({where}) is for generator v{v}, but the code supports "
+                             f"{SUPPORTED_VERSIONS}. Update the config deliberately.")
     return config
 
 
@@ -50,10 +60,11 @@ def jobs(config: dict, suite: str | None = None, limit: int | None = None) -> li
     for name, spec in config["suites"].items():
         if suite and name != suite:
             continue
+        version = spec.get("generator_version", config["generator_version"])
         for kind in KINDS:
             for difficulty, count in spec.get(kind, {}).items():
                 n = count if limit is None else min(count, limit)
-                out += [Job(name, kind, difficulty, spec["first_seed"] + i) for i in range(n)]
+                out += [Job(name, kind, difficulty, spec["first_seed"] + i, version) for i in range(n)]
     return out
 
 
@@ -64,20 +75,20 @@ def _paths(out_dir: Path, job: Job) -> tuple[Path, Path, Path]:
 
 def is_built(out_dir: Path, job: Job) -> bool:
     meta = _paths(out_dir, job)[2]
-    return meta.exists() and json.loads(meta.read_text())["generator_version"] == GENERATOR_VERSION
+    return meta.exists() and json.loads(meta.read_text())["generator_version"] == job.generator_version
 
 
 def build(job: Job, out_dir: Path, seconds: float) -> dict:
     """Generate, validate, measure and save one level. Returns its manifest row."""
     level_path, bot_path, meta_path = _paths(out_dir, job)
     level_path.parent.mkdir(parents=True, exist_ok=True)
-    g = generate(job.kind, job.seed, job.difficulty, seconds)
+    g = generate(job.kind, job.seed, job.difficulty, seconds, version=job.generator_version)
     stats = measure(g.level, g.bot.tick_inputs)
     g.level.save(level_path)
     bot_path.write_text("".join("1" if h else "0" for h in g.bot.frame_inputs))
     windows = stats.windows_ms
     row = {
-        **asdict(job), "name": job.name, "generator_version": GENERATOR_VERSION,
+        **asdict(job), "name": job.name,
         "attempts": g.attempts, "bot_nodes": g.bot.nodes,
         "seconds": round(stats.seconds, 2), "hazards": stats.hazards, "solids": stats.solids,
         "clusters_per_10s": round(stats.clusters_per_10s, 2),
@@ -105,3 +116,9 @@ def load_level(out_dir: Path, job: Job) -> tuple[Level, BotResult]:
     level = Level.load(level_path)
     frames = [c == "1" for c in bot_path.read_text().strip()]
     return level, BotResult(True, frames, frame_ticks=4, nodes=0, farthest_x=level.length)
+
+
+def level_hash(level: Level) -> str:
+    """SHA-256 of a level's content (its canonical JSON), independent of file formatting."""
+    text = json.dumps(level.to_dict(), sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()

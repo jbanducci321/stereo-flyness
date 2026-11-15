@@ -1,0 +1,1055 @@
+{
+ "seconds": 30.0,
+ "levels": {
+  "training/cube-easy-0": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "0c5bc0527bd4e5ebafbe27050caffa8967b32d7f304d874e6d48fb46d90acb70"
+  },
+  "training/cube-easy-1": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "690cd532e4b546ea7ce91973376f8f624255caddbd200ad300eb6f6d4639afc6"
+  },
+  "training/cube-easy-2": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "6ab1751b6666f16086c4b24d8281a37102a5585449f983de2642d3da2fdab081"
+  },
+  "training/cube-easy-3": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "ebe7c612283f552dee69ae9a9a1ff996fb60d511c97e22663654f57498d1e7e3"
+  },
+  "training/cube-easy-4": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "d7b4014af69eeecb46c1aefb52ab31badf9a80d7e9296eb5f47a25a5af53389c"
+  },
+  "training/cube-easy-5": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "224dc99d8d70db36f5b814aad299fc561f3a5b12a69ea14af05063c5bb1e45dd"
+  },
+  "training/cube-easy-6": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "345ed4d7e72b201b45adbab5c108741597533f9b659ed0232d2b0ea93cc5dd16"
+  },
+  "training/cube-easy-7": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "09dc7f9e738b9bf76edd1de853a280c2408ea379daae60d0b242d90e4932664b"
+  },
+  "training/cube-easy-8": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "8b0b67e1bdf4d854c38c11dfe73f24f8249a648440ca6499b0a550b8e13fc99c"
+  },
+  "training/cube-easy-9": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "d24df5d69a77bfb73d1a3184d315a3c37223ee7bead17c9cb9481cbc1360e5f0"
+  },
+  "training/cube-easy-10": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "c1ce775c8fdd279103da7952a1c0fb8c1555b337cf2a2e27bded2637274342f2"
+  },
+  "training/cube-easy-11": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "802eb6bd1ab2d2d05314815058a7583cd5dd0642f6ef02cbb2c0db15daef7086"
+  },
+  "training/cube-easy-12": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "9df50df21a96cad67937eb98d5fa8215f38e3cd2b54154595da5f737f0143ecf"
+  },
+  "training/cube-easy-13": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "d6362afa3dfc62d7ae6043fd8b4e46ee18e9208ba8359be5cdef543ba700b61e"
+  },
+  "training/cube-easy-14": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "9e4c02d594d2ca71269a3f5b9f215487c71c7d13e858f837cabe918a50accc65"
+  },
+  "training/cube-easy-15": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "0f0bd6003a9660fe001b31df065a10aa9596b663067ea77d2c33b81cbb9e876e"
+  },
+  "training/cube-easy-16": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "a754fe9220f6f53b01c694e391c5b98d604cc82a75fdf6573e0547d1d6946d17"
+  },
+  "training/cube-easy-17": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "d0e042ecc32092f7f803b0929e0a31f51cc59fc239273968371fc86a7cb2dd5a"
+  },
+  "training/cube-easy-18": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "1fdec2d7bdd746c8da7003ce34919a825d9eb681cc713d6bfd8952f446d40a31"
+  },
+  "training/cube-easy-19": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "976591fb4687f54734ee8de614491ac7274045f8f27b3aef28583e8ee5698169"
+  },
+  "training/cube-medium-0": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "f17f696c13947b4598d48f2b162bde68f19e5fbf9801b158ffbe9060d28a31bf"
+  },
+  "training/cube-medium-1": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "51184417e696322664318d7196509c9078da92c27ec161e7a9739114361d54bc"
+  },
+  "training/cube-medium-2": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "78dcdcdaf7327d56965cfb3644bc43b4b5d582608fef8a48102a24f8cbed7396"
+  },
+  "training/cube-medium-3": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "41991e7d0e14a2fd73f1391169ca9e3ba1c877bfe49fa928acced62e979cd1e0"
+  },
+  "training/cube-medium-4": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "fd29a6605d969206401ac14e11f5e3ec2bbcb60c0fd8b4191999f72f73b5159d"
+  },
+  "training/cube-medium-5": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "2a71c9f02fc39162c0a65f9f6e002efaf3b8deac68e8150fe76287c650f2b30b"
+  },
+  "training/cube-medium-6": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "072845c48410fad18bfa829463c5c189efe273864b2127f503e75f2fa35efe30"
+  },
+  "training/cube-medium-7": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "172838cb32c09dac1aaa65c9a6597e4fcf1c330a6392c1f56da5ed1247caa2ae"
+  },
+  "training/cube-medium-8": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "eae97320edd281f17bba235b33948ce7ae1f3193dc5ba62425b75916eb693e9a"
+  },
+  "training/cube-medium-9": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "85e87ae7e2a804d4c4276161b34a62b4f5b31d4fc8a5c8974d39011019e96af7"
+  },
+  "training/cube-medium-10": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "dcc4dd3ddc6c98b11f2b659e8135fdfeffbeaa5670f512e2e130d2c0b6b96d87"
+  },
+  "training/cube-medium-11": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "073fbd9ad03a0bc85b8fc1bd70dca692f3f51fc951556508df311250b36503be"
+  },
+  "training/cube-medium-12": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "d9418f6db626d1ef97fa9796a5463e2aebd570bc61b702799b1ed7dd17a334f9"
+  },
+  "training/cube-medium-13": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "9ffc0166eb31f73c201c55ca74221c6f266534edd1d55a1579647fc1a9d6b976"
+  },
+  "training/cube-medium-14": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "ebd89abb29ab89e79531d6301a04cf9c9542daa0b04b62c8124fd91f4e75b003"
+  },
+  "training/cube-medium-15": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "cba78bf6dacc396f822450d367971b8df831063f7bf391f3cbe8a52c1e5428a4"
+  },
+  "training/cube-medium-16": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "9132820490163fd865e32ca9534027f1269b10640ee2bfa90a79244b597e5037"
+  },
+  "training/cube-medium-17": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "dae8ad67ac8d8f03282e0f93e5e7395203d26acbc4770640d5d5081de24e00b9"
+  },
+  "training/cube-medium-18": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "5587660702b420b0581a6b6ae017c818b6c6fb9e5af1a2adb46a17df0eefb3f1"
+  },
+  "training/cube-medium-19": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "64eaa14626a2a31e40d5e023e8e1f00976463fe14b400aaa1f1a1ed4a2920c03"
+  },
+  "training/cube-hard-0": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "cf1bcea43c48c5aef8aa0a88336a3b83c3292fbf3ed1f4688d3589cae28b24a4"
+  },
+  "training/cube-hard-1": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "a5d2e742a10f208ef4589056727dae60281aaea3fc1400151c740727ffd5fe98"
+  },
+  "training/cube-hard-2": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "52931099661b65d47a5d96eb0751938159c3bca2c7ece91e6bf91896dfa9c09c"
+  },
+  "training/cube-hard-3": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "6f35aed03bd936407f5b7da51f025ce6d3a7fab3f60129b5d04815c8b4bbd5ad"
+  },
+  "training/cube-hard-4": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "6274b3d2d49492693dd0697040eb44bbd5a3756b52880c39788c0f5e28a4614c"
+  },
+  "training/cube-hard-5": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "bfe3f34548fe4cff6d58b77074dcea322e8c90aae5918a2cf52d8ee83291268f"
+  },
+  "training/cube-hard-6": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "20b3283091e6a46b31651e8f8d1a090889822cc81657cb2cfd59ba9282a3806a"
+  },
+  "training/cube-hard-7": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "3a8ceccf36eedd91a1d626971b08407fc2d0c41688441018d5a667bbf930ee95"
+  },
+  "training/cube-hard-8": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "7c46386d7dad89514933d24982add5be5297d1e1e9618057d7c24cae8ec33cf3"
+  },
+  "training/cube-hard-9": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "81eed57519d3ae1db4fe9bb6ff59f642a63d87439bc903a411603bd6c508491b"
+  },
+  "training/ship-easy-0": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "ec5b43717f0431bb98bcefa5e8ef2fe0a03558d22011735feca2848053d34fbc"
+  },
+  "training/ship-easy-1": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "564ed27fb38f7be846025d51875388d9f2e00faafab84a1825156386e6179359"
+  },
+  "training/ship-easy-2": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "ff819a895cadd780853f8329d3916771a46e16a02c57a274626bfe2cf2e245c5"
+  },
+  "training/ship-easy-3": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "eda5c75f38520eb51dd54942660d0b8a4433e61a7c52fafbd67ac1554374bd4f"
+  },
+  "training/ship-easy-4": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "ffb72f14fb387a21ede302e2ee21f7acc3767f722112ca5bf48955e6671d83c9"
+  },
+  "training/ship-easy-5": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "f212375aa68dbfb627cc16478387ec57a4f692e77581890224e355fab81a30d9"
+  },
+  "training/ship-easy-6": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "55e3b464a775182ad33c492b1605188989f44d63b8a1dcc9940705623bb2588b"
+  },
+  "training/ship-easy-7": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "63864f9ac64362c83a02a6111ef4d69817da8c8047dbde96857ee594617ed65a"
+  },
+  "training/ship-easy-8": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "b2d0e74f714b4f871c3000acf8e89ce824a9c6f03d923478414b10c5b8961a47"
+  },
+  "training/ship-easy-9": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "0b35bfed44ff50676a800b0719e252c2021c159eba72af32850fe788127818eb"
+  },
+  "training/ship-easy-10": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "26c9b6e95b34ddf8f65fd9b83b7a1e2a20c47a4569e70ef021b9175d0acf4929"
+  },
+  "training/ship-easy-11": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "a5d7bbc820ccf8ccaed9eb7960222c39313773e646fee35ccb144e50c22ac200"
+  },
+  "training/ship-easy-12": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "97ab9b91c7508ebfa09b2a846d3e2706296ea8e451445c002d9a8745d6b3cfee"
+  },
+  "training/ship-easy-13": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "6288ff2ffd0439f940a8992a19f34521e1448888e4530646af410e282a215e8d"
+  },
+  "training/ship-easy-14": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "25b47c0e038879f044c45bc4af333fdee261ca20c30dace9e62cf08fba82f5be"
+  },
+  "training/ship-easy-15": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "7e548ee27227434facb3da07f801f3c5cb2f10bb8f25b97e3005952e326a6827"
+  },
+  "training/ship-easy-16": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "ab9417b3a4bfec531d04fb2a4ee504891072cb811e7a4156fe171c7e0d1a6f50"
+  },
+  "training/ship-easy-17": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "ce0717fc541c3d0dfc14f0a7c67b3a6d8b51af3ab14c061ada17854cafb55640"
+  },
+  "training/ship-easy-18": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "18819ebe25fb434b466faac1a32c9db7a66186330dae109c86c6ca37d8254a88"
+  },
+  "training/ship-easy-19": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "6771f07d393b49096e0752b2613592c89f67a58d320329b84b96fe01318d0347"
+  },
+  "training/ship-medium-0": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "2e76e242b9c627327ccbc2291d0a69dec32f7de4f59befedd6967ccb40e2882d"
+  },
+  "training/ship-medium-1": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "22a8cb1e0e1bf5f6534d562d63b457170de4f47f65dc8bced87264d884c3eadb"
+  },
+  "training/ship-medium-2": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "c3dc9f015334bced20219917b81085e5bbedad704f5c5b39f57f42bb8e36898e"
+  },
+  "training/ship-medium-3": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "d73a72c2f897fc3df7b601c5b018afd3f58753f89095faba7a7bc3bd0ebdd5e6"
+  },
+  "training/ship-medium-4": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "994b9d408465901d4131ba709ac5d9544c2fa740721e8046205af0decd061054"
+  },
+  "training/ship-medium-5": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "0dccfdbb80fac5291cd9c8145dc93990010dfec43a5a93126c70ab4efd9db2ce"
+  },
+  "training/ship-medium-6": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "5de66eed3b2f417478268fe9f2537187100d41ecad66393fb7fd100346371623"
+  },
+  "training/ship-medium-7": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "fc016352e2f273687f6f2779a03fac9427720bd6d9d66c0fd37e6a68eabb0a8e"
+  },
+  "training/ship-medium-8": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "cc523fe82ffcb63c9bb15fa6879fb20ffa1ffe804985d5f4f0df3dced236f462"
+  },
+  "training/ship-medium-9": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "4d24bb252a65c970ff8a56ab273050a2d6cc9e28afeda912e53849e204de8a5d"
+  },
+  "training/ship-medium-10": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "695d79c327d7ddf50c065401cae5b3355fc41ec87588dfe670f61bc7e3da0865"
+  },
+  "training/ship-medium-11": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "d8d2523895e30aca26f4378f7a93ca3a26d77d1a179781e1a84e3d5836215b80"
+  },
+  "training/ship-medium-12": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "842fd564f5c55a2afca06fafa4071901697f0008795d16b105b5a347a7707914"
+  },
+  "training/ship-medium-13": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "3d6acd779fec8ea42b3285eb098828576b14f5f5839eba6023555234c5def818"
+  },
+  "training/ship-medium-14": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "33646a21566f49b6abe2bae3c6f67fd5aa4454f59b1083e2c3ae406e966be23b"
+  },
+  "training/ship-medium-15": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "9a43731279938e6a255bcc6d81ca919584930b78f248c4d88037cf2a23b8c2ee"
+  },
+  "training/ship-medium-16": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "ffd84dbf3f11d339b7c0b055769fbae267750e56b2c8d7c560bde0e8c5630719"
+  },
+  "training/ship-medium-17": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "c7262118c46b70ffd4903b9eff2b9c8b9f69f898a966661980113e0356c6b41d"
+  },
+  "training/ship-medium-18": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "1a5d7e56b0d21925d98dc060724ff1c33604bd0b7c881a24bced91b31962186c"
+  },
+  "training/ship-medium-19": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "cf85d24e7bf689456b587c68d1fa274a5a5f59ac3095a25197f6cb866bf26a84"
+  },
+  "training/ship-hard-0": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "de82646fcc4c21e58c961ebaae4ca693334a131f001b3dd30b18e948630c8188"
+  },
+  "training/ship-hard-1": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "0a8318ab66d4d814d781b1d110f96ea8a967fd5dc004adaced02ef70d4b09260"
+  },
+  "training/ship-hard-2": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "5f0405c9127567dc42ad3d94d0f585820ebae08fcc205a1794e5fcdc2a807170"
+  },
+  "training/ship-hard-3": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "afac2e033aae2228d1c8c0905c670065fbfd3ca8c3c52b9917e2f4d345a99143"
+  },
+  "training/ship-hard-4": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "064643ad55d8cae044e9b6eeb59c609ee24bad108caa9cf9b342c54490ecd66a"
+  },
+  "training/ship-hard-5": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "da808b3716f87d586e59d784ca2bb871fce888612438cb78b1a2882a906e11f7"
+  },
+  "training/ship-hard-6": {
+   "generator_version": 3,
+   "attempt": 1,
+   "sha256": "cecfef1f763f4266b74e1710ea15b769cd0d94a2a5421cdd4516de1fb40ab450"
+  },
+  "training/ship-hard-7": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "1845b4d0efa351c8316f6e18f83e4d3fd58356b14c6f1271d0b978e03e341082"
+  },
+  "training/ship-hard-8": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "b62025a5cb26892239704948499aa4b47b068c5f6e4665ad8aa3f3df6d3cbdfb"
+  },
+  "training/ship-hard-9": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "942ca54f97785137b80d0c17fda656a33e1c03755d3fab6828228a5729a06545"
+  },
+  "training/mixed-easy-0": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "553fa626bce9a3b4aca7f648fc86c95da80fd6061499fe3cfab2746bd6326a58"
+  },
+  "training/mixed-easy-1": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "3583bee97dced3821eac74c1e57563457c991f9caf5a63f2cda3e2358f263c11"
+  },
+  "training/mixed-easy-2": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "36b0641982f506e0d878f26c894a5eabe70cd22a66db2ea81d6326edb1666811"
+  },
+  "training/mixed-easy-3": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "cda764f6fb6f2195dd8673eaca13a31111023375f959497f46b7c4b7051a405b"
+  },
+  "training/mixed-easy-4": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "a86509f1924cca657ccfcf605010e4dfbd92f0c0483158846e81cc8c26632bb0"
+  },
+  "training/mixed-easy-5": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "4b504c233fefdf851d4fd094fb2801b39cf31f9d283074e06b7ad0e3b708df80"
+  },
+  "training/mixed-easy-6": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "51e10e53586c77c5bb5a493c5d8cbd741d8d8548353a88649b8b510f87ec70d7"
+  },
+  "training/mixed-easy-7": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "d50779346a467426f06f2ed4dea0a53a97342551c8f2b30ad3d24b47d93e4efb"
+  },
+  "training/mixed-easy-8": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "a3b2e26b7ef9dfba3bf306edab7a179801811b427f556f5a6f42fffbdb15d556"
+  },
+  "training/mixed-easy-9": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "3f0d01fceedb144865ef6512388ea980210bdea351bcc48c93242b3de41d6cf8"
+  },
+  "training/mixed-easy-10": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "841500bd26ffc712e4079f63dc6beb19a1a97634f302d4073b1e1234cbc7e056"
+  },
+  "training/mixed-easy-11": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "89560192e52b58c304867fb4c0e6312956c225d9454411128e1dd2c40b74fa4a"
+  },
+  "training/mixed-easy-12": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "d0e59d0d04497858863087de3aea001b828c66a384ed4c931ecd274b944a80e8"
+  },
+  "training/mixed-easy-13": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "7c1d8c5bf77877822a9ca1ea4c70974dc56ccd120493cd4dab13867466a3173a"
+  },
+  "training/mixed-easy-14": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "07843b69cdf91807fbb18a36afd292d01de51113c7e3fd90daa95c48c85b70bc"
+  },
+  "training/mixed-easy-15": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "3f7a78a7a6b76fb4b944aa9e5d3420ccff1d68976f1807a5bdd674a0689ba8e3"
+  },
+  "training/mixed-easy-16": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "11b3ae56dc602446f83587d6c64b11d6910b1aaa1fabaec736784909732582e4"
+  },
+  "training/mixed-easy-17": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "96908fc209fac6398d16bff9f656502a3f0dc2f7f0050ae148c2b636264f818a"
+  },
+  "training/mixed-easy-18": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "7740410412b4e6a5db4687c9932ec8992809e785d477ba33e80d1c98f788aec1"
+  },
+  "training/mixed-easy-19": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "60ca2fc9454e88dbda28b09c10736467793d6034847b689154d186628fda4269"
+  },
+  "training/mixed-medium-0": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "e9fac8c4f723adfba23dddb59305a2cef4eb232a05a07c06703eb537e1988d36"
+  },
+  "training/mixed-medium-1": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "ccead549d492b05d7300ce68a35d6fdf3607136ce1488ec31747734638341bda"
+  },
+  "training/mixed-medium-2": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "b0de77aaa15448b749a4626bac009ecf2e73303b93fff1af22660557cc6b13db"
+  },
+  "training/mixed-medium-3": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "cbf7bc9998ec053ea58866ecaeab260749f11849c778b2388d411ed171076f41"
+  },
+  "training/mixed-medium-4": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "b8cbcdb96ca8f41692c442808e5817ca0cc67faf93115df34747509dc4fb785e"
+  },
+  "training/mixed-medium-5": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "161a22c432d785bb54629b796419ddf59126ee1992ce21eaebbd195f929b4a10"
+  },
+  "training/mixed-medium-6": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "6816a75a4b79ce94613440da9910590dd91e399f0182a354dfa42cc1782a0a8e"
+  },
+  "training/mixed-medium-7": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "d5600ba338e5d3da34edbc88edc8748d24f2e762f985c45d6271885328b3d48c"
+  },
+  "training/mixed-medium-8": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "6017d62d2afd86105fb1c2ad982c990f36211207a2a2c35611703b71cb3a5aef"
+  },
+  "training/mixed-medium-9": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "3ec104adb5603af41d462473d895f6cfa21784f94282f662f38eebf80ee50cec"
+  },
+  "training/mixed-medium-10": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "59dbcb40f3c1b6af13e3f37212c1ef64947da6ee939e7c9255e660184129ba6e"
+  },
+  "training/mixed-medium-11": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "6359d5ef991ee825f1857fddcc5ce08be08be9a122e74bf9c89d6ea7de77f48e"
+  },
+  "training/mixed-medium-12": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "6847d12a89ffaa929ec2c1d721a6b997c4d1ccf38ec5e097abebbaf84a01cd07"
+  },
+  "training/mixed-medium-13": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "81d7b532e966838c89bbb6a46fd067a1d55c8a02384fe5383b6cd1a21d0af00f"
+  },
+  "training/mixed-medium-14": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "be8c9f60f6937abd0173c7fe5b1472a11d7186ca35c0c8649aa19f9ec6b616d0"
+  },
+  "training/mixed-medium-15": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "96d862d888df749f26102f62c128e7f07e8bb0f70e3688879de42c0046a8ab76"
+  },
+  "training/mixed-medium-16": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "6b2e41b16cad4b20170579012d18e62a14c0c7b5dde68d501a8dcf0fed012112"
+  },
+  "training/mixed-medium-17": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "4dd3b36308b4f41f5aa582e02ce4f339ab9a6c41695fde5a92d47e00cbe48818"
+  },
+  "training/mixed-medium-18": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "62fe934f713849447a991e5d8e2abf46f511dc5f87a470a9cb0f1c27f0ea1b2c"
+  },
+  "training/mixed-medium-19": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "bf21079c7df47e16572984e354a9ce354eb15e04f505c25edf6bdeb0fd1b7c9a"
+  },
+  "training/mixed-hard-0": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "a8418e748576215b4e7c0e1e7a7793a09f41b038fce83f7b6bc0c28c29e3093c"
+  },
+  "training/mixed-hard-1": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "05b05c3dc8035406e9fc05643daa6f6a0c4966debefd1159720cc9300cd3b17d"
+  },
+  "training/mixed-hard-2": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "bfc8d0ede94dacd1dc10c060b5a3a85c368984a923940c641806f549707a0c08"
+  },
+  "training/mixed-hard-3": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "84bab90b184a77b22fa0313daf5e5db2efceb846bdd4e74c29ada3c76376fef7"
+  },
+  "training/mixed-hard-4": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "effc755d95a7cc1e1f6250c15af2605c22664a1c8201ae2fae7269db539711a5"
+  },
+  "training/mixed-hard-5": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "ab39db343099ec1d738b887e91340c39bda46e2588bcd81cc578691c67f122b2"
+  },
+  "training/mixed-hard-6": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "fba52709567f5fa82b23a713c60ff47af68df60c779eb23dff7e9583848eed99"
+  },
+  "training/mixed-hard-7": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "8b49f4679c33930695f7c7c8597c3f6f256de7d2bab58d4556c0fe00e69f4613"
+  },
+  "training/mixed-hard-8": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "4e1eeda820ea48787bd0402625deb62c74122bc8333898fe2152e8f7af3d3946"
+  },
+  "training/mixed-hard-9": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "ef607e9c3912f8008d7bbae95654b33fa19e4f9a1d65f20a9a1e7dc1e65a09d7"
+  },
+  "held_out/cube-easy-1000000": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "e4b72635c061d288417cf38f31bbe9e5e4864db5db63c3feaf60cc6068e9b66b"
+  },
+  "held_out/cube-easy-1000001": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "7ef06cef630a830550f9d1a7c74b0d6427d98a6b0c9312b4e42429082b2ea7f2"
+  },
+  "held_out/cube-easy-1000002": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "34b5c542b5c55819753e1241fb66f5e46c5ec7e6c9dfc19690817af5cf210edb"
+  },
+  "held_out/cube-easy-1000003": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "b527f42fdb2db2538614a203d218009dba39d490d948fcce53cc7dffc7742c3a"
+  },
+  "held_out/cube-easy-1000004": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "e43b5d8513582c90bc8e5c9b04c370569fb8b427bbdffffc4aeccc0635be1540"
+  },
+  "held_out/cube-easy-1000005": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "4938aa07c7c4ed39ccb17be5867135e74d638fc9ae0fce1acbfcb24f5cba6324"
+  },
+  "held_out/cube-easy-1000006": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "525de750cf29d0112be73130e3cbd726fa83fd19575075e022e3ac8b769d6d8c"
+  },
+  "held_out/cube-easy-1000007": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "64faa5514bc3855ca319cbca6072182b012d2f09130db3f8f12a9b8dbd18b22d"
+  },
+  "held_out/cube-medium-1000000": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "ab1311e60ec04044997568a1c8175fc51205b872c49efe7220b7bf47f2636621"
+  },
+  "held_out/cube-medium-1000001": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "86a0bd30db73c4148eb016413e028e919ef284ad10e5056ea56e05c2cc6b605b"
+  },
+  "held_out/cube-medium-1000002": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "3b3fce7d1dd749b750fcf08aa84bb915dffb2b54ff2806a4db837db6a2ea1e1c"
+  },
+  "held_out/cube-medium-1000003": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "b01f283858234d5f5dcd0371a9730db845c92c18ff8e27540a6955c549310dc8"
+  },
+  "held_out/cube-medium-1000004": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "4bcece1162148ed2984a4dd00da626e55b75829c63e445103ba23d7c4aff8339"
+  },
+  "held_out/cube-medium-1000005": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "0e39fde47a1cad8f64eada1a438ae1b44dcfe71d5c5b3d61aef213373dce3975"
+  },
+  "held_out/cube-medium-1000006": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "c6224a94b86874a795b5aa56884a8bb352ba82772a9bfac845dac61280cdd5fa"
+  },
+  "held_out/cube-medium-1000007": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "e21f5d5bf9d969e544a3ed6b45334737ea45489a218709215f64a44cb715f5ef"
+  },
+  "held_out/cube-hard-1000000": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "723da4787daf223ea71e02d84419382fa6f94f428de7bbb1b682e88c8b738628"
+  },
+  "held_out/cube-hard-1000001": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "f96a9bdbb173d439c36e928c44fbc35b0ded8e1ac56bfb638f0b8d2dcb887a6f"
+  },
+  "held_out/cube-hard-1000002": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "149ba93adbfec1d31b21ed50704dfe6f5ac21e849ac2b63307638eff0e5624b4"
+  },
+  "held_out/cube-hard-1000003": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "af1bef1593fd5b4a798652c8578bb3e3ed4c24a5070d5376612451f0c5f94901"
+  },
+  "held_out/ship-easy-1000000": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "30abe93af01f5f54593b30796f9816a5dd368f16e5918d0aff0882fb12d22249"
+  },
+  "held_out/ship-easy-1000001": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "6fb8c03afc35016b929e274ef2ea1587ba9d2b60ea43eb0ecd0b6a0f1d1ad2ef"
+  },
+  "held_out/ship-easy-1000002": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "1bec6f016cc33fcd3492a8da70a39da8abba71dc9082382e68771eb72c0d7a00"
+  },
+  "held_out/ship-easy-1000003": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "6152a6a3e2f69b28c3f1bb31cf8f59256acf02614bbadf8eae5a83dba878c4a1"
+  },
+  "held_out/ship-easy-1000004": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "281073546c0c5e47dd1cc13d1ef3e5f20285086d93efcd3a2f64b07474a7ef2f"
+  },
+  "held_out/ship-easy-1000005": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "f8e93fdec12bb359d2872d9062d8d3196236ac00f8953670be8ed86f553d2b4d"
+  },
+  "held_out/ship-easy-1000006": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "df35cf1d4a931481f43919341c41c2a1429484b11300da88771a940c86c1d3cc"
+  },
+  "held_out/ship-easy-1000007": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "10e9c14157c3aa7b768ad432409bf5805383225dd6b21e8bca2aaa536061c59c"
+  },
+  "held_out/ship-medium-1000000": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "222d86efa1962180c515a71c6b986f903969e33e4cae9a7b798ce3c8d1503808"
+  },
+  "held_out/ship-medium-1000001": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "79f3537217ad1677ff2fbe28e29e6b8b43503e09d4641869c3976359f44984a6"
+  },
+  "held_out/ship-medium-1000002": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "e8356be0f30f8ef8df059a37e07af30d13f129784139535a9f4cebb4347b935f"
+  },
+  "held_out/ship-medium-1000003": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "ce195a39220bedb9f688e8bcc4d3bd9a7a2d28f9b27f7883fc80a8c63fcef60b"
+  },
+  "held_out/ship-medium-1000004": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "a69d64253a4c4fb7744bbd7c5a8c3dab033a6840adf05faa023dc12e5cf78369"
+  },
+  "held_out/ship-medium-1000005": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "05e73787daba3e1cc3a31c2226301e8aeb720c8366c51a607b4975694e9a20e5"
+  },
+  "held_out/ship-medium-1000006": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "9d449ce0998349460f2a6d6a434d424f0c3957cb7d4cd1ac456b639155fc8899"
+  },
+  "held_out/ship-medium-1000007": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "8b2d4b91e8f457ea4076cd961c3bd8bdbf957688e0f611cccc6b32565b84ff9d"
+  },
+  "held_out/ship-hard-1000000": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "b5301aa54cb04b708f3668c8571b2dd93c63e1efae95a12d8b37e7898ede9722"
+  },
+  "held_out/ship-hard-1000001": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "640bad181248460568365d8bf5aea9468370e1461f562af5f51a02c856299779"
+  },
+  "held_out/ship-hard-1000002": {
+   "generator_version": 3,
+   "attempt": 1,
+   "sha256": "8c7006c3e0431012d6626716ed5d9d5ecfb8406761e7074ba8fa7f11d5452487"
+  },
+  "held_out/ship-hard-1000003": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "f794c2e616fe7c2c1997b47dc08437d6d1a2599d14cbe5cb75ad424ea0e68c75"
+  },
+  "held_out/mixed-easy-1000000": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "9eeca919b467dab0f5218b113790751a58a3276700f4005268cbb8b7d5b33d25"
+  },
+  "held_out/mixed-easy-1000001": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "e85f1cd4c56f88478356de26fad5839f4234a0dfedce45479a344f688d34bf51"
+  },
+  "held_out/mixed-easy-1000002": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "d2c41c554530e6b7f9e1a717b2354f6e84c63668566fb472220ad3c7337392e4"
+  },
+  "held_out/mixed-easy-1000003": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "855e399493aaae40b01b036216cc019a782f9fac29b7e4a51dec64de16985a6b"
+  },
+  "held_out/mixed-easy-1000004": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "363f34a9e7b7f55cf3e95220333f52fafe2c0f42e063d7a3d6b2028f73495e2f"
+  },
+  "held_out/mixed-easy-1000005": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "5501d8cbe9e2f8f55c248e8359007d33749495ad126a60e98713a06653aa6138"
+  },
+  "held_out/mixed-easy-1000006": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "30ed2630da5ce94893dff6aad7ee09a81a6636181b00a7ac141d345de19044e1"
+  },
+  "held_out/mixed-easy-1000007": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "87ad86b7c6d77a438789e1c5bcee7870d29a55fd27c6fd2298b4ad7d4b0dd343"
+  },
+  "held_out/mixed-medium-1000000": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "185d30f46b7e907e8cbea1190c46c0aa84ddfe03df52ab361bd7fcbc43b5758a"
+  },
+  "held_out/mixed-medium-1000001": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "29c4bd2458c94289c86a5025083d127f872b9d1f3a9b23a46c3475a96d953e77"
+  },
+  "held_out/mixed-medium-1000002": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "6f618e7ab0f9f37470a31fa7131d85ba564e31ab05e43faeccd46ea49a160023"
+  },
+  "held_out/mixed-medium-1000003": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "d9b0ef9b59f5de69e6c5ff029ffa62a16e6fe91927252a10c5db8f204d6ebb54"
+  },
+  "held_out/mixed-medium-1000004": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "e78afcb4ca23f8534bf302f133996881b7d731a4b3302a477f4da7462b667a0d"
+  },
+  "held_out/mixed-medium-1000005": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "8c196bddf1eecf14e935584bef39bc1e903db05c8ae0815f2843ab797bb92b68"
+  },
+  "held_out/mixed-medium-1000006": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "d55644731382249b04822391b303267d2b922bf9c9b50c84dd508ce1abe66f62"
+  },
+  "held_out/mixed-medium-1000007": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "349291389649380a9f08d187578cbfa7d30b4ce3b4c6b60cc9b250bcb9c1d45f"
+  },
+  "held_out/mixed-hard-1000000": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "4708615bf6fcf88dbe618d0bdec270c89b1d8ee198e3aeafc6b466b980a3cfe9"
+  },
+  "held_out/mixed-hard-1000001": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "4bdacbdb9241cbd75a2d86231e8d51100a6c928e2c2fc7c7e3f833042a5a24c3"
+  },
+  "held_out/mixed-hard-1000002": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "03f8a64dce3683f800eb12b5e9f670dbe8842d0855db008b4988849a24343a3b"
+  },
+  "held_out/mixed-hard-1000003": {
+   "generator_version": 3,
+   "attempt": 0,
+   "sha256": "93be9b598d84185fb3663b95c9398707930d160bd50634cef65072aa26173af7"
+  }
+ }
+}

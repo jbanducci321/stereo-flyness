@@ -27,7 +27,11 @@ from stereo_flyness.game.bot import BotResult, solve
 from stereo_flyness.game.level import Box, Level, Portal, ship_bounds
 from stereo_flyness.game.objects import hitbox
 
-GENERATOR_VERSION = 3
+GENERATOR_VERSION = 3  # the newest version, used when none is asked for
+# Every version still in use. The version is part of each level's random seed, so a level is fixed
+# by (kind, difficulty, seed, version). Old suites keep their version: iteration 1's suites are v3
+# and must rebuild unchanged (tests/test_generator_freeze.py). New chunks go behind a new version.
+SUPPORTED_VERSIONS = (3,)
 GRID = 30.0
 UNITS_PER_SECOND = P.X_PER_TICK * P.TICKS_PER_SECOND  # 311.58
 START_RUNWAY = 600.0  # flat ground before the first obstacle (~1.9 s)
@@ -215,36 +219,44 @@ def _assemble(rng, chunks: dict[str, Chunk], tier: Tier, x: float, x_end: float)
     return boxes, x
 
 
-def _rng(kind: str, difficulty: str, seed: int, attempt: int) -> random.Random:
-    return random.Random(f"{kind}:{GENERATOR_VERSION}:{difficulty}:{seed}:{attempt}")
+def check_version(version: int) -> int:
+    if version not in SUPPORTED_VERSIONS:
+        raise ValueError(f"generator v{version} is not supported (supported: {SUPPORTED_VERSIONS})")
+    return version
 
 
-def _level(kind, difficulty, seed, attempt, length, boxes, portals=(), start_mode="cube") -> Level:
+def _rng(kind: str, difficulty: str, seed: int, attempt: int, version: int) -> random.Random:
+    return random.Random(f"{kind}:{check_version(version)}:{difficulty}:{seed}:{attempt}")
+
+
+def _level(kind, difficulty, seed, attempt, version, length, boxes, portals=(), start_mode="cube") -> Level:
     return Level(
         name=f"{kind}-{difficulty}-{seed}",
-        source=f"generator v{GENERATOR_VERSION}: {kind}, {difficulty}, seed {seed}, attempt {attempt}",
+        source=f"generator v{version}: {kind}, {difficulty}, seed {seed}, attempt {attempt}",
         length=length, boxes=boxes, portals=list(portals), start_mode=start_mode,
     )
 
 
-def build_cube(seed: int, difficulty: str, seconds: float = 30.0, attempt: int = 0) -> Level:
+def build_cube(seed: int, difficulty: str, seconds: float = 30.0, attempt: int = 0,
+               version: int = GENERATOR_VERSION) -> Level:
     """One candidate cube-only level (not yet checked by the bot)."""
-    rng = _rng("cube", difficulty, seed, attempt)
+    rng = _rng("cube", difficulty, seed, attempt, version)
     end = seconds * UNITS_PER_SECOND - END_RUNWAY  # obstacles stop so the level ends ~`seconds` in
     boxes, x = _assemble(rng, CUBE_CHUNKS, CUBE_TIERS[difficulty], START_RUNWAY, end)
-    return _level("cube", difficulty, seed, attempt, x + END_RUNWAY, boxes)
+    return _level("cube", difficulty, seed, attempt, version, x + END_RUNWAY, boxes)
 
 
-def build_ship(seed: int, difficulty: str, seconds: float = 30.0, attempt: int = 0) -> Level:
+def build_ship(seed: int, difficulty: str, seconds: float = 30.0, attempt: int = 0,
+               version: int = GENERATOR_VERSION) -> Level:
     """One candidate ship-only level: starts as a ship in the ground-level area (floor 0, ceiling 300)."""
-    rng = _rng("ship", difficulty, seed, attempt)
+    rng = _rng("ship", difficulty, seed, attempt, version)
     end = seconds * UNITS_PER_SECOND - END_RUNWAY
     boxes, x = _assemble(rng, SHIP_CHUNKS, SHIP_TIERS[difficulty], START_RUNWAY, end)
-    return _level("ship", difficulty, seed, attempt, x + END_RUNWAY, boxes, start_mode="ship")
+    return _level("ship", difficulty, seed, attempt, version, x + END_RUNWAY, boxes, start_mode="ship")
 
 
 def build_mixed(seed: int, difficulty: str, seconds: float = 30.0, attempt: int = 0,
-                section_seconds: tuple[float, float] = (6.0, 9.0)) -> Level:
+                section_seconds: tuple[float, float] = (6.0, 9.0), version: int = GENERATOR_VERSION) -> Level:
     """One candidate mixed level: cube and ship sections alternate, starting and ending with the cube.
 
     - **Into the ship:** a ship portal at ground level (centre y 45, touched by a cube on the
@@ -253,7 +265,7 @@ def build_mixed(seed: int, difficulty: str, seconds: float = 30.0, attempt: int 
       y 90-210) lies inside the portal's reach, so the ship can't fly past it. The opening is
       surrounded by clear travel.
     """
-    rng = _rng("mixed", difficulty, seed, attempt)
+    rng = _rng("mixed", difficulty, seed, attempt, version)
     clear = PORTAL_CLEARANCE * UNITS_PER_SECOND
     total_end = seconds * UNITS_PER_SECOND - END_RUNWAY
     boxes, portals, x, mode = [], [], START_RUNWAY, "cube"
@@ -274,7 +286,7 @@ def build_mixed(seed: int, difficulty: str, seconds: float = 30.0, attempt: int 
             portals.append(Portal("cube", x + GRID / 2, _row(lo) + (hi - lo - 1) * GRID / 2))
             mode = "cube"
         x = _snap(x + GRID + clear)  # clear travel after the portal
-    return _level("mixed", difficulty, seed, attempt, x + END_RUNWAY, boxes, portals)
+    return _level("mixed", difficulty, seed, attempt, version, x + END_RUNWAY, boxes, portals)
 
 
 BUILDERS = {"cube": build_cube, "ship": build_ship, "mixed": build_mixed}
@@ -289,11 +301,11 @@ class Generated:
 
 
 def generate(kind: str, seed: int, difficulty: str = "medium", seconds: float = 30.0,
-             validate: Callable = solve) -> Generated:
+             validate: Callable = solve, version: int = GENERATOR_VERSION) -> Generated:
     """A bot-beatable level of `kind` ("cube", "ship" or "mixed"). Re-rolls until the bot beats one."""
     rejected = []
     for attempt in range(MAX_ATTEMPTS):
-        level = BUILDERS[kind](seed, difficulty, seconds, attempt)
+        level = BUILDERS[kind](seed, difficulty, seconds, attempt, version=version)
         result = validate(level)
         if result.success:
             return Generated(level, attempt + 1, result, rejected)

@@ -7,7 +7,7 @@
 #
 # Counts are per difficulty. Totals: training 50 cube / 50 ship / 50 mixed; held-out 20 of each.
 
-generator_version = 3  # must match stereo_flyness.game.generator.GENERATOR_VERSION
+generator_version = 3  # default for every suite; a suite may set its own (old suites stay on v3)
 seconds = 30.0         # approximate length of every level
 
 [suites.training]
