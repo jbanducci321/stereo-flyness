@@ -134,7 +134,7 @@ def one(name, level, path_comp, path_con, cells, patches, gf, stuck_ids, args, o
             "commit": git_commit(), "ship_design": args.ship, **extra}
     rec = play_modes(Game(level), st, ctrl, policy=policy, stuck_ids=stuck_ids, meta=meta)
     rec.save(out / rec.driver / name)
-    return rec.summary
+    return name, rec.summary
 
 
 def main() -> None:
@@ -200,15 +200,15 @@ def main() -> None:
     count = iter(range(1, len(names) + 1))
 
     def play_batch(todo):
-        """One pool for `todo`; yields each summary as its run finishes. A new pool per call."""
+        """One pool for `todo`; yields (name, summary) as each run finishes. A new pool per call."""
         runs = Parallel(n_jobs=args.jobs, return_as="generator_unordered")(
             delayed(one)(n, levels[n], path_comp, path_con, cells, patches, gf, stuck_ids, args, out, extra)
             for n in todo)
-        for s in runs:
+        for n, s in runs:
             if quiet:  # the stuck flag is the one live check allowed (D48)
                 flag = "" if s["stuck_from_frame"] is None else f"; STUCK from frame {s['stuck_from_frame']}"
                 print(f"run {next(count)}/{len(names)} done{flag}", flush=True)
-            yield s
+            yield n, s
 
     summaries = play_with_retries(names, play_batch, log=lambda m: print(m, flush=True)) if names else []
     if quiet:
