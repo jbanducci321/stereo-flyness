@@ -15,7 +15,7 @@ from stereo_flyness.game.generator import generate
 from stereo_flyness.game.level import Box, Level
 from stereo_flyness.game.objects import hitbox
 from stereo_flyness.game.player import Player
-from stereo_flyness.interface.encoding import CubeEncoder, angular_size
+from stereo_flyness.interface.encoding import PREDICTED_LABELS, VIEWS, CubeEncoder, angular_size
 
 NO_PATCHES = {s: {t: [] for t in ("LC4", "LPLC2")} for s in ("right", "left")}
 PLATFORM = 6  # columns 20-25 hold the platform (x 600-780)
@@ -36,8 +36,8 @@ def _pits(k, width):
     return [("pit", 780 + 30 * (k + i) + 15, 2) for i in range(width)]
 
 
-def _enc(level, path="no_press"):
-    return CubeEncoder(level, NO_PATCHES, 180.0, 150.0, "collision", path=path)
+def _enc(level, path="no_press", view="landing"):
+    return CubeEncoder(level, NO_PATCHES, 180.0, 150.0, "collision", path=path, view=view)
 
 
 def _on_platform(x, height=1):
@@ -122,3 +122,21 @@ def test_nothing_changes_in_the_air_or_on_the_floor(difficulty, seed):
             break
     if difficulty != "easy":
         assert raised > 0  # the check covers ticks on raised surfaces too
+
+
+@pytest.mark.parametrize("height,peak", [(1, 13.5), (2, 7.3)])
+def test_true_optics_puts_the_pits_on_course_but_they_stay_small(height, peak):
+    """Option (i): the same objects come on course, but θ is from the real eye, so it never nears 39°."""
+    level = _platform(_pits(0, 3), height=height)
+    enc = _enc(level, view="eye")
+    looms = [enc.encode(_on_platform(700 + 0.5 * i, height)) for i in range(160)]
+    # on course: the pit the walk-off would fall into (the first or second cell, by height)
+    assert all(l.predicted and l.obstacle.bottom == 0 and l.obstacle.x0 in (780.0, 810.0) for l in looms)
+    assert max(l.theta_deg for l in looms) <= peak + 0.2 < 39
+
+
+def test_views_and_labels():
+    assert set(VIEWS) == set(PREDICTED_LABELS) and _enc(_platform()).view == "landing"
+    assert PREDICTED_LABELS["landing"] == "θ shown from landing level, our construction"
+    with pytest.raises(ValueError):
+        _enc(_platform(), view="parallax")

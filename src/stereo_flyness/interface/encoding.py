@@ -17,6 +17,10 @@ Every choice here is ours, not the fly's (PROJECT_BRIEF §2):
   **landing-level view**: θ from an eye at the object's base level (its bottom + 15), as a cube
   down at that level would see it, at the true horizontal distance. Objects already on course
   keep their usual θ. In the air and on the floor nothing changes, so landing stays invisible.
+  `view="eye"` is option (i), reported alongside (Shannyn's condition): the same objects come on
+  course, but θ is true optics from the current eye (a pit below a platform peaks at 7-14°).
+  Frames where either is used are flagged (`Loom.predicted`) and labelled in replays with
+  `PREDICTED_LABELS[view]`.
 - **Angular size** of the nearest looming object, from its real top and bottom:
   θ = atan((top - eye) / d) - atan((bottom - eye) / d), with d the gap to its front face.
 - **Patch:** on each side, a fraction f = min(1, θ / θ_full) of the LC4 neurons and the same
@@ -46,6 +50,11 @@ SIDES = ("right", "left")
 TYPES = ("LC4", "LPLC2")
 _EPS = 1e-6
 PATHS = ("current", "no_press")
+VIEWS = ("landing", "eye")  # fix 1's (ii) landing-level view and (i) true optics
+PREDICTED_LABELS = {  # replay text for frames where Loom.predicted is set (hard rule 10)
+    "landing": "θ shown from landing level, our construction",  # Shannyn's wording, 2026-11-15
+    "eye": "on course via our predicted fall; θ from the eye (true optics)",
+}
 MAX_PATH_TICKS = 2400  # 10 s of prediction at most; paths normally end far sooner (floor, death)
 
 
@@ -133,14 +142,16 @@ class CubeEncoder:
     """
 
     def __init__(self, level, patches, theta_full_deg: float, rate_hz: float, mode: str = "collision",
-                 rate_scaling: bool = False, path: str = "current"):
+                 rate_scaling: bool = False, path: str = "current", view: str = "landing"):
         if mode not in ("collision", "all"):
             raise ValueError(f"mode must be 'collision' or 'all', not {mode!r}")
         if path not in PATHS:
             raise ValueError(f"path must be one of {PATHS}, not {path!r}")
         if path == "no_press" and mode != "collision":
             raise ValueError("path='no_press' only applies to the collision-course mode")
-        self.path = path
+        if view not in VIEWS:
+            raise ValueError(f"view must be one of {VIEWS}, not {view!r}")
+        self.path, self.view = path, view
         self._level, self._game, self._path_cache = level, None, None
         if theta_full_deg <= 0:
             raise ValueError("theta_full_deg must be positive")
@@ -176,7 +187,8 @@ class CubeEncoder:
             if self.mode == "collision" and not (o.bottom < player.top - _EPS and o.top > player.bottom + _EPS):
                 if path is None or not path.hits(o):
                     continue
-                eye_y, predicted = o.bottom + HALF, True  # the landing-level view
+                eye_y = o.bottom + HALF if self.view == "landing" else player.y  # (ii) or (i)
+                predicted = True
             theta = angular_size(gap, o.bottom, o.top, eye_y)
             if best is None or gap < best_gap - _EPS or theta > best_theta:
                 best, best_theta, best_gap, best_pred = o, theta, gap, predicted
