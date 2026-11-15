@@ -52,18 +52,30 @@ Reported, per threshold:
 
 ## [Shannyn] Biology argument
 
-*To fill in: whether a one-shot escape reflex can be expected to clear close obstacles; whether any calibration other than the mean real-fly threshold (39°) is defensible; and the open question of the Giant Fiber–independent long-mode take-off (von Reyn et al. 2014) as a route for later, slower take-offs, or whether that's future work.*
+*Shannyn, 2026-11-15.*
+
+**What the Giant Fiber escape is for.** It launches the fly away from an approaching threat as fast as possible, triggered when the looming object reaches a size threshold (LPLC2 carrying angular size, LC4 angular velocity; Ache et al. 2019). It is a one-shot reflex: it decides *when* to go, not *where* to land, and nothing in it plans a trajectory over a second obstacle. So a close group of obstacles that needs a precisely aimed jump is outside what this reflex does, in a real fly as in ours.
+
+**The double spike is about spread, not threshold.** The ideal fly at 39° clears every double spike it reaches; the model fly fails about half the time because its first spike varies (37.1 ± 7.3°) around the 38° edge. That variability is fly-like: real flies are *more* variable (39 ± 14°; von Reyn et al. 2014). A real fly with this reflex would fail this obstacle about as often or more. **That is a finding about putting an escape reflex into a timing game, and it's reported as such.**
+
+**Moving the calibration (b) is defensible only as a labelled variant, never as the fly of record.** The fly of record is calibrated to the *mean* measured threshold, which is the one principled choice. The ±14° is variability between trials and flies, not a range of equally good means, so any other target is chosen for performance: tuning, even inside the measured range. Under D55 that's allowed as one dial set on training levels, if it's labelled "a late-threshold fly, inside the range measured in real flies", reported beside the record, and set by a rule fixed before the sweep is read. Iteration 1 already showed that later isn't simply better (50 Hz did worse on Stereo Madness, D54).
+
+**The long-mode take-off: future work.** Real flies also take off through a slower, Giant Fiber–independent route, with the wings raised before the jump (von Reyn et al. 2014); slower looms favour it. Using it would need a new readout from descending neurons that aren't well mapped for this behaviour, and a new output rule: a new mechanism, not a fix to our interface. Worth naming as future work, not iteration 2.
+
+**How the write-up words it:** "Close groups of obstacles need an aimed jump. The Giant Fiber escape fires at a size threshold with a natural spread and doesn't aim, so the fly clears a double spike only when its threshold falls on the late side of its spread, and can't clear triple spikes or close pairs at any threshold measured in real flies. We report this as a limit of a one-shot escape reflex in this game."
 
 ## [Shannyn] Predictions (written before step 1 runs)
 
+*Shannyn, 2026-11-15, before step 1 runs. Scored hit or miss when the check is opened; confidence isn't part of the score.*
+
 | | Prediction | Why | Confidence |
 |---|---|---|---|
-| Ideal fly, double spikes in iteration-2 levels: cleared at 39°? | | | |
-| Is there a threshold window inside 25–53° (39 ± 14°) that clears every double spike? | | | |
-| Triple spikes and 1-cell spaced pairs: cleared at any threshold below 90°? | | | |
-| Spaced pairs with 2–4 empty cells (two jumps): cleared by the ideal 39° fly? | | | |
-| Does any single threshold complete more iteration-2 training levels than 39°? By how many? | | | |
-| Outcome: (a) report as a limit, or (b) worth designing? | | | |
+| Ideal fly, double spikes in iteration-2 levels: cleared at 39°? | **Yes, ≥ 90% of those it reaches** | 127/127 on iteration-1 training; the new levels add contexts (after drops, short run-ups) that may cost a few | Medium-high |
+| Is there a threshold window inside 25–53° (39 ± 14°) that clears every double spike? | **Yes, from ~38–40° up to 53°** | In isolation any threshold from 38° up clears them | Medium-high |
+| Triple spikes and 1-cell spaced pairs: cleared at any threshold below 90°? | **No** | They need θ ≥ ~94° (geometry table) | High |
+| Spaced pairs with 2–4 empty cells (two jumps): cleared by the ideal 39° fly? | **Less often as the gap shrinks: 3-cell gaps mostly cleared, 2-cell gaps mostly not** | A jump from the 39° point lands ~4.5 cells on, close to where a second spike 2 cells past the first sits | Low |
+| Does any single threshold complete more iteration-2 training levels than 39°? By how many? | **Yes, a later one (40–55°), but by only a few levels (≤ 3)** | On iteration-1 training, 45–50° completed 22/50 against 21 at 39° (D47's check) | Medium |
+| Outcome: (a) report as a limit, or (b) worth designing? | **(a), report as a limit** | A window will exist, but I expect its gain to be small and to cost elsewhere (as 50 Hz did on Stereo Madness) | Medium-high |
 
 ## Questions for Shannyn
 
