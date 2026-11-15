@@ -1,0 +1,22 @@
+# Iteration-2 cube suites (docs/notes/iteration2_levels.md; rule 7: separate configs and folders).
+# Built by: uv run python scripts/generate_levels.py --config configs/iteration2/level_suites.toml
+#                --out results/iteration2/levels --suite training
+# into git-ignored results/iteration2/levels/; only this file is committed.
+#
+# - training: for designing and setting fixes, and the ideal-fly checks.
+# - held_out: opened ONCE, at the end of iteration 2 (Shannyn's rule a). Never built for a look,
+#   never summarised before then.
+# Both are frozen (every level's hash recorded and tested) before any run (Shannyn, 2026-11-15).
+#
+# Seeds don't overlap iteration 1's (0-49 training, 1,000,000+ held-out).
+
+generator_version = 4  # cube levels with the v4 chunks; iteration 1's suites stay on v3
+seconds = 30.0
+
+[suites.training]
+first_seed = 500_000
+cube = { easy = 20, medium = 20, hard = 10 }
+
+[suites.held_out]
+first_seed = 2_000_000
+cube = { easy = 16, medium = 16, hard = 8 }

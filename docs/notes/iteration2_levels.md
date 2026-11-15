@@ -12,7 +12,7 @@ Measured in our engine on hand-made obstacles, with the cube driven by a script 
 
 **One jump:** it carries the cube **134 units (4.5 cells)**, lasts **425 ms** and peaks **64 units** up.
 
-**Walking off a raised platform without jumping:** the cube lands **~45 units** past the edge from a 1-block platform and **~64 units** from a 2-block one. So pits within ~1.5 cells of a 1-block edge catch a cube that just walks off.
+**Walking off a raised platform without jumping:** the cube's **back edge** lands **~45 units** past the edge from a 1-block platform and **~64 units** from a 2-block one; its centre ~60 and ~79, its front ~75 and ~94. *(Corrected 2026-11-15: the first draft didn't say which part of the cube, and read as the front.)* So pits starting up to 2 cells past either edge catch a cube that just walks off (measured in the v4 chunks: k = 0–2 are fix cases from both heights, k = 3 a control).
 
 **When one jump at take-off angle θ clears a group of spikes:**
 
@@ -48,7 +48,7 @@ Measured in our engine on hand-made obstacles, with the cube driven by a script 
 - **Fix case or control, computed per level, not by k alone** (Shannyn, 2026-11-15). Each drop is simulated with a cube that walks off the edge without pressing:
   - **fix case:** the walk-off cube lands in the pits (from on top they never loom today);
   - **control:** it lands on the ground first, so the pits loom as they do now.
-  - Why not k alone: a walk-off lands ~45 units out from a 1-block platform but ~64 from a 2-block one, so k = 2 after a 2-block platform can still be a fix case.
+  - Why not k alone: where a walk-off lands depends on the platform's height (and on the pits' hitboxes), so the label comes from simulating it. In the v4 chunks this gives k = 0–2 as fix cases and k = 3 as a control, from either height.
   - The label is stored with each level, so results are always split by it.
 - **Pit strip width:** 2–5 cells (easy 2–3, medium 2–4, hard 2–5).
 - **After the pits:** plain ground, or a platform of the same height (50/50).
@@ -81,6 +81,17 @@ Measured in our engine on hand-made obstacles, with the cube driven by a script 
 - Iteration-2 levels are 30 s long, like the others.
 - **The suites are frozen before any run** (Shannyn, 2026-11-15): seeds, counts and generator version in the config, and every level's hash recorded and tested, as for the v3 levels.
 - **Ship and mixed suites** for fix 3 come later, in fix 3's own note.
+
+## How v4 builds them (2026-11-15; choices to confirm before the suites are frozen)
+
+Built in `generator.py` as version 4, used only by `configs/iteration2/level_suites.toml`. The v3 levels rebuild unchanged (freeze test). Choices the note didn't fix, for Shannyn to confirm:
+1. **`step_down_pits` shape:** a 2-block run then a 1-block run, each 2–4 cells; medium and hard only (easy has 1-block drops only).
+2. **The landing platform after pits** (the 50/50 "same-height platform" case): 3–5 cells long.
+3. **The guarantee:** each level's guaranteed drop (`platform_drop` or `step_down_pits`, 50/50 where both exist) and spaced pair are placed among its first 6 chunks; all later chunks are random.
+4. **A spaced pair with a 4-cell gap** reads as two single spikes in the per-obstacle results, since chunks in hard levels can be just 4 cells apart and the shapes are then identical.
+5. **Easy levels are harder than v3's easy levels:** their tightest press windows drop to 8–21 ms (v3 easy kept out anything under ~50 ms). That's the new features doing their job, but it means "easy" isn't comparable across iterations.
+
+**The 50 training levels are built** (results/iteration2/levels/training, not committed; 6 min). Hard levels needed 4 attempts on average (bot re-rolls). They contain 114 fix-case drops and 45 controls, with pit widths covering every tier's range (including 4–5-cell strips in medium and hard), spaced pairs in every tier, and 2-high plain step-downs in medium and hard. **The held-out suite isn't built**, and neither suite is frozen yet.
 
 ## Engineering constraint
 
