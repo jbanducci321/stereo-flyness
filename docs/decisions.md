@@ -1031,6 +1031,24 @@ Jacob's proposal (`docs/notes/step6_proposal.md`) with Shannyn's answers of 2026
     3. **The batch printed "FAILED" for every run,** from a name-lookup bug in the reporting step (fixed in #53, merged after all runs). Each run saved all its files before the error; nothing was re-run, and the report checks every run from its own files.
   - **Stereo Madness is now spent as a held-out test.** Any later change (e.g. iteration 2) can't be judged on it as held-out data.
 
+**D55. Iteration 2: fixing the interface where Stereo Madness found its limits, exploratory** (2026-11-15)
+
+Iteration 1 ends with D54's result and the `v1.0-research` tag. Iteration 2 is reported as an exploratory Part 2, after Part 1 and never mixed with it.
+- **The tag** (2026-11-15): `v1.0-research` was first made on the #63 merge (`89fee20`), before Shannyn's discussion point 5 was in. It was moved to the #66 merge (`7939848`), where Part 1 ends, before anything in iteration 2 ran.
+- **Frozen:** the connectome (hard rule 1, unchanged) and everything iteration 1 reported.
+- **What may change:** the interface only (`src/stereo_flyness/interface/`), one fix at a time, each with a dated design note and Shannyn's biology argument written before it's run. At most 2–3 new dials across iteration 2, set on training levels only.
+- **Stereo Madness is spent as a held-out test.** Hard rule 5 is lifted for iteration 2 only: we may look at it, and say so. No fix is ever judged on it; it shows only how far the fly then gets, on fresh seeds (100 onwards) with N fixed before each set of runs.
+- **New levels:** training levels and a **fresh held-out suite** (its own seed range) with each fix's feature (gaps and drops; close pairs of obstacles) in ranges fixed **before** Stereo Madness is studied further, not centred on its spacings. The fresh held-out suite is opened **once, at the end of iteration 2.**
+- **The main measure for each fix is "gets past the feature"** (Shannyn, 2026-11-15): for each level, whether the median run over 3 seeds gets past the fix's feature, compared with iteration 1 (the unfixed fly) by a **sign test** across levels. Progress and completions are reported beside it.
+- **A fix counts** only if it's better on the fresh held-out levels by that measure (sign test, p < 0.05) and passes the **no-harm check** on iteration 1's held-out cube levels: **no significant drop, and worse on no more levels than better.** Since those levels have been seen, this is described as a **no-harm check, not a test**. Both are fixed in each fix's design note before it's run.
+- **At most one revision per fix,** logged with its reason.
+- **Extra runs** on any held-out levels or Stereo Madness are agreed by both of us before they're run.
+- **Labels:** Part 2 and any video from it say "exploratory: interface adjusted after seeing this level; brain wiring unchanged."
+- **Fix 1 (gaps): (ii) the landing-level view, with (i) true optics reported alongside.** While the cube stands on something raised, the collision course includes falling under gravity (its no-press path), so obstacles it would fall into loom, shown from the level they stand at. Framed as correcting our collision course: our code supplies the foresight, the fly supplies the timing. **No claim that flies use looming for gaps** (gap crossing is parallax-based and central-complex driven; option B is future work). Design, gate and predictions: `docs/notes/fix1_design.md`.
+- **Fix 2 (double spike):** first a no-brain check with the ideal fly across thresholds on the new levels. If no single threshold works, it's reported as a limit of a one-shot escape reflex.
+- **Fix 3 (ship):** a new output rule, argued on its own merits, only after fixes 1 and 2.
+- **Where the details live:** the proposal and Shannyn's answers (`docs/notes/iteration2_proposal.md`), the new levels' ranges (`docs/notes/iteration2_levels.md`) and fix 1's design note with her biology argument, dated predictions and gate (`docs/notes/fix1_design.md`).
+
 ## Open
 
 Still open:
@@ -1046,6 +1064,7 @@ Still open:
 - Step 5 (ship): Shannyn's draft is in (`docs/notes/ship_proposals.md`). Agreed with it on 2026-11-10, to log with the design: DNp22 as the readout (any spike releases the next tick, otherwise hold), R_ship the only ship dial (baseline 150 Hz), the whole brain, both eyes with the left–right asymmetry stated. Its first check failed: neither ideal ship completed any training ship level (`docs/notes/ship_ideal.md`), so the encoding is being rethought before any brain run. Also agreed 2026-11-05 (to log at the start of Step 5): ship mode stays in whatever happens in Stereo Madness; whether to tune it is decided after its baseline.
 - Brain panel (R3): version 1 of Shannyn's design is built; her five questions are answered in `docs/notes/brain_panel_design.md`, for her review.
 - Step 6 (Stereo Madness): **done** (D54, result 2026-11-14): the fly of record completes 0 of 10, median 9.2%; every run ends in the first cube section. Stereo Madness is now spent as a held-out test.
+- **Iteration 2** (exploratory, D55): started after the `v1.0-research` tag. Fix 1's design is agreed (`docs/notes/fix1_design.md`); nothing is run until the iteration-2 suites are frozen. Fixes 2 and 3 come after.
 - **Stereo Madness run N times, not once (changes D7; agreed in principle 2026-11-02, written up in D54).** A frozen fly with Poisson input is a distribution, not a single outcome, so one run can't tell luck from typical. Conditions:
   - N and the seeds are fixed before any Stereo Madness run, and nothing changes between or after the runs (D7 still holds: no tuning on it);
   - the headline is the full count and median progress (e.g. "3 of 10, median X%"), never the best run;
