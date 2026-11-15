@@ -14,7 +14,8 @@
 Source: `docs/pathway_results.md`, D39.
 - **Escape** (LC4/LPLC2 → Giant Fiber): **GO.** It drives the Giant Fiber in every trial at every rate, within ~8–13 ms, and stops within ~3–13 ms of input off.
 - **Steering** (T4/T5 → VS → DNp20), original signs: **GO.** "Down" drives VS cells and DNp20 in every trial; "up" gives exactly 0 and suppresses "down". Corrected signs: the same pattern, ~10–15% stronger.
-- **What this does and doesn't show:** the model *can* carry the signals; it isn't evidence the fly can play. **[Shannyn]** one or two sentences on what the open-loop responses mean biologically.
+- **What this does and doesn't show:** the model *can* carry the signals; it isn't evidence the fly can play.
+- **Biologically:** the escape pathway's fast, reliable response matches its structure: LC4 and LPLC2 are the Giant Fiber's main direct visual inputs (Ache et al. 2019), so one synapse separates our input from the readout. In the steering pathway, "up" giving exactly zero and suppressing "down" is the model's version of VS cells' motion opponency, where upward motion hyperpolarises them through an inhibitory interneuron (Mauss et al. 2015). The model's VS cells can't show a hyperpolarisation as spikes, only as fewer of them, so "zero" is as far as it can go.
 
 ## R2. The untuned fly plays the cube (Step 2)
 
@@ -23,7 +24,7 @@ Source: D48, `docs/notes/step2_report.md`.
 - **Further than random pressing on 18 of 20 levels** (against the mean of 10 random draws per level). On the other 2, the first object is a raised slab, which kills every player including the ideal 39° fly.
 - **How it dies:** mostly early jumps (d1); most of the rest are the encoding's limits (things it can't see, D47).
 - *Figure R2:* progress per level: fly, never press, random presses, ideal 39° fly. **[to make]**
-- **[Shannyn]** early jumps against the real fly's ~39° threshold and its variability (D46: first-spike s.d. 8.5° against 14° in the fly).
+- **Early jumps and the real fly's threshold:** closed loop, the model's first Giant Fiber spike comes at 37.1 ± 7.3° (without carry-over), on the calibrated ~39° and **less variable than a real fly** (model s.d. 8.5° open loop, D46, against ~14° measured in flies). So the early jumps aren't the model misbehaving: they come from the low half of a normal, fly-like spread, and spike rows punish anything early. A real fly, with its larger spread, would be expected to jump early more often, not less. In real flies the threshold isn't a fixed angle either: the Giant Fiber sums looming size and speed (Ache et al. 2019), so its timing depends on the object's size-to-speed ratio. Every obstacle here approaches at the same speed, which is why one angle describes it well.
 
 ## R3. Tuning helps only by leaving the real fly's range (Step 3)
 
@@ -39,7 +40,7 @@ Source: D51, `docs/notes/step4_report.md`.
 - **A relay alone plays *further*, by firing later:** the looming-kept shuffle and the relay-only network give identical results, 59.4% against 29.4% progress (24 of 24 easy runs completed against 6). Better at p = 0.013 alone, **not after Holm** (p = 0.129). They fire ~10° later (46.5° against 36.6°), so by D51's fixed reading this is the same late-threshold effect as Step 3, **not** "a relay plays better".
 - **So the rest of the wiring mostly makes the Giant Fiber fire earlier,** close to the real fly's 39°, which at 150 Hz happens to cost progress.
 - **Neither lesion is specific:** E5b and E5c show no clear difference against intact or their matched controls, although E5c moves the first spike much later (100° against 37°).
-- **[Shannyn]** what the 293 direct LC4/LPLC2 → Giant Fiber connections (19.9% of its input) mean for "relay plus threshold", and why the rest of the brain pulls the threshold earlier.
+- **Relay plus threshold, and what the rest adds:** the 293 direct LC4/LPLC2 → Giant Fiber connections (19.9% of its input) are enough on their own to make the cube jump and to fly the easy levels. So "does play need the specific wiring?" has two answers. **The direct route is needed** (networks without it never jump), but that alone is close to trivial. **The rest of the real wiring changes *when*:** it brings the first spike ~10° earlier, from 46.5° to 36.6°, close to the real fly's ~39°. The lesions point to where that comes from: silencing the 12 excitatory partners (E5c) moves the first spike to ~100°, so extra excitation through partners beyond the direct inputs is what pulls the Giant Fiber to threshold sooner. This shift makes the model more like the real fly and, at 150 Hz, worse at this game; the two shouldn't be confused.
 
 ## R5. The subcircuit stands for the whole brain (Step 7)
 
@@ -64,7 +65,8 @@ Source: D53 and its result, `docs/notes/ship_baseline_results.md`.
 - **Every control death is "too high"** (39 d_up, 0 d_down; 36 of the 39 hit an upper block's underside, 3 borderline).
 - **Why:** holding pushes up at 0.5 g and releasing pulls down at only 0.32 g, so the ship needs ~61% releases to hold height. DNp22's ceiling (~110 Hz against 240 Hz ticks) allows at most ~67.5%, so it sinks at only ~−35 units/s. **R_ship can't fix this, and the output rule isn't changed after seeing it** (D53).
 - **Shannyn's dated predictions:** 8 hits, 2 misses (one hit by the letter only).
-- **[Shannyn]** DNp22's ceiling against the real fly's descending control; why the ship is the weaker claim (README limits).
+- **The descent limit is ours, not the fly's:** DNp22 firing at ~110 Hz is an ordinary rate for a spiking neuron (real DNOVS2 rates rise ~8–9 Hz per mV and by ~25 Hz in flight; Suver et al. 2016). The limit comes from our rule turning each spike into one 240 Hz tick of "release". A real fly doesn't steer altitude with a binary button: descending neurons adjust wing-stroke amplitude and timing gradually, through many neurons at once. So R6 says nothing about how well real flies descend.
+- **Why the ship is the weaker claim:** (1) **our code does the steering** (where the opening is, and the speed to reach it); the fly only stabilises; (2) **DNOVS neurons encode body rotation**, and we use them for climbing and falling; (3) the model has no gap junctions or ocellar input, both prominent in this pathway in real flies. **What does stand:** with the fly's own stabilising term (B), the ship flies far better than without it (C, p < 0.001); with the brain, C is no better than random holding. So the fly's motion pathway does real work here, within our framing.
 
 ## R7. Switching modes works (Step 6, mixed levels)
 
@@ -120,17 +122,43 @@ The search bot completes the level in our engine: it's playable, which says noth
 
 ## D. Discussion
 
-**[Shannyn]** leads; outline only, written before the Stereo Madness results so its points don't follow them.
-1. **What the connectome does here:** the escape circuit's wiring sets *when* the jump happens (R4); random wiring never jumps.
+**[Shannyn]** leads. Points 1–4 and 6 are drafted from R1–R7, before the Stereo Madness results were read into them; point 5 waits for R8.
+1. **What the connectome does here:** the escape circuit's wiring sets *when* the jump happens (R4); random wiring never jumps. The direct looming → Giant Fiber route is enough to jump at all; the rest of the real wiring moves the first spike to ~37°, near the real fly's ~39°. That timing is the clearest thing the connectome contributes to play, and it emerges from the wiring: we calibrated one dial, not the timing of each jump.
 2. **What our code does:** looming, collision course, the patch, the output rules and mode switching are ours (README "the fly vs our code"). The fly never "decides to play".
-3. **Threshold, not skill:** in the cube, firing later helps at 150 Hz (R3, R4), so better play isn't more fly-like play.
-4. **The ship's asymmetry** (R6): a limit of our output rule against the game's physics, not evidence about real descending control.
+3. **Threshold, not skill:** in the cube, firing later helps at 150 Hz (R3, R4), so better play isn't more fly-like play. The game rewards a later jump than the escape reflex is built for. A real Giant Fiber escape is meant to get the fly airborne before a predator arrives, not to clear a row of spikes, so a calibrated fly playing "too early" is the expected result of putting an escape reflex into a timing game.
+4. **The ship's asymmetry** (R6): a limit of our output rule against the game's physics, not evidence about real descending control. The positive finding is that the fly's own stabilising term makes steering work: a wide-field motion stabiliser (VS cells' role) is needed, but can't navigate by itself (the failed first draft).
 5. **Stereo Madness:** **[after the runs]**, read against R2 and R6 and the predictions, never re-explained after the fact.
-6. **What we'd do next:** **[Shannyn / Jacob]** (e.g. a ship output rule argued on its own merits; gap junctions; adaptation and noise for the stuck state).
+6. **What we'd do next:** **[Shannyn / Jacob]**
+   - **A ship output rule argued on its own merits,** e.g. reading DNp22's rate as a graded command, as real descending control is graded.
+   - **Gap junctions,** which the escape and steering circuits both use.
+   - **Adaptation and noise,** our untested guess for the stuck state.
+   - **Edge and gap vision:** real flies judge gaps from parallax and set altitude from edge position, through circuits not yet mapped; showing these to the model would replace parts of our code with the fly's own.
 
 ## L. Limitations
 
-Kept in one place, from the README ("Limits of the model", "Choices we made that happen to help the fly") and D53's ship limits (no gap junctions, no ocellar input, spiking VS cells, DNOVS rotation against the ship's translation, no behavioural state). **[Shannyn]** final wording; nothing is dropped from the README list.
+Kept in one place, from the README ("Limits of the model", "Choices we made that happen to help the fly") and D53's ship limits. **[Shannyn]** draft; nothing is dropped from the README list.
+
+**The model**
+- **Brain only:** no ventral nerve cord, so "the Giant Fiber spiked" stands in for "the fly jumped".
+- **Only the fast escape** is modelled; real flies also escape through slower pathways without the Giant Fiber.
+- **No gap junctions,** which both the escape and steering circuits use.
+- **Predicted transmitter signs** (Eckstein et al. 2024), some wrong; T4/T5 is tested both ways and the original is the result of record.
+- **No behavioural state** (no octopamine): the model is neither resting nor flying.
+- **No adaptation or noise,** our guess for why it sometimes gets stuck (~0.2% per simulated second), flagged and counted.
+- **Unrealistic firing:** the Giant Fiber fires at 100–200 Hz while driven, where a real one fires once or twice; the jump rule uses only the first spike.
+- **Spiking VS cells;** real ones signal mostly with graded voltage.
+- **No ocellar input,** the largest input to DNp20 and DNp22 in v783.
+
+**Our code, not the fly**
+- **We stimulate looming and motion detectors directly,** so looming detection, direction selectivity and our collision course come from our code.
+- **Only objects on a collision course at the cube's height loom;** objects it lands onto are invisible (about a third of an ideal fly's deaths, D44, D47).
+- **Which LC4/LPLC2 neurons an obstacle drives is approximated** from shared inputs, not real visual-field positions.
+- **The ship's steering is ours:** our code finds the opening and the speed to reach it; the fly stabilises.
+- **DNOVS neurons encode rotation;** we use them for climbing and falling.
+- **The ship's button is binary** and runs at 240 Hz, which caps how fast the fly can descend.
+- **Our code switches between cube and ship.**
+
+**The README needs two updates** (Step 8): the ship readout is now DNp22, not DNp20; and Stereo Madness was run 10 times per variant (D54), not once.
 
 ## README update (Step 8)
 

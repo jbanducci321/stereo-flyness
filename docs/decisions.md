@@ -1001,6 +1001,35 @@ Jacob's proposal (`docs/notes/step6_proposal.md`) with Shannyn's answers of 2026
 - **Predictions:** Shannyn's six dated predictions, `docs/notes/step6_predictions.md` (2026-11-13), committed before any run. Each is scored a hit or a miss by its own rule when the report is opened, with no partial credit. Stated already, from the ship baseline: its ship sections will be hardest wherever they need a fast drop.
 - **Model limits to state:** as D53 for the ship (no gap junctions, no ocellar input, spiking VS cells, DNOVS rotation against the ship's translation, no behavioural state); for the cube, as before (D41–D47). In ship sections the Giant Fibers still fire through T4/T5 → LPLC2 → GF; the game ignores them there, and the replay shows them as the model's activity.
 - **The killing object is approximate:** it's found from the full 30-unit grid cell, not the smaller hitbox that kills, so next to two objects it can name the wrong one. Accepted as is (Shannyn, 2026-11-14); any odd case is checked in the replay.
+- **Result (2026-11-14; report `results/stereo_madness/report.md`; write-up R8 in `docs/notes/writeup_results.md`).** All checks pass for every variant: 10 of 10 runs each, every run replays exactly from its logged holds, settings and connectome as configured, one clean commit (`e72c2d7`, the merge of D54), 0 stuck.
+
+  | Variant | Completed | Median progress (quartiles; range) |
+  |---|---|---|
+  | **Record (150 Hz, original signs)** | **0 of 10** | **9.2%** (9.1–9.2%; 3.8–10.9%) |
+  | 50 Hz (tuned, outside the range measured in real flies; reported second) | 0 of 10 | 6.5% (6.0–6.5%; 6.0–10.9%) |
+  | Corrected signs (sensitivity check) | 0 of 10 | 9.2% (9.1–9.2%; 3.8–10.9%) |
+
+  - **The headline: the fly of record completes 0 of 10 and reaches a median 9.2% of Stereo Madness.** Every run of every variant ends in the first cube section (of 5); no run reaches a ship section (0 of 3).
+  - **Where the record dies:** 7 of 10 at the double spike (x 2382–2412), 2 at the pits after the raised platform (x 2860.5, the furthest, 10.9%), 1 early (x 1002, 3.8%).
+  - **The 50 Hz variant does worse** (median 6.5%): 9 of 10 die earlier, at x 1570.5 or 1720.5; 1 reaches the pits (10.9%). Firing later doesn't help here, unlike on the held-out cube levels (D49).
+  - **Corrected signs are identical to the record:** every seed's game state matches tick for tick to the end. No run reached ship mode, where the T4/T5 correction would act.
+  - **Showcase replay** (by D54's rule): record seed 5, 9.2%.
+  - **Context only:** the search bot completes the level in our engine, so the level is playable; this says nothing about what a fly should do.
+  - **Shannyn's predictions** (`docs/notes/step6_predictions.md`, scored by their own rules): **3 hits, 2 misses, 1 not scored.**
+    - **1, no variant completes: hit** (0 of 30).
+    - **2, 50 Hz gets further than the record: miss** (median 6.5% against 9.2%).
+    - **3, corrected signs identical in cube sections: hit** (10 of 10 seeds identical; since no run reached a ship section, this covers whole runs).
+    - **4, at least 6 of 10 record runs end in a cube section: hit** (10 of 10).
+    - **5, record ship-section deaths hit an object above: not scored** (no record run reached a ship section).
+    - **6, at least one stuck run across the 30: miss** (0).
+  - **Why the fly dies where it does** (from the replays; described, not tested):
+    - **The double spike:** the Giant Fiber fires at ~36–38°, its normal threshold; the jump clears the first spike and lands on the second.
+    - **The pits after the raised platform:** on the platform, the pit's spikes are below the cube, so by our encoding's rule (collision course at the cube's current height, D47) they never loom. They loom only once the cube is falling into them, too late. **This is a limit of our encoding, not of the fly.**
+  - **Deviations from D54, all recorded here:**
+    1. **Extra runs.** After the opening, 90 further record-setting runs (seeds 10–99), not pre-specified, were run at commit `e72c2d7`: 0 of 90 completed, furthest 10.9%, deaths at the same two places (53 at the double spike, 33 at the pits). They are kept in separate folders the report doesn't read, reported in a footnote, and the headline stays the pre-registered 10. They weren't agreed before being run; from now on, any extra run on held-out levels or Stereo Madness is agreed first (agreed 2026-11-14).
+    2. **The opening wasn't one joint sitting.** Jacob and Shannyn first looked at where the runs died together; Shannyn then scored the predictions from the report separately. All runs were finished and nothing could change.
+    3. **The batch printed "FAILED" for every run,** from a name-lookup bug in the reporting step (fixed in #53, merged after all runs). Each run saved all its files before the error; nothing was re-run, and the report checks every run from its own files.
+  - **Stereo Madness is now spent as a held-out test.** Any later change (e.g. iteration 2) can't be judged on it as held-out data.
 
 ## Open
 
@@ -1016,7 +1045,7 @@ Still open:
 - Step 7 (whole brain against the subcircuit): **done** (D52, result 2026-11-10): 60 of 60 identical games at 150 Hz and at 50 Hz; the subcircuit's cube results stand for the whole brain.
 - Step 5 (ship): Shannyn's draft is in (`docs/notes/ship_proposals.md`). Agreed with it on 2026-11-10, to log with the design: DNp22 as the readout (any spike releases the next tick, otherwise hold), R_ship the only ship dial (baseline 150 Hz), the whole brain, both eyes with the left–right asymmetry stated. Its first check failed: neither ideal ship completed any training ship level (`docs/notes/ship_ideal.md`), so the encoding is being rethought before any brain run. Also agreed 2026-11-05 (to log at the start of Step 5): ship mode stays in whatever happens in Stereo Madness; whether to tune it is decided after its baseline.
 - Brain panel (R3): version 1 of Shannyn's design is built; her five questions are answered in `docs/notes/brain_panel_design.md`, for her review.
-- Step 6 (Stereo Madness): **fixed in D54** (2026-11-14); runs not started.
+- Step 6 (Stereo Madness): **done** (D54, result 2026-11-14): the fly of record completes 0 of 10, median 9.2%; every run ends in the first cube section. Stereo Madness is now spent as a held-out test.
 - **Stereo Madness run N times, not once (changes D7; agreed in principle 2026-11-02, written up in D54).** A frozen fly with Poisson input is a distribution, not a single outcome, so one run can't tell luck from typical. Conditions:
   - N and the seeds are fixed before any Stereo Madness run, and nothing changes between or after the runs (D7 still holds: no tuning on it);
   - the headline is the full count and median progress (e.g. "3 of 10, median X%"), never the best run;
