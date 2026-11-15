@@ -106,12 +106,14 @@ Scored by her rules, a hit or a miss each, no partial credit:
 
 | # | Prediction | Hit or miss | From the report |
 |---|---|---|---|
-| 1 | No variant completes Stereo Madness | **[ ]** | 0 of 10 completed in each variant |
-| 2 | 50 Hz gets further than the record (median) | **[ ]** | Medians: 50 Hz 6.5%, record 9.2% |
-| 3 | Corrected signs play exactly like the record in cube sections | **[ ]** | "Identical for every seed: yes" (10 of 10 seeds) |
-| 4 | ≥ 6 of 10 record runs end in a cube section | **[ ]** | 10 of 10 ended in a cube section |
-| 5 | Every record ship-section death is on an object above | **[ ]** | 0 record ship-section deaths (not scored if none) |
-| 6 | At least one stuck run across the 30 | **[ ]** | 0 stuck of 30 |
+| 1 | No variant completes Stereo Madness | **Hit** | 0 of 10 completed in each variant |
+| 2 | 50 Hz gets further than the record (median) | **Miss** (6.5% vs 9.2%) | Medians: 50 Hz 6.5%, record 9.2% |
+| 3 | Corrected signs play exactly like the record in cube sections | **Hit** (10/10 identical; no run reached a ship section, so it covers whole runs) | "Identical for every seed: yes" (10 of 10 seeds) |
+| 4 | ≥ 6 of 10 record runs end in a cube section | **Hit** (10/10) | 10 of 10 ended in a cube section |
+| 5 | Every record ship-section death is on an object above | **Not scored** (no ship-section deaths) | 0 record ship-section deaths (not scored if none) |
+| 6 | At least one stuck run across the 30 | **Miss** (0 stuck) | 0 stuck of 30 |
+
+**Total: 3 hits, 2 misses, 1 not scored** (scored by Shannyn, 2026-11-15).
 
 ### R8.5 The showcase replay
 
