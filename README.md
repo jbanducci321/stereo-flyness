@@ -2,7 +2,14 @@
 
 A simulated fruit fly brain, built from the real wiring diagram of the *Drosophila* brain (the FlyWire connectome), playing a minimal Geometry Dash-style game. The final test is a recreation of the first level, Stereo Madness.
 
-**Status:** Step 4, controls and lesions on the cube (shuffled wiring, silenced neurons). Steps 0–3 are done. Untuned, the fly completes 6 of 60 runs on unseen cube levels, all easy, and gets further than random pressing on 18 of 20 levels. Tuning its one input dial lets it go further, but only by jumping well outside the range measured in real flies, and the test fixed in advance showed no clear gain, so the calibrated fly stays the fly of record. Ship mode (Step 5) and Stereo Madness (Step 6) come next.
+**Status:** the planned project (Steps 0–7) is done. **On Stereo Madness, the held-out final test, the untuned fly completed 0 of 10 runs, with a median progress of 9.2%** (whole brain, 150 Hz, blind runs fixed in advance in D54). Every run died in the first cube section, at a double spike or at pits it never saw loom, and none reached a ship section. Along the way:
+- **Pathways (Step 0):** the model carries the game's signals: looming drives the Giant Fiber, image motion drives the steering neurons.
+- **Cube (Steps 2–3):** untuned, the fly completes 6 of 60 runs on unseen cube levels, all easy, and gets further than random pressing on 18 of 20 levels. Tuning its input dial only helps by jumping well outside the range measured in real flies, with no clear gain, so the calibrated fly stays the fly of record.
+- **Controls (Step 4):** shuffled and random wiring never jump. Most of the rest of the brain makes the Giant Fiber fire earlier, close to the real fly's threshold.
+- **Ship (Step 5):** steering works (6 of 20 held-out levels against 0 for its control), but the ship can't descend fast enough, a limit of our output rule against the game's physics.
+- **Mixed levels and the whole brain (Steps 6–7):** mode switching works with no mismatches, and the subcircuit plays tick for tick like the whole brain.
+
+The full results are in `docs/notes/writeup_results.md`. Replays of Stereo Madness stay out of the repository (RobTop's level, D9); any shared video is labelled as a replay of a simulation, with our input shown separately from the fly's spikes.
 
 ## What this is (and isn't)
 
@@ -41,13 +48,13 @@ These are ours, not the fly's, and every result should be read with them in mind
 - **Firing rates are unrealistic.** The model's Giant Fiber fires at 100–200 Hz while driven; a real one fires once or twice per approaching object. The jump rule only uses the first spike.
 - **The model sometimes gets stuck.** About 0.2% of the time per simulated second, activity locks into a self-sustaining state centred on the mushroom body and never stops. We treat this as a property of the model, not of the fly; our untested guess is that it comes from the model having no adaptation and no noise. Stuck runs are flagged and counted as they happen, not re-run.
 - **Tuning uses a subcircuit,** about a quarter of the brain (~33k neurons), checked against the whole brain on held-out tests. The whole brain is compared at the end.
-- **The ship pathway is the weaker claim.** The steering neurons we read out (DNp20) mainly move the head in the real fly.
+- **The ship pathway is the weaker claim.** We read the ship from DNp22 (DNOVS2), which in the real fly encodes rotation and reaches neck, wing and haltere motor regions (Suver et al. 2016), while our ship moves straight up and down. Its top firing rate, not the fly, limits how fast the ship can descend (D53).
 
 ### How we keep it honest
 
 - Weights are never changed. At most 2–3 interface dials are tuned; the cube uses one.
 - The rules for judging each experiment are written down **before** its results are seen ([docs/decisions.md](docs/decisions.md)).
-- Stereo Madness is held out: nothing is tuned on it, and it's played once at the end.
+- Stereo Madness is held out: nothing is tuned on it, and it was played blind once at the end, 10 pre-specified runs per variant (D54).
 - Replays show the recorded activity unaltered, say they are replays of a simulation, and show our input separately from the fly's own spikes.
 
 ## Plan
@@ -60,6 +67,8 @@ These are ours, not the fly's, and every result should be read with them in mind
 5. Ship pathway: motion-sensing → steering neurons.
 6. Mixed levels, then Stereo Madness as the held-out final test. We never tune on it.
 7. The whole brain on a GPU, compared to the subcircuit.
+
+All eight steps are done (2026-11-14); what each found is in the status above.
 
 **End goal:** watch the fly play Stereo Madness, with its brain activity shown alongside the game. Looming neurons light up as obstacles approach, and the Giant Fiber fires as the cube jumps. Runs are recorded frame by frame and replayed at real speed, since the simulation itself runs slower than real time.
 
