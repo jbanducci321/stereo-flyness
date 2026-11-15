@@ -77,7 +77,8 @@ def threshold_fly(enc: CubeEncoder, level, threshold: float) -> dict:
                       loom.theta_deg, held))
     d = game.death
     return {"completed": game.finished, "progress": game.progress, "ticks_pressed": presses,
-            "death": None if d is None else f"{d.kind} at x {d.x:.0f}", "mode_at_end": game.player.mode,
+            "death": None if d is None else f"{d.kind} at x {d.x:.0f}", "death_x": None if d is None else d.x,
+            "mode_at_end": game.player.mode,
             "cause": None if d is None else death_cause(level, d, pd.DataFrame(trace, columns=[
                 "tick", "x", "y", "vy", "on_ground", "obstacle_x0", "theta", "held"]), threshold)}
 
