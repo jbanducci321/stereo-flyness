@@ -75,6 +75,7 @@ The per-obstacle sweep (`scripts/ideal_fly.py --by-obstacle`, 50 cube training l
    - a platform followed by pits makes the pits loom from the platform; a plain step-down makes nothing loom.
 2. **Ideal-fly check (no brain), training levels only,** once the predictions are in and D55 is logged: `ideal_fly.py --by-obstacle` at 39°, current encoding vs (i) vs (ii). On the iteration-1 training levels and the iteration-2 training levels (frozen first). Reported per obstacle type, with `platform_drop` and `step_down_pits` split into **fix cases and controls** (per level: does a walk-off cube land in the pits?) and by pit width, plus `platform_step_down`.
    - **Gate (Shannyn, 2026-11-15):** if the ideal 39° fly with (ii) clears **fewer than 50% of the fix-case drops** on the iteration-2 training levels, we **stop before any fly runs** and report why.
+     - **Refined 2026-11-15, before anything ran** (after Jacob's geometry check): one jump from a 1- or 2-block platform, taken at the 39° point, clears at most 3 pit cells (2 from the ground; scripted cube, game geometry, not a fly result). So the gate counts **only fix-case drops a single jump can clear (pit strips ≤ 3 cells)**. Wider strips are reported separately as a limit of the jump's geometry, so the gate tests the encoding, not the game's physics.
 3. **Fly runs on the iteration-2 training levels** (whole brain, 150 Hz, the record settings). This is where the design can be revised, **at most once, logged with its reason** (rule d).
 4. **Once, at the end of iteration 2:** the iteration-2 held-out suite (40 cube levels, opened once) and the iteration-1 held-out cube levels, with and without the fix.
 5. **Then Stereo Madness** on fresh seeds (100 onwards, N fixed beforehand, agreed by both of us), reported only as how far the fly gets.
@@ -109,6 +110,10 @@ The per-obstacle sweep (`scripts/ideal_fly.py --by-obstacle`, 50 cube training l
 | Iteration-1 training levels overall (ideal fly): better, same or worse? | **Same, within ±1 level** | v3 levels have no pits after platforms, so (ii) only changes rare raised-surface cases | Medium |
 | Real fly, iteration-2 held-out: does fix 1 pass the bar? | **Yes** | Every level has a drop, and the ideal fly should clear most fix cases; the risk is runs dying earlier at other features, which makes ties | Medium-low |
 | Real fly, Stereo Madness: furthest point reached (median of N) | **Median unchanged at ~9.2%**; the furthest run passes 10.9% | 7 of 10 record runs die at the double spike, before the pits, and fix 1 doesn't change the double spike. Only runs that get past it reach the pits | High for the median, medium for the furthest run |
+
+**Dated corrections (2026-11-15, after Jacob's geometry check, before anything ran; no prediction changed):**
+- **Prediction 1:** the reason overstated how far a platform jump goes. It clears at most 3 pit cells, so 4–5-cell strips can't be cleared by any single jump and the share has a ceiling below 100%. The prediction (≥ 50% of all fix-case drops) is kept and scored as written; the gate itself now counts only strips of ≤ 3 cells (above).
+- **Prediction 3 (control drops):** the reason was wrong. The pits reach 39° while the walk-off cube is still in the air (it lands ~45 units out), not after it lands. The prediction ("same") still follows, because in the air (ii) uses the current rule, so both encodings agree.
 
 ## Shannyn's answers (2026-11-15)
 
