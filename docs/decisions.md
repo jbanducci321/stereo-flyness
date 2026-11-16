@@ -1049,6 +1049,26 @@ Iteration 1 ends with D54's result and the `v1.0-research` tag. Iteration 2 is r
 - **Fix 3 (ship):** a new output rule, argued on its own merits, only after fixes 1 and 2.
 - **Where the details live:** the proposal and Shannyn's answers (`docs/notes/iteration2_proposal.md`), the new levels' ranges (`docs/notes/iteration2_levels.md`) and fix 1's design note with her biology argument, dated predictions and gate (`docs/notes/fix1_design.md`).
 
+**D56. Iteration 2: fix 1's gate passes; fix 2 reported as a limit for now** (2026-11-15)
+The first iteration-2 checks, no brain, on training levels only, run blind from `main` at `746a0e5` (`results/ideal_fly/it2_*`; report checksums in `it2_reports_sha256.txt`, verified before opening). Opened together by Jacob and Shannyn, in the agreed order: fix 1's gate, then fix 2's margin, then fix 2's sweep. Exploratory (D55).
+
+**Fix 1, step 2** (`docs/notes/fix1_design.md`; ideal 39° fly, iteration-2 training levels):
+- **The gate passes:** with (ii), fix-case drops with strips of ≤ 3 cells cleared **17 of 28 (60.7%)**, against ≥ 50%. With the current encoding **0 of 23**; with (i) true optics **0 of 23**.
+- All fix cases with (ii): 18 of 31 (58.1%). By ground cells before the pits: k = 0, 14 of 15; k = 1, 4 of 5; **k = 2, 0 of 11** (the pits reach 39° only after the cube has walked off the edge, in the air, where it can't jump). Controls: 100% either way (9/9, 11/11).
+- No harm at plain edges: 0 jumps on the plain step-downs reached (20 current, 29 with (ii)); the same on iteration 1's training levels (45 and 45).
+- Levels completed (of 50): current 1, (i) 1, **(ii) 4** (all easy). Iteration 1's training levels: 21 either way.
+- **Fix 1 goes on to step 3** (fly runs on the iteration-2 training levels), to be agreed before it runs.
+
+**Fix 2** (`docs/notes/fix2_design.md`):
+- **Margin, opened first:** noise 0 levels (no level is completed by at least half its draws at 37.1°, in either set), so **N = 3**, with and without fix 1 (ii).
+- **At the fly's own spread** (37.1 ± 7.3°, 20 draws), cleared share, current / with (ii): double spike **48% / 51%**; triple spike 0% / 0%; spike, 1 cell, spike 0% / 0%; spike, 2 cells, spike 54% / 55%; spike, 3 cells, spike 96% / 98%.
+- **(b)'s rule:** current encoding, best shifted mean 46° at +1 level, so **it fails N**; with fix 1 (ii), best shifted mean 50° at **+7** (7 against 0), so it passes N.
+- **Decision (made after seeing these results; the rule hadn't said which encoding governs):** **(a), report it as a limit, for now.** Fix 1 has passed its gate but not yet D55's held-out bar, so (b) isn't built on top of it. (b) may be raised again only if fix 1 passes its held-out bar, and that sequence is logged then. Both readings are reported.
+
+**Predictions** (scored by their own rules, hit or miss):
+- **Fix 1, 6 of 8 scored:** 1 hit (≥ 50% of all fix cases, edge more often than set back), 2 hit ((i) no change), 3 hit (controls the same), 4 hit (no extra edge jumps), 5 hit (slabs unchanged: 0/15 and 0/2 on iteration 1's levels, none reached on iteration 2's), 6 hit (iteration 1's levels the same, 21 of 50). 7 and 8 (held-out, Stereo Madness) are scored later.
+- **Fix 2, 6 of 6 scored, on the current encoding (the decision above):** 1 hit (double spikes at 39°: 13 of 13), 2 hit (window from 39° up), 3 hit (triple spikes and 1-cell pairs only from 90°), 4 hit (3-cell gaps 7 of 7, 2-cell gaps 0 of 14), **5 miss** (no threshold beats 39° on the current encoding; with (ii), 50–55° gives 7 against 4, +3), 6 hit ((a)). With the (ii) reading, 5 would be a hit and 6 a miss.
+
 ## Open
 
 Still open:
@@ -1064,7 +1084,7 @@ Still open:
 - Step 5 (ship): Shannyn's draft is in (`docs/notes/ship_proposals.md`). Agreed with it on 2026-11-10, to log with the design: DNp22 as the readout (any spike releases the next tick, otherwise hold), R_ship the only ship dial (baseline 150 Hz), the whole brain, both eyes with the left–right asymmetry stated. Its first check failed: neither ideal ship completed any training ship level (`docs/notes/ship_ideal.md`), so the encoding is being rethought before any brain run. Also agreed 2026-11-05 (to log at the start of Step 5): ship mode stays in whatever happens in Stereo Madness; whether to tune it is decided after its baseline.
 - Brain panel (R3): version 1 of Shannyn's design is built; her five questions are answered in `docs/notes/brain_panel_design.md`, for her review.
 - Step 6 (Stereo Madness): **done** (D54, result 2026-11-14): the fly of record completes 0 of 10, median 9.2%; every run ends in the first cube section. Stereo Madness is now spent as a held-out test.
-- **Iteration 2** (exploratory, D55): started after the `v1.0-research` tag. Fix 1's design is agreed (`docs/notes/fix1_design.md`); nothing is run until the iteration-2 suites are frozen. Fixes 2 and 3 come after.
+- **Iteration 2** (exploratory, D55): started after the `v1.0-research` tag. Suites frozen. **Fix 1's gate passed** (D56); its fly runs on the training levels (step 3) are next, once agreed. **Fix 2: reported as a limit for now** (D56). Fix 3 comes after.
 - **Stereo Madness run N times, not once (changes D7; agreed in principle 2026-11-02, written up in D54).** A frozen fly with Poisson input is a distribution, not a single outcome, so one run can't tell luck from typical. Conditions:
   - N and the seeds are fixed before any Stereo Madness run, and nothing changes between or after the runs (D7 still holds: no tuning on it);
   - the headline is the full count and median progress (e.g. "3 of 10, median X%"), never the best run;

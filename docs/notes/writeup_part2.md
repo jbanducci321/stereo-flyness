@@ -31,13 +31,24 @@ Part 1 ended at two walls in Stereo Madness's first section (R8): the double spi
 
 *Fixed by fix 1's design note before it ran. No brain. Iteration-2 training levels only.*
 
-**Setup:** the ideal 39° fly (`ideal_fly.py --all --iteration2 --sweep 10 175 5 --by-obstacle --fix1`), with the current encoding, (i) and (ii). **[after step 2]** commit, date.
+**Setup:** the ideal 39° fly (`ideal_fly.py --all --iteration2 --sweep 10 175 5 --by-obstacle --fix1`), with the current encoding, (i) and (ii). Run blind at `746a0e5`, opened together 2026-11-15 (D56).
 
-**The gate:** with (ii), fix-case drops with strips of ≤ 3 cells cleared: **[__ of __, __%]** against ≥ 50%.
+**The gate:** with (ii), fix-case drops with strips of ≤ 3 cells cleared: **17 of 28, 60.7%** against ≥ 50%. **Passed.**
+
+**Result, in the wording fixed above:** "With the landing-level view, an ideal fly at the real fly's average threshold clears 60.7% of the drops a jump at that moment can clear (17 of 28), against 0% with today's encoding and 0% with true optics. Fix 1 went on to fly runs." It fails every drop whose pits start two cells past the edge (0 of 11): the pits reach 39° only once the cube is already in the air.
 - **If it passed:** "With the landing-level view, an ideal fly at the real fly's average threshold clears __% of the drops a jump at that moment can clear (__ of __), against __% with today's encoding and __% with true optics. Fix 1 went on to fly runs."
 - **If it failed:** "With the landing-level view, an ideal fly at the real fly's average threshold clears only __% of the drops a jump at that moment can clear (gate: 50%). By the rule fixed beforehand, no fly runs were made with fix 1." Then why, from the per-obstacle table.
 
-**Table [after step 2]:** current / (i) / (ii): fix cases ≤ 3 cells, 4–5 cells, all; controls; plain step-downs (no-harm: edge jumps against the unfixed encoding); levels completed.
+**Table (D56):**
+
+| | current | (i) | (ii) |
+|---|---|---|---|
+| Fix cases, ≤ 3 cells (gate) | 0 / 23 | 0 / 23 | **17 / 28** |
+| Fix cases, 4–5 cells | 0 / 2 | 0 / 2 | 1 / 3 |
+| Fix cases, all | 0 / 25 | 0 / 25 | 18 / 31 |
+| Controls | 9 / 9 | 9 / 9 | 11 / 11 |
+| Jumps at plain step-downs | 0 (of 20 reached) | – | 0 (of 29 reached) |
+| Levels completed (of 50) | 1 | 1 | 4 |
 
 ## P4. Fix 1, step 3: the fly on the training levels
 
@@ -59,8 +70,9 @@ Part 1 ended at two walls in Stereo Madness's first section (R8): the double spi
 
 *Fixed by fix 2's design note before the check ran. No brain.*
 
-- **The spread-aware ideal fly** (thresholds drawn per approach from the fly's own spread, 37.1 ± 7.3°), on the iteration-2 training levels: **[after the check]** cleared share per obstacle type, double spikes and spaced pairs by gap; levels completed (a level counts if at least half its 20 draws complete it).
-- **The margin, recorded before the shifted-mean sweep was read:** noise **[__]** levels, so N = **[__]**.
+- **The spread-aware ideal fly** (thresholds drawn per approach from the fly's own spread, 37.1 ± 7.3°), on the iteration-2 training levels, current encoding / with fix 1 (ii): double spike cleared **48% / 51%**; triple spike 0% / 0%; spike, 1 cell, spike 0% / 0%; spike, 2 cells, spike 54% / 55%; spike, 3 cells, spike 96% / 98%. No level is completed by at least half its draws at 37.1° (D56).
+- **The margin, recorded before the shifted-mean sweep was read:** noise **0** levels, so N = **3**.
+- **The shifted means:** current encoding, best 46° at +1 level (fails N); with fix 1 (ii), best 50° at +7 (passes N). **Decided after seeing this (D56; the rule hadn't said which encoding governs): (a) for now**, since fix 1 hasn't yet passed its held-out bar; (b) may be raised again only if it does. Both readings reported.
 - **The decision:**
   - **(a) Report it as a limit** (the default): "**[Shannyn's agreed wording]** Close groups of obstacles need an aimed jump. The Giant Fiber escape fires at a size threshold with a natural spread and doesn't aim, so the fly clears a double spike only when its threshold falls on the late side of its spread, and can't clear triple spikes or close pairs at any threshold measured in real flies. We report this as a limit of a one-shot escape reflex in this game."
   - **(b), only if the best shifted mean beat 37.1° by at least N levels:** a labelled variant, *"a late-threshold fly, inside the range measured in real flies"*, with its own design note, reported second, held to D55's bar. Never the fly of record.
@@ -80,8 +92,8 @@ Read against Shannyn's prediction (fix 1's note): fix 1 alone leaves the median 
 ## P9. Predictions, scored
 
 Hit or miss each, by the rules in the notes that hold them, no partial credit.
-- Fix 1 (`fix1_design.md`, 8 predictions): **[after each step]**
-- Fix 2 (`fix2_design.md`, 6 predictions): **[after the check]**
+- Fix 1 (`fix1_design.md`, 8 predictions): after step 2, **6 of 6 scored are hits**; 7 and 8 (held-out, Stereo Madness) **[later]** (D56).
+- Fix 2 (`fix2_design.md`, 6 predictions): **5 hits, 1 miss** (prediction 5: no threshold beats 39° on the current encoding), scored on the current encoding by D56's decision; with the (ii) reading, 5 would be a hit and 6 a miss.
 
 ## D2. Discussion
 
