@@ -18,7 +18,10 @@ Iteration 2 (D55): `--fix1 i|ii` turns on fix 1's encoding (docs/notes/fix1_desi
 path with (i) true optics or (ii) the landing-level view); frames shown via the no-press path are
 flagged and labelled in replays. `--iteration2` plays the frozen iteration-2 levels and writes to
 results/iteration2/closed_loop/ (rule 7). Their held-out suite only runs with `--iteration2-final`,
-once, at the end of iteration 2 (D55).
+once, at the end of iteration 2 (D55). `--iteration2 --iteration1-levels` plays iteration 1's levels
+instead (fix 1's no-harm check, docs/notes/fix1_heldout_plan.md), written under
+results/iteration2/closed_loop/<network>/iteration1_<suite>/, never into Part 1's results; their
+held-out suite also needs `--iteration2-final`.
 
 If joblib's worker pool breaks mid-batch (a Windows error, `experiments/batches.py`), the runs that
 hadn't finished are played again in a new pool, up to 3 tries. After a batch is killed outright (e.g.
@@ -97,7 +100,18 @@ FIX1_VIEWS = {"i": "eye", "ii": "landing"}
 
 
 def levels_dir(args):
-    return IT2_LEVELS if getattr(args, "iteration2", False) else LEVELS
+    it2 = getattr(args, "iteration2", False) and not getattr(args, "iteration1_levels", False)
+    return IT2_LEVELS if it2 else LEVELS
+
+
+def out_base(args, sm: bool) -> Path:
+    """The folder above the settings folder."""
+    if sm:
+        return SM_OUT / args.network
+    if getattr(args, "iteration1_levels", False):  # fix 1's no-harm check: iteration 1's levels, iteration 2's output
+        return IT2_OUT / args.network / f"iteration1_{args.suite}"
+    root = IT2_OUT if args.iteration2 else OUT
+    return root / args.network if args.suite == "training" else root / args.network / args.suite
 
 
 def get_level(name, suite, args=None) -> Level:
@@ -181,6 +195,8 @@ def main() -> None:
     parser.add_argument("--fix1", choices=list(FIX1_VIEWS), default=None,
                         help="iteration 2, fix 1: the no-press path with (i) true optics or (ii) the landing-level view")
     parser.add_argument("--iteration2", action="store_true", help="the frozen iteration-2 levels (D55)")
+    parser.add_argument("--iteration1-levels", action="store_true",
+                        help="with --iteration2: iteration 1's levels (fix 1's no-harm check), output under results/iteration2")
     parser.add_argument("--iteration2-final", action="store_true",
                         help="allow iteration 2's held-out suite: once, at the end of iteration 2 (D55)")
     parser.add_argument("--stereo-madness-final", action="store_true",
@@ -191,6 +207,8 @@ def main() -> None:
     if args.theta_full is None:
         args.theta_full = tomllib.loads((ROOT / "configs" / "recruitment.toml").read_text())["theta_full_deg"]
 
+    if args.iteration1_levels and not args.iteration2:
+        sys.exit("Refused, nothing run: --iteration1-levels is for iteration 2 (fix 1's no-harm check); add --iteration2.")
     if args.iteration2 and args.suite == "held_out" and not args.iteration2_final:  # before any level is loaded
         sys.exit("Refused, nothing run: iteration 2's held-out suite is opened once, at the end (D55); "
                  "it only runs with --iteration2-final.")
@@ -210,9 +228,7 @@ def main() -> None:
     path_comp, con_paths, _ = network(None if args.network == "whole_brain" else args.network)
     stuck_ids = load_stuck_state(ROOT / cfg["cascade"]["stuck_state"])  # restricted to the network (D38)
     status = {"final": "subcircuit (D46)", "whole_brain": "whole brain"}.get(args.network, f"{args.network} network")
-    root_out = IT2_OUT if args.iteration2 else OUT
-    base = (SM_OUT / args.network if sm else root_out / args.network if args.suite == "training"
-            else root_out / args.network / args.suite)
+    base = out_base(args, sm)
     out = base / (f"{args.theta_full:g}deg_{args.mode}{'' if args.fix1 is None else f'_fix1-{args.fix1}'}"
                   f"_R{args.rate:g}{'' if args.rate_scaling else '_flat'}"
                   f"{'' if args.ship is None else f'_ship-{args.ship}' + ('' if args.ship_rate == 150 else f'_Rs{args.ship_rate:g}')}"
