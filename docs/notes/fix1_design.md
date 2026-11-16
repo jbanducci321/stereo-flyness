@@ -131,6 +131,20 @@ The per-obstacle sweep (`scripts/ideal_fly.py --by-obstacle`, 50 cube training l
 | No harm: jumps while on top of plain step-downs, fixed vs unfixed | **No more with the fix (within ±10% of the unfixed count)** | Nothing is on the path past a plain edge (D56: 0 extra for the ideal fly); jumps there come from leftover firing, the same in both arms | Medium |
 | Levels completed (of 50, 2 of 3 seeds) | **Few in both, ≤ 4 with the fix; fixed ≥ unfixed** | The ideal fly completed 4 with (ii) and 1 without; the real fly's spread costs more at double spikes (~50% each) | Medium |
 
+## [Shannyn] Held-out predictions (written before the held-out runs)
+
+*Shannyn, 2026-11-16, after step 3 was opened (D57) and before any held-out run. Measures as in `docs/notes/fix1_heldout_plan.md`. These add to prediction 7 above ("does fix 1 pass the bar? Yes"), which stands as written. Scored hit or miss when the held-out report is opened; confidence isn't part of the score.*
+
+| | Prediction | Why | Confidence |
+|---|---|---|---|
+| The test (iteration-2 held-out): levels past the feature, fixed vs unfixed | **Fixed better on at least 8 levels, worse on at most 1** | Training gave 12 better, 0 worse of 47 levels with a feature (D57); the held-out suite is a little smaller and built the same way | Medium |
+| Fix-case drops reached, share cleared | **Unfixed ≤ 5%; fixed 40–65%** | Training: 0 of 68 and 54% (D57); the ideal fly's 58% is the natural ceiling, give or take level mix | Medium |
+| Fix-case drops with k = 2 (pits two cells out), share cleared with the fix | **≤ 10%** | A geometry limit: the pits reach the threshold only after the cube has walked off (0 of 11 ideal, 0 of 29 real, D56–D57) | High |
+| No-harm check (iteration-1 held-out cube levels) | **Passes both parts:** no significant drop, and worse on no more levels than better | Those levels have no fix-case drops, so fix 1 rarely changes the input there; the ideal fly was identical on iteration 1's training levels (21 of 50 either way, D56) | Medium-high |
+| Iteration-1 held-out levels that tie exactly (same obstacles passed in both arms) | **At least 15 of 20** | Most have no raised surface with something on course below it, so fix 1 changes no frame | Medium-low |
+| Levels where fix 1 changed no frame, both suites | **Every one plays identically in both arms** | Same input and same seed give the same run; this is a check that the runs are sound | High |
+| Jumps while on top of a plain step-down, both suites | **No more with the fix** | Nothing is on the path past a plain edge (0 and 0 in step 3) | High |
+
 ## Shannyn's answers (2026-11-15)
 
 1. **(ii) is defensible,** framed like ship B: our code supplies the foresight, the fly supplies the timing. Report (i) alongside, label it in the replay ("θ shown from landing level, our construction"), and word it as our choice, never as what the fly sees.
