@@ -36,6 +36,7 @@ import pandas as pd
 import pygame
 
 from stereo_flyness.game import physics as P
+from stereo_flyness.interface.encoding import PREDICTED_LABELS
 from stereo_flyness.viewer import ship_panel
 from stereo_flyness.viewer.render import COLOURS, font
 
@@ -266,6 +267,9 @@ def _column_input(surface, track, tick, rect):
         tx = gx + round(gw * THRESHOLD_DEG / GAUGE_MAX_DEG)
         pygame.draw.line(surface, AMBER_DIM, (tx, gy - 3), (tx, gy + 9), 2)
         _text(surface, "39° (the real fly's average threshold)", (tx + 4, gy + 8), SMALL, 11)
+        if bool(r.get("predicted", False)):  # fix 1: on course only via our predicted fall (hard rule 10)
+            label = PREDICTED_LABELS.get(track.run.get("view", "landing"), PREDICTED_LABELS["landing"])
+            _text(surface, label, (x0 + 10, y0 + h - 46), INPUT, 12)
         _text(surface, "Our input, computed by our code from the game.", (x0 + 10, y0 + h - 30), SMALL, 11)
         _text(surface, "Dots are in our patch order, not the eye's real layout.", (x0 + 10, y0 + h - 16), SMALL, 11)
     elif mode == "ship" and "omega_deg" in r and not pd.isna(r["omega_deg"]):

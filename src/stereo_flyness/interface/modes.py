@@ -66,6 +66,8 @@ class CubeController(Controller):
         loom = self.encoder.encode(player)
         row = {"theta_deg": loom.theta_deg, "gap": loom.gap, "f": loom.f, "rate_hz": loom.rate_hz,
                **{f"driven_{s}_{t}": n for (s, t), n in loom.driven.items()}}
+        if self.encoder.path != "current":  # fix 1 (iteration 2): flag frames shown via the no-press path
+            row["predicted"] = bool(loom.predicted)
         return {"loom": self.encoder.rates(loom)}, row
 
     def output(self, counts):
@@ -73,7 +75,10 @@ class CubeController(Controller):
 
     def settings(self):
         e = self.encoder
-        return {"theta_full_deg": e.theta_full_deg, "rate_hz": e.rate_hz, "mode": e.mode, "rate_scaling": e.rate_scaling}
+        out = {"theta_full_deg": e.theta_full_deg, "rate_hz": e.rate_hz, "mode": e.mode, "rate_scaling": e.rate_scaling}
+        if e.path != "current":  # iteration-1 runs keep exactly their old fields
+            out |= {"path": e.path, "view": e.view}
+        return out
 
 
 class ShipController(Controller):
