@@ -27,12 +27,13 @@
 
 Checks first, as D54's: every run present, settings and connectome right, one clean commit, exact replay, stuck runs counted. Nothing is reported if a check fails. Then:
 - **The headline:** completed **k of 100**; **median progress** (quartiles, range). Never the best run as the headline.
+  - **How the median is computed** (Shannyn, 2026-11-16): the 100 runs' progress sorted, and the mean of the 50th and 51st. The same rule applies to Part 1's 100 runs in the context line.
 - **Where runs ended, by place:** the killing object and its x, grouped (as D54: "the double spike", "the pits after the raised platform", …), cube or ship section.
 - **Milestones, each reached or not, with how many runs:** past 10.9% (Part 1's furthest); the first ship portal (~30%); the first ship section cleared; a complete run.
 - **Context, not a comparison:** Part 1's 100 record runs (seeds 0–99, no fix 1) by the same measures. They're different seeds and judge nothing; they show what changed in where the fly stops.
 - **Frames fix 1 changed, per run** (its `predicted` flag), so it's clear where the fix acted.
 - **The showcase replay** (D54's rule): the run closest to the median, ties to the lowest seed; optional and labelled, the furthest run, captioned "the furthest of 100". Both carry the exploratory label and the landing-level label (D55, hard rule 10).
-- **Scored at opening: Shannyn's fix 1 prediction 8:** "Median unchanged at ~9.2%; the furthest run passes 10.9%", high confidence for the median, medium for the furthest run. *Before the runs, we fix what "unchanged" means (question 3).*
+- **Scored at opening: Shannyn's fix 1 prediction 8:** "Median unchanged at ~9.2%; the furthest run passes 10.9%", high confidence for the median, medium for the furthest run. **"Unchanged" (agreed 2026-11-16):** the median is within ±1 percentage point of 9.2% (8.2–10.2%). The prediction is a hit if the median is in that band **and** the furthest run passes 10.9%.
 
 **Opened together**, after the report is checksummed, as before.
 
@@ -43,9 +44,16 @@ Checks first, as D54's: every run present, settings and connectome right, one cl
 - **The report:** D54's report extended with the milestones, Part 1's context and the changed frames, tested on Part 1's 100 opened runs as stand-ins.
 - **D54's gates** (the ship open-loop gate, the mixed-level switching check) are rechecked by the runner. Since D54's runs (`e72c2d7`), only the cube encoder has changed (fix 1, off by default); the ship encoding, the mode switching, the game and the brain code are unchanged (checked 2026-11-16).
 
-## Questions for Shannyn
+## Questions for Shannyn (answered 2026-11-16, below)
 
 1. **N = 100, seeds 100–199?** Or D54's N = 10, which would leave only ~5 runs at the pits?
 2. **Fix 1 (ii) only, or the unfixed fly too, on the same seeds?** I'd run fix 1 only and use Part 1's 100 runs as context. These runs judge nothing, and a same-seed unfixed arm would invite exactly the comparison D55 rules out. Its one advantage: your identical-until-changed check, run for run (it held on all 150 step 3 pairs).
 3. **What counts as "unchanged" for prediction 8?** A proposal, fixed before the runs: the median is unchanged if it's within ±1 percentage point of 9.2% (8.2–10.2%), since Part 1's 100 runs ended at a few fixed places. It's a hit if the median is in that band and the furthest run passes 10.9%.
 4. **Anything else in the report,** or predictions to add, before the runs?
+
+## Shannyn's answers (2026-11-16, approving #83)
+
+1. **N = 100, seeds 100–199.**
+2. **Fix 1 (ii) only,** with Part 1's 100 runs as context.
+3. **The ±1 point band for "unchanged" is fine.** The median of 100 is the mean of the 50th and 51st runs (added above).
+4. **No more predictions;** prediction 8 stands.
