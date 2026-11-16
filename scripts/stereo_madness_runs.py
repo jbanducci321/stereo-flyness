@@ -12,9 +12,14 @@ Runs `--parallel` games at once (one brain each), each with `--resume`: after a 
 the same command plays only what's missing at this commit. Only progress and stuck flags are
 printed. Nothing is changed between or after runs.
 
+Iteration 2 (D60): `--config configs/iteration2/stereo_madness.toml` runs its own seeds with fix 1 (ii),
+through `play_level.py --iteration2 --fix1 ii`, written under results/iteration2/stereo_madness/.
+A config sets these with `iteration2 = true` and `fix1 = "ii"`; D54's config has neither.
+
 Usage:
     uv run python scripts/stereo_madness_runs.py --dry-run
     uv run python scripts/stereo_madness_runs.py                 # every variant, in the config's order
+    uv run python scripts/stereo_madness_runs.py --config configs/iteration2/stereo_madness.toml
 """
 
 import argparse
@@ -50,15 +55,16 @@ def mixed_check_passed(path=MIXED) -> bool:
 
 def command(cfg: dict, variant: str, seed: int) -> list[str]:
     v = cfg["variants"][variant]
+    it2 = (["--iteration2"] if cfg.get("iteration2") else []) + (["--fix1", cfg["fix1"]] if cfg.get("fix1") else [])
     return ["uv", "run", "python", "-u", "scripts/play_level.py", "stereo_madness", "--stereo-madness-final",
             "--network", cfg["network"], "--rate", f"{v['rate_hz']:g}", "--ship", cfg["ship_design"],
             "--ship-rate", f"{cfg['ship_rate_hz']:g}", "--signs", v["signs"], "--seed", str(seed),
-            "--jobs", "1", "--quiet", "--resume"]
+            "--jobs", "1", "--quiet", "--resume", *it2]
 
 
 def refusal(cfg: dict) -> str | None:
     if not decision_logged(cfg, DECISIONS.read_text(encoding="utf-8")):
-        return ("configs/stereo_madness.toml doesn't name a logged Step 6 decision. Log it in docs/decisions.md "
+        return ("the config doesn't name a logged Stereo Madness decision. Log it in docs/decisions.md "
                 "and set `decision` first (D7: settings fixed before any run).")
     dirty = subprocess.run(["git", "status", "--porcelain", "--untracked-files=no"], cwd=ROOT,
                            capture_output=True, text=True).stdout.strip()
@@ -76,9 +82,10 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--parallel", type=int, default=4, help="games at once (one brain each)")
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--config", type=Path, default=CONFIG, help="default: D54's configs/stereo_madness.toml")
     args = ap.parse_args()
     sys.stdout.reconfigure(encoding="utf-8")
-    cfg = load_config()
+    cfg = load_config(args.config)
     jobs = [(v, s) for v in cfg["variants"] for s in cfg["seeds"]]
     if args.dry_run:
         for v, s in jobs[:3]:

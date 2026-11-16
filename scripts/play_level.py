@@ -21,7 +21,9 @@ results/iteration2/closed_loop/ (rule 7). Their held-out suite only runs with `-
 once, at the end of iteration 2 (D55). `--iteration2 --iteration1-levels` plays iteration 1's levels
 instead (fix 1's no-harm check, docs/notes/fix1_heldout_plan.md), written under
 results/iteration2/closed_loop/<network>/iteration1_<suite>/, never into Part 1's results; their
-held-out suite also needs `--iteration2-final`.
+held-out suite also needs `--iteration2-final`. `--iteration2 stereo_madness --stereo-madness-final`
+plays Stereo Madness for iteration 2 (docs/notes/sm_newseeds_plan.md), written under
+results/iteration2/stereo_madness/, never into Part 1's results/stereo_madness/.
 
 If joblib's worker pool breaks mid-batch (a Windows error, `experiments/batches.py`), the runs that
 hadn't finished are played again in a new pool, up to 3 tries. After a batch is killed outright (e.g.
@@ -66,6 +68,7 @@ from stereo_flyness.interface.ship_encoding import ShipEncoder
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "results" / "closed_loop"
 SM_OUT = ROOT / "results" / "stereo_madness"
+IT2_SM_OUT = ROOT / "results" / "iteration2" / "stereo_madness"
 SM_NAME = "stereo_madness"
 SM_LEVEL = ROOT / "data" / "gd" / "stereo_madness.json"
 
@@ -106,8 +109,8 @@ def levels_dir(args):
 
 def out_base(args, sm: bool) -> Path:
     """The folder above the settings folder."""
-    if sm:
-        return SM_OUT / args.network
+    if sm:  # iteration 2's Stereo Madness runs never go into Part 1's folder
+        return (IT2_SM_OUT if getattr(args, "iteration2", False) else SM_OUT) / args.network
     if getattr(args, "iteration1_levels", False):  # fix 1's no-harm check: iteration 1's levels, iteration 2's output
         return IT2_OUT / args.network / f"iteration1_{args.suite}"
     root = IT2_OUT if args.iteration2 else OUT
@@ -123,8 +126,11 @@ def refuse(args, levels: dict[str, Level]) -> str | None:
     if getattr(args, "iteration2", False) and args.suite == "held_out" and not args.iteration2_final:
         return ("Iteration 2's held-out suite is opened once, at the end of iteration 2 (D55). "
                 "It only runs with --iteration2-final.")
-    if getattr(args, "iteration2", False) and SM_NAME in levels:
-        return "Stereo Madness isn't part of the iteration-2 level suites; play it without --iteration2."
+    if getattr(args, "iteration1_levels", False) and SM_NAME in levels:
+        return "Stereo Madness isn't one of iteration 1's levels; drop --iteration1-levels."
+    if getattr(args, "fix1", None) is not None and SM_NAME in levels and not getattr(args, "iteration2", False):
+        return ("fix 1 is iteration 2: play Stereo Madness with --iteration2, so it's written under "
+                "results/iteration2/stereo_madness/, not into Part 1's results.")
     if SM_NAME in levels:
         if not args.stereo_madness_final:
             return ("Stereo Madness is the held-out final test (D7, hard rule 5). It only runs with "
