@@ -3,7 +3,7 @@
 *Jacob, 2026-11-15. **Written before any iteration-2 result exists**, as Part 1's results were written before Stereo Madness was run: the order, the headings and the wording for each possible outcome are fixed now, so the results can't shape how they're framed. Nothing below changes after the runs except the blanks. Every number that goes in is copied from the decision log or the note it cites. **[Shannyn]** marks her framing; **[after …]** marks what's filled in once that step's results are opened. Part 1 is `docs/notes/writeup_results.md`, tagged `v1.0-research`, and isn't changed by anything here.*
 
 **How to read Part 2:**
-- **It's exploratory.** Every result, figure and video carries: *"exploratory: interface adjusted after seeing this level; brain wiring unchanged"* (D55).
+- **It's exploratory.** Every result, figure and video carries: *"exploratory: interface adjusted after seeing Stereo Madness; brain wiring unchanged"* (D55).
 - **The brain never changed.** The connectome is the same frozen FlyWire v783 model as Part 1; only our interface (`src/stereo_flyness/interface/`) changed, one fix at a time.
 - **Fixes are judged on general levels, never on Stereo Madness.** Stereo Madness is spent as a held-out test (D54); in Part 2 it shows only how far the fly then gets.
 - **The fly of record is unchanged:** calibrated to the real fly's mean threshold (39°), R = 150 Hz. Any variant is labelled and reported second.
