@@ -6,8 +6,9 @@ Fixed before the runs (docs/notes/fix1_step3_plan.md). Checks first, then the me
   holds; stuck runs counted, not re-run. If any check fails, nothing is reported, only what failed.
 - **main measure:** levels that get past their first fix-case drop (at least 2 of 3 seeds), fixed vs
   unfixed, sign test (descriptive on training levels; D55's bar is the held-out suite);
-- **beside it:** every fix-case drop reached, by k and pit width; controls; jumps at plain step-downs
-  (no harm); progress, completions, deaths by obstacle type, stuck runs.
+- **beside it:** each level's feature with its k; every fix-case drop reached, by k and pit width;
+  controls; jumps while on top of a plain step-down (no harm; any jump on top, not only at the edge);
+  progress, completions, deaths by obstacle type, stuck runs.
 
 Usage:
     uv run python scripts/fix1_step3_report.py            # writes results/iteration2/fix1_step3_report.md
@@ -104,6 +105,23 @@ def report(rows, commit) -> list[str]:
               f"- Fixed better on **{better}**, worse on **{worse}**, tied on {len(with_feature) - better - worse}; "
               f"sign test p = **{sign_test(better, worse):.3g}** (descriptive).", ""]
 
+    # each level's feature, with its k (Shannyn, 2026-11-15: helps read ties, e.g. k = 2)
+    feat = []
+    for lv in with_feature:
+        r0 = df[(df["level"] == lv)].iloc[0]
+        g = r0["groups"][r0["reading"].feature]
+        seeds = {arm: sum(r.past for r in df[(df["level"] == lv) & (df["arm"] == arm)]["reading"]) for arm in ARMS}
+        feat.append({"level": lv, "feature": g.type.split(" (")[0], "k": drop_k(g),
+                     "pits": sum(b.kind == "pit" for b in g.boxes),
+                     "unfixed (seeds past)": f"{seeds['unfixed']}/{len(SEEDS)}",
+                     "fix 1 (ii) (seeds past)": f"{seeds['fix1 (ii)']}/{len(SEEDS)}",
+                     "result": ("better" if per[("fix1 (ii)", lv)] and not per[("unfixed", lv)]
+                                else "worse" if per[("unfixed", lv)] and not per[("fix1 (ii)", lv)] else "tied")})
+    ft = pd.DataFrame(feat).sort_values(["k", "level"])
+    by_k = ft.groupby("k")["result"].value_counts().unstack(fill_value=0).reset_index()
+    lines += ["**By the feature's k** (ground cells before the pits; all levels kept, as the measure is fixed):", "",
+              md_table(by_k, 0), "", "**Each level's feature:**", "", md_table(ft, 0), ""]
+
     # every fix-case drop reached, by k and width; controls
     drops = []
     for r in rows:
@@ -129,7 +147,7 @@ def report(rows, commit) -> list[str]:
         med = d.groupby("level")["progress"].median()
         rows2.append({"arm": arm, "runs": len(d), "completed": int(d["completed"].sum()),
                       "median progress (per level, median)": f"{100 * med.median():.1f}%",
-                      "plain step-downs reached": reached, "jumps on them": jumps, "stuck runs": int(d["stuck"].sum())})
+                      "plain step-downs reached": reached, "jumps while on top": jumps, "stuck runs": int(d["stuck"].sum())})
     lines += ["## No harm, progress, completions, stuck runs", "", md_table(pd.DataFrame(rows2), 0), ""]
 
     # deaths by obstacle type
