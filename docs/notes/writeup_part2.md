@@ -94,7 +94,9 @@ Part 1 ended at two walls in Stereo Madness's first section (R8): the double spi
 
 ## P7. Fix 3: the ship
 
-**[after fixes 1 and 2]** Only if fixes 1 and 2 let the cube reach a ship section. A new output rule, argued on its own merits (D55). If no run reaches a ship section, this section says so and stops.
+*Only if fixes 1 and 2 let the cube reach a ship section. A new output rule, argued on its own merits (D55). If no run reaches a ship section, this section says so and stops.*
+
+**No run reached a ship section, so fix 3 stops here (D59).** Part 1's furthest Stereo Madness run reached 10.9%, short of the first ship portal (~30%); the iteration-2 levels are cube only; and the double and triple spikes, which come before the ship, stay a limit (D56, D58). Testing the ship on ship-only levels instead would have changed this condition after seeing the cube results. The ship's own limit stays Part 1's finding (D53: DNp22 can't fire fast enough to descend); fixing it would need a new output rule, and is named as future work in the discussion.
 
 ## P8. Stereo Madness, new seeds
 
