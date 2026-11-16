@@ -1,4 +1,6 @@
-# Iteration 2, fix 2: showing a spike group from its far end (a proposal)
+# Iteration 2, fix 2: showing a spike group from its far end (considered and declined)
+
+**Declined, 2026-11-16 (D58): nothing was built or run.** Shannyn's reasons are at the end. The proposal is kept as written, for the record.
 
 *Jacob, 2026-11-16. A proposal for Shannyn. **It reopens D56's fix 2 decision ((a), a limit for now), so nothing is built or run until we both agree.** If we do, it follows fix 1's path: her argument and predictions first, then a no-brain check on the iteration-2 training levels with a gate fixed before it runs, then fly runs. Exploratory (D55). Nothing in it uses Stereo Madness beyond what D54 records (7 of 10 record runs died at its double spike).*
 
@@ -51,3 +53,11 @@ Spikes in isolation after a full run-up, eye on the ground, θ = 2·atan(15/d); 
 2. **If it is:** does it replace D56's "(a) for now" for double spikes, with (b) left as it was?
 3. **The gate above:** right thresholds?
 4. **The label** for replays.
+
+## [Shannyn] Declined (2026-11-16)
+
+*Shannyn's answer to the proposal; Jacob agrees.*
+
+**(e) isn't defensible as a fix.** Part 2 asks how far the fly gets once our interface stops limiting it, and fix 1 fit that: the pits were invisible because of our encoding. The double spike isn't like that: the encoding shows it correctly (the ideal 39° fly clears every one, D56), and the real fly fails because its timing varies, at exactly the rate the spread model predicted (48%, D57). (e) would make up for the fly's spread by moving where the hazard appears to start, which is our code aiming the jump. That is what fix 2's biology argument says the escape reflex doesn't do.
+
+**So D56's "(a), a limit" stands.** The double spike is reported as a finding, now confirmed by the real fly; the triple spike stays a limit as before.

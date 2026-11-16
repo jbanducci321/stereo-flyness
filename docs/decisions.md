@@ -1069,6 +1069,9 @@ The first iteration-2 checks, no brain, on training levels only, run blind from 
 - **Fix 1, 6 of 8 scored:** 1 hit (≥ 50% of all fix cases, edge more often than set back), 2 hit ((i) no change), 3 hit (controls the same), 4 hit (no extra edge jumps), 5 hit (slabs unchanged: 0/15 and 0/2 on iteration 1's levels, none reached on iteration 2's), 6 hit (iteration 1's levels the same, 21 of 50). 7 and 8 (held-out, Stereo Madness) are scored later.
 - **Fix 2, 6 of 6 scored, on the current encoding (the decision above):** 1 hit (double spikes at 39°: 13 of 13), 2 hit (window from 39° up), 3 hit (triple spikes and 1-cell pairs only from 90°), 4 hit (3-cell gaps 7 of 7, 2-cell gaps 0 of 14), **5 miss** (no threshold beats 39° on the current encoding; with (ii), 50–55° gives 7 against 4, +3), 6 hit ((a)). With the (ii) reading, 5 would be a hit and 6 a miss.
 
+**D58. Iteration 2: fix 2 (e), a spike group shown from its far end, considered and declined** (2026-11-16)
+Proposed by Jacob after step 3 (`docs/notes/fix2_group_view.md`): spikes in touching columns merged into one object, its θ taken at the group's last spike. On game geometry alone it would lift double-spike clears from ~45% to ~96% at the fly's spread (triple spikes ~8%). Nothing was built or run. **Declined** (Shannyn, Jacob agreeing): fix 1 removed a blind spot our encoding created, but the double spike is shown correctly (the ideal 39° fly clears every one, D56), and the real fly fails it because its timing varies, at the rate the spread model predicted (48%, D57). (e) would make up for that spread by moving where the hazard appears to start: our code aiming the jump, which fix 2's biology argument says the escape reflex doesn't do. **D56's (a) stands:** the double spike is reported as a finding, confirmed by the real fly; the triple spike stays a limit.
+
 ## Open
 
 Still open:
