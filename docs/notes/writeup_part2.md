@@ -54,7 +54,22 @@ Part 1 ended at two walls in Stereo Madness's first section (R8): the double spi
 
 *Only if the gate passed. Whole brain, R = 150 Hz, the record's settings. At most one revision, logged with its reason (D55 rule d).*
 
-**[after step 3]** gets past the feature (median run per level over 3 seeds) with and without fix 1; progress; completions; the no-harm count at plain edges. **If revised:** what changed, why, and the result before and after, both shown.
+**Setup:** 50 frozen iteration-2 training levels × unfixed / fix 1 (ii) × seeds 0–2, 300 runs from `17a0ffe`, read from one report fixed before the runs and checksummed before opening (D57). Descriptive: D55's bar is the held-out suite (P5).
+
+**Result:** "With the landing-level view, the real fly gets past the first drop-into-pits on 12 of 47 training levels, against 0 without it (12 better, 0 worse; p = 0.0005, descriptive). Per drop it reaches, it clears 54% (88% when the pits start at the edge), close to the ideal fly's 58%, and never when the pits start two cells out. It does no harm at plain edges or control drops." It completes no level in either arm: the runs it frees mostly die next at the double spike (deaths there 15 → 32), so median progress rises only from 11.8% to 13.5%.
+
+| | unfixed | fix 1 (ii) |
+|---|---|---|
+| Levels past the feature (2 of 3 seeds, of 47) | 0 | **12** |
+| Fix-case drops reached, cleared | 0 / 68 | **44 / 81** |
+| … k = 0 / k = 1 / k = 2 | 0 / 30, 0 / 13, 0 / 25 | 30 / 34, 14 / 18, 0 / 29 |
+| Control drops reached, cleared | 19 / 28 | 22 / 32 |
+| Jumps on top of plain step-downs | 0 (of 53 reached) | 0 (of 68 reached) |
+| Levels completed (of 50) | 0 | 0 |
+| Median progress (per level) | 11.8% | 13.5% |
+| Deaths at fix-case drops / double spikes | 68 / 15 | 37 / 32 |
+
+**Not revised** (D57): the fixed fly came close to the ideal fly wherever it reached a drop.
 
 ## P5. Fix 1 on held-out levels (opened once, at the end of iteration 2)
 
@@ -93,6 +108,7 @@ Read against Shannyn's prediction (fix 1's note): fix 1 alone leaves the median 
 
 Hit or miss each, by the rules in the notes that hold them, no partial credit.
 - Fix 1 (`fix1_design.md`, 8 predictions): after step 2, **6 of 6 scored are hits**; 7 and 8 (held-out, Stereo Madness) **[later]** (D56).
+- Fix 1, step 3 (`fix1_design.md`, 7 predictions): **7 of 7 hits** (D57). Two were close: the fixed fly's share cleared (54.3% against a 25–55% range), and levels completed (0 and 0 met "few, fixed ≥ unfixed", though some completions were expected).
 - Fix 2 (`fix2_design.md`, 6 predictions): **5 hits, 1 miss** (prediction 5: no threshold beats 39° on the current encoding), scored on the current encoding by D56's decision; with the (ii) reading, 5 would be a hit and 6 a miss.
 
 ## D2. Discussion
