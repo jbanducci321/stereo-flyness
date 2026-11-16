@@ -117,6 +117,20 @@ The per-obstacle sweep (`scripts/ideal_fly.py --by-obstacle`, 50 cube training l
 - **Prediction 1:** the reason overstated how far a platform jump goes. Taken at the 39° point, it clears at most 3 pit cells, so 4–5-cell strips can't be cleared by a jump at the 39° point (only by a later jump right at the edge), and the share has a ceiling below 100%. The prediction (≥ 50% of all fix-case drops) is kept and scored as written; the gate itself now counts only strips of ≤ 3 cells (above).
 - **Prediction 3 (control drops):** the reason was wrong. The pits reach 39° while the walk-off cube is still in the air (its back edge lands ~45 units out, its centre ~60), not after it lands. The prediction ("same") still follows, because in the air (ii) uses the current rule, so both encodings agree.
 
+## [Shannyn] Step 3 predictions (written before step 3 runs)
+
+*Shannyn, 2026-11-15, after step 2 was opened (D56) and before any step 3 run. Measures as in `docs/notes/fix1_step3_plan.md`. Scored hit or miss when the step 3 report is opened; confidence isn't part of the score.*
+
+| | Prediction | Why | Confidence |
+|---|---|---|---|
+| Unfixed fly, fix-case drops reached: share cleared | **≤ 5%** | The ideal fly cleared 0 of 23 with today's encoding; the real fly can only clear one by chance (a leftover or early spike near the edge) | High |
+| Fixed fly (ii), fix-case drops reached: share cleared | **25–55%: below the ideal fly's 58%** | The fly's first spike varies (37.1 ± 7.3°), and a late spike on a k = 0 drop comes after the edge, where it can't jump | Medium-low |
+| Fixed fly (ii), by k | **k = 0 cleared most; k = 2 cleared ≤ 10%** | As for the ideal fly (k = 2: 0 of 11): the pits reach the threshold only after the cube has walked off | Medium-high |
+| Main measure: levels past the feature, fixed vs unfixed | **Fixed better on more levels than worse, worse on at most 1; sign test p < 0.05** (descriptive) | The unfixed fly almost never gets past; the fixed one should on most k = 0 and k = 1 features it reaches. Levels where the fly dies before the feature, or the feature has k = 2, tie | Medium |
+| Control drops: share cleared, fixed vs unfixed | **Within 10 percentage points** | In the air, (ii) uses the current rule, so both arms see the same thing (D56: 100% either way for the ideal fly) | Medium-high |
+| No harm: jumps while on top of plain step-downs, fixed vs unfixed | **No more with the fix (within ±10% of the unfixed count)** | Nothing is on the path past a plain edge (D56: 0 extra for the ideal fly); jumps there come from leftover firing, the same in both arms | Medium |
+| Levels completed (of 50, 2 of 3 seeds) | **Few in both, ≤ 4 with the fix; fixed ≥ unfixed** | The ideal fly completed 4 with (ii) and 1 without; the real fly's spread costs more at double spikes (~50% each) | Medium |
+
 ## Shannyn's answers (2026-11-15)
 
 1. **(ii) is defensible,** framed like ship B: our code supplies the foresight, the fly supplies the timing. Report (i) alongside, label it in the replay ("θ shown from landing level, our construction"), and word it as our choice, never as what the fly sees.
