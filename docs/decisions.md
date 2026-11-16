@@ -1081,12 +1081,12 @@ Fix 1, step 3 (`docs/notes/fix1_step3_plan.md`): the whole-brain fly of record (
 
 **Shannyn's step 3 predictions** (`docs/notes/fix1_design.md`), scored by their own rules: **7 of 7 hits.**
 1. Unfixed fly clears ≤ 5% of fix-case drops: 0 of 68. Hit.
-2. Fixed fly clears 25–55%, below the ideal fly's 58%: 54.3%. Hit, at the top of its range.
+2. Fixed fly clears 25–55%, below the ideal fly's 58%: 54.3%. Hit, near the top of its range: 54.3% is below the ideal fly's 58.1%, but not by a margin that means anything.
 3. k = 0 cleared most, k = 2 ≤ 10%: 88% and 0%. Hit.
 4. Main measure better on more levels than worse, worse on at most 1, p < 0.05: 12 against 0, p = 0.0005. Hit.
 5. Controls within 10 points: 68.8% and 67.9%. Hit.
 6. No more jumps on top with the fix: 0 and 0. Hit.
-7. Levels completed few in both, ≤ 4 with the fix, fixed ≥ unfixed: 0 and 0. Hit by its wording only: it expected some completions, and the real fly completed none.
+7. Levels completed few in both, ≤ 4 with the fix, fixed ≥ unfixed: Hit by its wording (0 and 0). Its reasoning expected a few completions with the fix; there were none, because the runs it freed died next at the double spike.
 
 ## Open
 

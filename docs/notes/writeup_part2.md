@@ -108,7 +108,7 @@ Read against Shannyn's prediction (fix 1's note): fix 1 alone leaves the median 
 
 Hit or miss each, by the rules in the notes that hold them, no partial credit.
 - Fix 1 (`fix1_design.md`, 8 predictions): after step 2, **6 of 6 scored are hits**; 7 and 8 (held-out, Stereo Madness) **[later]** (D56).
-- Fix 1, step 3 (`fix1_design.md`, 7 predictions): **7 of 7 hits** (D57). Two were close: the fixed fly's share cleared (54.3% against a 25–55% range), and levels completed (0 and 0 met "few, fixed ≥ unfixed", though some completions were expected).
+- Fix 1, step 3 (`fix1_design.md`, 7 predictions): **7 of 7 hits** (D57). Two were close: the fixed fly's share cleared (54.3%, near the top of its 25–55% range, and below the ideal fly's 58.1% but not by a margin that means anything), and levels completed (a hit by its wording, 0 and 0; its reasoning expected a few completions with the fix, and there were none, because the runs it freed died next at the double spike).
 - Fix 2 (`fix2_design.md`, 6 predictions): **5 hits, 1 miss** (prediction 5: no threshold beats 39° on the current encoding), scored on the current encoding by D56's decision; with the (ii) reading, 5 would be a hit and 6 a miss.
 
 ## D2. Discussion
