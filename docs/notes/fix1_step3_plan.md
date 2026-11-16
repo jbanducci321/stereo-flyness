@@ -34,7 +34,8 @@ uv run python scripts/play_level.py $LEVELS --iteration2 --network whole_brain -
 **Reported beside it:**
 - per drop, all fix-case drops reached, by k (ground cells before the pits) and pit width: cleared share per arm;
 - control drops: cleared share per arm (no harm expected);
-- **no-harm at plain edges:** jumps taken while on a plain step-down, per arm (fix 1's bar: no more with the fix);
+- **each level's feature with its k** (Shannyn, 2026-11-15): levels whose feature has k = 2 are expected to tie, which helps read the result; they stay in, since dropping them would shape the measure from D56;
+- **no harm at plain step-downs:** jumps while on top of one (any jump on top, not only at the edge), per arm (fix 1's bar: no more with the fix);
 - progress (median per level), completions, deaths by obstacle type, stuck runs (counted, not re-run).
 
 **Read only after all 300 runs have finished**, from one report written by a script fixed before the runs: `scripts/fix1_step3_report.py` (in this PR; the measures in `experiments/fix1_step3.py`, tested). It checks every run first (all 300 present, right settings, one clean commit, exact replay) and reports nothing if any check fails. It was exercised end to end on 300 stand-in runs, not fly runs.
