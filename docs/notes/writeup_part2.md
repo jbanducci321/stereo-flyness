@@ -122,6 +122,14 @@ Hit or miss each, by the rules in the notes that hold them, no partial credit.
 4. **What still needs a new mechanism:** landing onto things (slabs), aimed jumps (triple spikes, close pairs), graded descent (the ship).
 5. **What we'd do next:** **[Shannyn / Jacob]**, including option B for gaps (showing the edge) and the long-mode take-off.
 
+   **[Jacob's draft for item 5, the engineering side; Shannyn to edit and add the biology]** Each item is something iteration 2 showed needs a new mechanism or a new readout, not another interface tweak:
+   - **Gaps the fly can't see coming (k = 2), and gaps in general: option B.** Fix 1 shows pits that start at the platform's edge, but not pits two cells out, which reach threshold only once the cube is falling (0 of 29, D57). Real flies judge gaps by parallax, through the central complex, not by looming. A gap pathway would need its own input encoding and output rule.
+   - **Aimed jumps: triple spikes and close pairs.** No threshold a real fly shows clears them in one jump (D56), and the real fly clears the double spike at the rate its timing spread predicts (48%, D57). Showing a spike group from its far end (fix 2 (e)) would lift the double spike to ~96% on geometry alone, but it was declined because it means our code aims the jump (D58). A real answer needs a mechanism that plans a trajectory, which a one-shot escape reflex doesn't have.
+   - **The long-mode take-off.** A slower take-off with the wings raised first, which can happen without the Giant Fiber, and which slower looms favour (von Reyn et al. 2014). Using it needs a readout from descending neurons that aren't yet mapped for this behaviour, and a new output rule.
+   - **Graded descent in the ship.** DNp22 can't fire fast enough to bring the ship down to lower openings (D53). No run reached a ship section in iteration 2, so fix 3 stopped (D59). A ship fix needs a new output rule, tested on ship levels with its own condition fixed before it runs.
+   - **Landing onto things (slabs).** Objects the cube lands onto stay invisible (agreed 2026-10-31). Landing is a different behaviour from escape and would need its own input.
+   - **Engineering, for any of these:** whole-brain runs take ~11 minutes per full level, so 300 runs take a night. The subcircuit plays cube levels identically (D52) and is several times faster. It could carry larger N for cube-only work once each new input or readout is checked on it. Every fix kept the same discipline: a design note, predictions, a gate checked without a brain, then fly runs. That's what let us tell our encoding's limits from the fly's.
+
 ## L2. Limitations (in addition to Part 1's)
 
 **[Shannyn]** final wording; nothing dropped:
