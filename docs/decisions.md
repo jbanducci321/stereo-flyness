@@ -1128,6 +1128,25 @@ Fix 1, step 4 (`docs/notes/fix1_heldout_plan.md`):
   - Beside it, not used to judge: the fresh unfixed runs match Part 1's Step 4 intact runs **tick for tick on 60 of 60**.
 - **Verdict:** the test passed, the check passed, and fix 1's own condition was met (0 and 0 jumps). **Fix 1 counts.** No revision (D55 rule d), and the iteration-2 held-out suite is now spent. The foresight is still our code's (D55's framing); the fly supplies the timing.
 - **D56's condition for fix 2 (b) is now met:** "(b) may be raised again only if fix 1 passes its held-out bar". This entry records only that. **Nothing is decided on (b) here**; whether to raise it is for both of us, after the Stereo Madness runs.
+- **Interpretation, from replays watched after the opening** (labelled as such, not results; videos local in `results/replays/iteration2/`):
+  - **The one k = 2 clear** (`cube-easy-2000004`, seed 0, which also completed the level):
+    - the fly landed on the raised platform only ~50 units before its edge;
+    - with the pits shown from landing level, its Giant Fiber fired once at **θ = 29.4°**, on the last tick the cube was on the platform, and the jump cleared all three pits;
+    - a 39° fly reaches its threshold a few units past the edge, as on every other k = 2 drop.
+
+    So k = 2 is a borderline case of the geometry, not a wall: fix 1 made the clear possible, and an early spike from the fly's spread (37.1 ± 7.3°) made it happen.
+  - **A typical k = 0 clear** (`cube-hard-2000006`, seed 0): the arms are identical until fix 1 shows the pits from the platform.
+    - The fixed fly fires at θ = 39.2°, jumps and clears the pits.
+    - The unfixed fly sees 3°, walks off and dies in the pit.
+  - **The one better level in the no-harm check** (`cube-hard-1000002`, seed 1) is not chance drift. It's a slab bridge over pits:
+    - unfixed, the fly walks off the end of a slab into the pits;
+    - fixed, the pits ahead are shown from landing level (53°) and the fly jumps to the next slab.
+
+    This is the case fix 1's note predicted (once on a slab, (ii) warns about the slab's far end). Getting **onto** a slab is still the separate landing limit.
+- **The replay pipeline was rehearsed** on the k = 2 run for the Stereo Madness showcase:
+  - the viewer reads iteration-2 runs;
+  - fix 1's frames carry "θ shown from landing level, our construction", with our input shown apart from the fly's activity (hard rule 10);
+  - a 31 s run renders in ~80 s.
 
 **Shannyn's held-out predictions** (`docs/notes/fix1_design.md`), scored by the readings agreed in #88: **7 of 7 scored hits, plus H6, a check that held.**
 1. Prediction 7: fix 1 passes the bar: **Fix 1 counts.** Hit.
