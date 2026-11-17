@@ -1,0 +1,18 @@
+# Iteration 2: Stereo Madness on new seeds (P8; docs/notes/sm_newseeds_plan.md, logged as D60).
+#
+# Shows only how far the fly gets with iteration 2's interface; judges nothing (D55). Agreeing the
+# plan agreed these runs and no others. Run with:
+#     uv run python scripts/stereo_madness_runs.py --config configs/iteration2/stereo_madness.toml
+# D54's own configs/stereo_madness.toml stays untouched. Never change anything here after a run.
+
+decision = "D60"              # the logged plan (2026-11-16)
+network = "whole_brain"       # as D54
+seeds = [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199]   # N = 100, seeds 100-199 (D55: new seeds from 100; Part 1 used 0-99)
+ship_design = "B"             # D53, as D54
+ship_rate_hz = 150.0          # D53: R_ship, untuned
+iteration2 = true             # written under results/iteration2/stereo_madness/
+fix1 = "ii"                   # fix 1 (ii), the landing-level view, as in step 3 and the held-out opening
+
+[variants.fix1_ii]            # the only arm (Shannyn, 2026-11-16)
+rate_hz = 150.0               # D50: 150 Hz is the fly of record
+signs = "original"
