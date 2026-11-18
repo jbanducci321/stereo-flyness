@@ -7,11 +7,13 @@ Pure functions; `scripts/sm_newseeds_report.py` loads and checks the runs. Like
 - `got_past`: whether a run is alive with its whole body past an edge (or completed the level).
 - `milestones`: how many runs reach each of P8's milestones.
 - `prediction8`: the measures for Shannyn's fix 1 prediction 8, by D60's rule.
+- `seed_refused`: why an iteration-2 Stereo Madness seed can't run (Part 1 used seeds 0-99), or None.
 """
 
 from stereo_flyness.game.physics import HALF_PLAYER
 
 HAZARDS = ("pit", "spike")
+FIRST_SEED = 100  # D55: iteration 2's Stereo Madness seeds start here; Part 1 used 0-99 (D54)
 
 
 def strip_at(level, x: float, gap: float = 30.0) -> tuple[float, float] | None:
@@ -59,3 +61,12 @@ def prediction8(median: float, any_past: bool, centre: float = 0.092, band: floa
     unchanged = centre - band - 1e-12 <= median <= centre + band + 1e-12
     return {"median unchanged": unchanged, "a run past Part 1's furthest point": any_past,
             "hit": unchanged and any_past}
+
+
+def seed_refused(seed: int) -> str | None:
+    """Iteration 2 plays Stereo Madness only on new seeds (D55), so Part 1's seeds 0-99 can't be
+    reused by accident (Shannyn, #70 and #87)."""
+    if seed < FIRST_SEED:
+        return (f"iteration 2 plays Stereo Madness on new seeds only, from {FIRST_SEED} (D55); "
+                f"seeds 0-{FIRST_SEED - 1} are Part 1's (D54). Got --seed {seed}.")
+    return None

@@ -43,3 +43,12 @@ def test_prediction8_needs_the_band_and_a_run_past():
     assert N.prediction8(0.082, True)["hit"] and N.prediction8(0.102, True)["hit"]  # inclusive
     assert not N.prediction8(0.1021, True)["hit"]
     assert not N.prediction8(0.092, False)["hit"]
+
+
+def test_seed_refused_only_part1_seeds():
+    from stereo_flyness.experiments.sm_newseeds import FIRST_SEED, seed_refused
+    assert FIRST_SEED == 100
+    for seed in (0, 9, 10, 99):
+        assert "seeds 0-99 are Part 1's" in seed_refused(seed)
+    for seed in (100, 150, 199, 250):
+        assert seed_refused(seed) is None

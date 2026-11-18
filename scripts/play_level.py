@@ -23,7 +23,8 @@ instead (fix 1's no-harm check, docs/notes/fix1_heldout_plan.md), written under
 results/iteration2/closed_loop/<network>/iteration1_<suite>/, never into Part 1's results; their
 held-out suite also needs `--iteration2-final`. `--iteration2 stereo_madness --stereo-madness-final`
 plays Stereo Madness for iteration 2 (docs/notes/sm_newseeds_plan.md), written under
-results/iteration2/stereo_madness/, never into Part 1's results/stereo_madness/.
+results/iteration2/stereo_madness/, never into Part 1's results/stereo_madness/, and only on
+new seeds (100 onwards, D55): Part 1's seeds 0-99 are refused.
 
 If joblib's worker pool breaks mid-batch (a Windows error, `experiments/batches.py`), the runs that
 hadn't finished are played again in a new pool, up to 3 tries. After a batch is killed outright (e.g.
@@ -58,6 +59,7 @@ from stereo_flyness.brain.controls import file_sha256
 from stereo_flyness.experiments.batches import play_with_retries, resumable
 from stereo_flyness.experiments.cascades import load_stuck_state
 from stereo_flyness.experiments.pathway_tests import loom_patches
+from stereo_flyness.experiments.sm_newseeds import seed_refused
 from stereo_flyness.game.engine import Game
 from stereo_flyness.game.level import Level
 from stereo_flyness.game.suites import load_level
@@ -131,6 +133,8 @@ def refuse(args, levels: dict[str, Level]) -> str | None:
     if getattr(args, "fix1", None) is not None and SM_NAME in levels and not getattr(args, "iteration2", False):
         return ("fix 1 is iteration 2: play Stereo Madness with --iteration2, so it's written under "
                 "results/iteration2/stereo_madness/, not into Part 1's results.")
+    if SM_NAME in levels and getattr(args, "iteration2", False) and (why := seed_refused(args.seed)):
+        return why
     if SM_NAME in levels:
         if not args.stereo_madness_final:
             return ("Stereo Madness is the held-out final test (D7, hard rule 5). It only runs with "
