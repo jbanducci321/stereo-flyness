@@ -1134,7 +1134,7 @@ Fix 1, step 4 (`docs/notes/fix1_heldout_plan.md`):
     - with the pits shown from landing level, its Giant Fiber fired once at **θ = 29.4°**, on the last tick the cube was on the platform, and the jump cleared all three pits;
     - a 39° fly reaches its threshold a few units past the edge, as on every other k = 2 drop.
 
-    So k = 2 is a borderline case of the geometry, not a wall: fix 1 made the clear possible, and an early spike from the fly's spread (37.1 ± 7.3°) made it happen.
+    So, on this one run, a k = 2 drop is clearable when the fly lands late on the platform and fires early: fix 1 made the clear possible, and an early spike from the fly's spread (37.1 ± 7.3°) made it happen.
   - **A typical k = 0 clear** (`cube-hard-2000006`, seed 0): the arms are identical until fix 1 shows the pits from the platform.
     - The fixed fly fires at θ = 39.2°, jumps and clears the pits.
     - The unfixed fly sees 3°, walks off and dies in the pit.
@@ -1153,7 +1153,7 @@ Fix 1, step 4 (`docs/notes/fix1_heldout_plan.md`):
 2. Fixed better on ≥ 8 levels, worse on ≤ 1: 10 and 0. Hit.
 3. Fix-case drops cleared, unfixed ≤ 5%, fixed 40–65%: 0% and 52.4%. Hit.
 4. k = 2 with the fix ≤ 10%: 4% (1 of 25). Hit.
-5. The no-harm check passes both parts: yes. Hit.
+5. The no-harm check passes both parts: yes. Hit. *The reason was wrong:* she expected fix 1 to rarely change the input on these levels, but it changed frames on 16 of 20. The check passed because those changes didn't alter which obstacles the fly passed.
 6. Iteration-1 levels tied on obstacles passed ≥ 15 of 20: 19. Hit. *The reason was wrong:* she expected fix 1 to change no frame on most of these levels, but it changed frames on 16 of 20, and only 4 played identically on every seed. The levels tied because the changes didn't alter which obstacles the fly passed.
 7. Levels fix 1 never changed play identically: held on 6 of 6 and 4 of 4. Recorded as a check that held, outside the tally, since the report can't be written otherwise.
 8. No more plain step-down jumps with the fix: 0 and 0. Hit.

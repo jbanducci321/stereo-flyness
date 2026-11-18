@@ -150,6 +150,7 @@ The per-obstacle sweep (`scripts/ideal_fly.py --by-obstacle`, 50 cube training l
 - **Fix-case drops cleared, unfixed ≤ 5%, fixed 40–65%:** 0 of 62 (0%) and 44 of 84 (52.4%). Hit.
 - **k = 2 with the fix ≤ 10%:** 1 of 25 (4%). Hit.
 - **No-harm check passes both parts:** yes, 1 better, 0 worse, 19 tied. Hit.
+  - *Dated note: the reason was wrong.* The prediction expected fix 1 to rarely change the input on these levels, but it changed frames on 16 of the 20. The check passed because those changes didn't alter which obstacles the fly passed.
 - **Iteration-1 levels tied on obstacles passed, ≥ 15 of 20:** 19. Hit.
   - *Dated note: the reason was wrong.* Fix 1 changed frames on 16 of the 20 levels, not "rarely", and only 4 played identically on every seed. They tied because those changes didn't alter which obstacles the fly passed.
 - **Unchanged levels play identically:** 6 of 6 and 4 of 4. Recorded as a check that held, outside the tally: the report can't be written otherwise.
