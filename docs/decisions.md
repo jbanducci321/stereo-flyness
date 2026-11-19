@@ -1160,6 +1160,27 @@ Fix 1, step 4 (`docs/notes/fix1_heldout_plan.md`):
 
 Prediction 8 (Stereo Madness) is scored when the new-seed runs are opened (D60).
 
+**D62. Iteration 2: Stereo Madness on new seeds with fix 1; prediction 8 a hit** (2026-11-18)
+The runs D60 fixed (`docs/notes/sm_newseeds_plan.md`): the fly of record with fix 1 (ii), ship B at 150 Hz, whole brain, seeds 100–199, 100 runs from `main` at `55b4cb7`, clean, blind. The report (`scripts/sm_newseeds_report.py`, fixed before the runs) passed every check (all 100 present, right settings, one clean commit, exact replays, no stuck runs), and Part 1's context runs passed theirs. It was checksummed before opening (`results/iteration2/stereo_madness/report_sha256.txt`, verified at opening) and opened in the agreed order (`docs/notes/sm_newseeds_opening.md`, #91). Exploratory (D55). **It shows only how far the fly gets; it judges nothing:** fix 1 was judged by D61 alone, and Part 1's runs are context (different seeds, no fix 1).
+
+- **The headline:** completed **0 of 100**; median progress **9.2%** (quartiles 9.2–11.6%, range 2.0–15.0%). *Context: Part 1's record runs, seeds 0–99 (D54): 0 of 100; median 9.2% (quartiles 9.2–10.9%, range 2.0–10.9%).*
+- **Where runs ended** (fix 1 / Part 1):
+  - the double spike, x 2382–2418: **50 / 60**;
+  - the pits after the raised platform, x 2830.5–2899.5: **0 / 35**;
+  - the spike at x 3072–3078, past the pits: **37 / 0**;
+  - earlier spike strips (x 522–528, 1002–1008, 1452–1488): 12 / 5;
+  - the long pit strip, x 3760.5–4489.5: 1 / 0.
+- **Milestones:** past Part 1's furthest point (alive past x 2899.5) **38 of 100** (Part 1: 0); the first ship portal, the first ship section and a complete run: 0 of 100 each. Fix 3's condition (D59) is still unmet.
+- **Frames fix 1 changed:** 88 of 100 runs; median 51 frames per run (range 0–335). Where it acted, not a measure of success.
+- **Showcase (D54's rule):** seed 109, 9.2%, closest to the median. The furthest, seed 188 at 15.0%, is rendered as well, captioned "the furthest of 100". Both stay local (D9).
+- **Reading:** fix 1 removes the pit wall on Stereo Madness, as on the held-out levels. The median doesn't move because the double spike still ends half the runs (D56, D58). The runs fix 1 frees die next, mostly at the spike at x 3072.
+
+**Shannyn's fix 1 prediction 8** ("Median unchanged at ~9.2%; the furthest run passes 10.9%"), by D60's rule: the median, 9.2%, is in 8.2–10.2% (holds), and a run is alive past x 2899.5 (38 of 100; holds). **Hit.** Her reasoning held too: the double spike kept the median, and only runs past it reached the pits. **All 8 of her fix 1 predictions are hits** (D56, D61, this entry).
+
+**Interpretation, after the opening** (labelled as such, not results; from the run logs and the level, no new runs):
+- **The 12 runs fix 1 never changed are exactly the 12 that died before x 1500,** before the first place fix 1 acts. So the 8 deaths at x 1452–1488 (against 1 in Part 1) came before fix 1 could act: seed variation, not the fix.
+- **The spike at x 3072 is an encoding limit of D44's kind (b), not fix 1.** It sits on the raised block row the cube lands on after the pits. Our encoding shows it together with the block it sits on, as one 0–60 column, though the cube stands level with the block's top. So it looms early: ~28° at a gap of ~120, where a lone spike would be ~14° (the logged θ matches the 0–60 column to within 0.2°). All 37 runs pressed 4–49 units after landing, at θ 27–40° (median 32°, the fly's usual spread) and gaps of 80–125, and came down on the spike. Even the latest, at 39.8° (gap 80), died, which suggests a 39° fly would too. Fix 1 changed no frame between the landing and the spike in any of them. An ideal-fly check on Stereo Madness would settle it, but that's an extra run there, which needs both of us to agree first (D55).
+
 ## Open
 
 Still open:
@@ -1175,7 +1196,7 @@ Still open:
 - Step 5 (ship): Shannyn's draft is in (`docs/notes/ship_proposals.md`). Agreed with it on 2026-11-10, to log with the design: DNp22 as the readout (any spike releases the next tick, otherwise hold), R_ship the only ship dial (baseline 150 Hz), the whole brain, both eyes with the left–right asymmetry stated. Its first check failed: neither ideal ship completed any training ship level (`docs/notes/ship_ideal.md`), so the encoding is being rethought before any brain run. Also agreed 2026-11-05 (to log at the start of Step 5): ship mode stays in whatever happens in Stereo Madness; whether to tune it is decided after its baseline.
 - Brain panel (R3): version 1 of Shannyn's design is built; her five questions are answered in `docs/notes/brain_panel_design.md`, for her review.
 - Step 6 (Stereo Madness): **done** (D54, result 2026-11-14): the fly of record completes 0 of 10, median 9.2%; every run ends in the first cube section. Stereo Madness is now spent as a held-out test.
-- **Iteration 2** (exploratory, D55): started after the `v1.0-research` tag. Suites frozen. **Fix 1's gate passed** (D56) and **it works for the real fly on training levels, with no revision** (D57); **it counts by D55's bar on the held-out suite** (D61: 10 better, 0 worse, p = 0.00195; no harm on iteration 1's levels). **Fix 2: a limit** (D56; (e) declined, D58); D56's condition for raising (b) is now met, undecided (D61). **Fix 3 stops** (D59): no run reached a ship section. Next: Stereo Madness on new seeds (D60), then fix 1's prediction 8 and the write-up.
+- **Iteration 2** (exploratory, D55): started after the `v1.0-research` tag. Suites frozen. **Fix 1's gate passed** (D56) and **it works for the real fly on training levels, with no revision** (D57); **it counts by D55's bar on the held-out suite** (D61: 10 better, 0 worse, p = 0.00195; no harm on iteration 1's levels). **Fix 2: a limit** (D56; (e) declined, D58); D56's condition for raising (b) is now met, undecided (D61). **Fix 3 stops** (D59): no run reached a ship section. **Stereo Madness on new seeds** (D62): median unchanged at 9.2%, 38 of 100 runs past Part 1's furthest point, none to the ship; prediction 8 a hit. Next: whether to raise fix 2 (b) (`docs/notes/fix2b_cost.md`), then the write-up.
 - **Stereo Madness run N times, not once (changes D7; agreed in principle 2026-11-02, written up in D54).** A frozen fly with Poisson input is a distribution, not a single outcome, so one run can't tell luck from typical. Conditions:
   - N and the seeds are fixed before any Stereo Madness run, and nothing changes between or after the runs (D7 still holds: no tuning on it);
   - the headline is the full count and median progress (e.g. "3 of 10, median X%"), never the best run;

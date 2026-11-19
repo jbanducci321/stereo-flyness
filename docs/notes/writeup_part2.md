@@ -125,14 +125,33 @@ On iteration 1's levels, fix 1 changed the input on 16 of 20 levels, and the fly
 
 *Only how far the fly gets; never used to judge a fix. Seeds from 100 onwards, N fixed before each set and agreed by both of us (D55).*
 
-**[before running: N, seeds, settings]** **[after the runs]** completed __ of N; median progress __%; where runs ended, by place. **Milestones,** each reported as reached or not: past 10.9% (Part 1's furthest); the first ship portal (~30%); the first ship section cleared; a complete run.
+**Setup (D60, fixed before any run):** the fly of record with fix 1 (ii), ship B at 150 Hz, whole brain; N = 100, seeds 100–199; 100 runs from one clean commit, blind. The report was fixed before the runs, passed every check, and was checksummed before it was opened together (D62).
 
-Read against Shannyn's prediction (fix 1's note): fix 1 alone leaves the median at ~9.2%, because 7 of 10 record runs die at the double spike before the pits.
+**With fix 1, the median run on Stereo Madness is unchanged at 9.2%, because the double spike still ends half the runs. No run dies in the pits any more, and 38 of 100 get further than any run in Part 1.** None reaches the ship.
+
+| | Fix 1 (ii), seeds 100–199 | *Part 1, seeds 0–99 (context, D54)* |
+|---|---|---|
+| Completed | 0 of 100 | *0 of 100* |
+| Median progress (quartiles; range) | **9.2%** (9.2–11.6%; 2.0–15.0%) | *9.2% (9.2–10.9%; 2.0–10.9%)* |
+| Died at the double spike (x 2382–2418) | 50 | *60* |
+| Died in the pits after the raised platform (x 2830.5–2899.5) | **0** | *35* |
+| Died at the spike at x 3072–3078 | 37 | *0* |
+| Died elsewhere | 13 | *5* |
+| Past Part 1's furthest point (alive past x 2899.5) | **38** | *0* |
+| Reached the first ship portal (~30%) / cleared the first ship section | 0 / 0 | *0 / 0* |
+
+Part 1's runs are context, not a comparison: different seeds and no fix 1. Nothing here is tested for significance, and it judges nothing; fix 1 was judged on the held-out suite (P5).
+
+**Reading:** fix 1 removes the pit wall on Stereo Madness as it did on the held-out levels, and moves the death forward. The median holds because the double spike comes first (P6). Fix 1 changed frames in 88 of 100 runs; the other 12 died before the first place it acts.
+
+**Interpretation (D62; from the run logs, not a result):** the new wall, the spike at x 3072, is an encoding limit of the kind Part 1 already found (D44 (b)), not fix 1. The spike sits on the raised row the cube lands on, and our encoding shows it with its block as one 60-unit column, so it looms early and the fly jumps too soon (θ 27–40°, at gaps of 80–125). Checking it with the ideal fly would be an extra Stereo Madness run, which needs both of us to agree.
+
+**Videos (local only, D9):** the run closest to the median (seed 109, 9.2%) and, captioned "the furthest of 100", seed 188 (15.0%).
 
 ## P9. Predictions, scored
 
 Hit or miss each, by the rules in the notes that hold them, no partial credit.
-- Fix 1 (`fix1_design.md`, 8 predictions): after step 2, **6 of 6 scored are hits** (D56); 7 (held-out: fix 1 passes the bar) **hit** (D61); 8 (Stereo Madness) **[later]**.
+- Fix 1 (`fix1_design.md`, 8 predictions): after step 2, **6 of 6 scored are hits** (D56); 7 (held-out: fix 1 passes the bar) **hit** (D61); 8 (Stereo Madness: median unchanged at ~9.2%, the furthest run past 10.9%) **hit** (D62: 9.2%, and 38 runs past Part 1's furthest point). **8 of 8.**
 - Fix 1, held-out (`fix1_design.md`, 7 more predictions): **6 of 6 scored are hits, plus one check that held** (D61; with prediction 7, 7 of 7), scored by the readings agreed before opening (#88). One was a hit for a reason that turned out wrong: the iteration-1 levels tied (19 of 20, against ≥ 15), but not because fix 1 left them alone, as she reasoned; it changed frames on 16 of them without changing which obstacles the fly passed.
 - Fix 1, step 3 (`fix1_design.md`, 7 predictions): **7 of 7 hits** (D57). Two were close: the fixed fly's share cleared (54.3%, near the top of its 25–55% range, and below the ideal fly's 58.1% but not by a margin that means anything), and levels completed (a hit by its wording, 0 and 0; its reasoning expected a few completions with the fix, and there were none, because the runs it freed died next at the double spike).
 - Fix 2 (`fix2_design.md`, 6 predictions): **5 hits, 1 miss** (prediction 5: no threshold beats 39° on the current encoding), scored on the current encoding by D56's decision; with the (ii) reading, 5 would be a hit and 6 a miss.

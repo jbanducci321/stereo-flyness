@@ -113,6 +113,8 @@ The per-obstacle sweep (`scripts/ideal_fly.py --by-obstacle`, 50 cube training l
 | Real fly, iteration-2 held-out: does fix 1 pass the bar? | **Yes** | Every level has a drop, and the ideal fly should clear most fix cases; the risk is runs dying earlier at other features, which makes ties | Medium-low |
 | Real fly, Stereo Madness: furthest point reached (median of N) | **Median unchanged at ~9.2%**; the furthest run passes 10.9% | 7 of 10 record runs die at the double spike, before the pits, and fix 1 doesn't change the double spike. Only runs that get past it reach the pits | High for the median, medium for the furthest run |
 
+**Prediction 8 scored 2026-11-18 (D62), opened together by D60's rule: hit.** The median, 9.2%, is in 8.2–10.2%, and 38 of 100 runs got past x 2899.5, Part 1's furthest point. The reason held too: 50 runs died at the double spike, none in the pits. **All 8 predictions in this table are hits.**
+
 **Dated corrections (2026-11-15, after Jacob's geometry check, before anything ran; no prediction changed):**
 - **Prediction 1:** the reason overstated how far a platform jump goes. Taken at the 39° point, it clears at most 3 pit cells, so 4–5-cell strips can't be cleared by a jump at the 39° point (only by a later jump right at the edge), and the share has a ceiling below 100%. The prediction (≥ 50% of all fix-case drops) is kept and scored as written; the gate itself now counts only strips of ≤ 3 cells (above).
 - **Prediction 3 (control drops):** the reason was wrong. The pits reach 39° while the walk-off cube is still in the air (its back edge lands ~45 units out, its centre ~60), not after it lands. The prediction ("same") still follows, because in the air (ii) uses the current rule, so both encodings agree.
