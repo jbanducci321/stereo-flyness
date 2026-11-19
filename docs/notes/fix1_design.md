@@ -6,7 +6,7 @@
 
 ## The problem, in one paragraph
 
-The encoding only shows the fly objects that overlap the cube's **current** height ("collision course", `interface/encoding.py`). Standing on a raised platform, the pits past its edge are below the cube, so they never loom: the fly gets no warning, walks off and falls in. In iteration 1, this was the second wall in Stereo Madness (33 of the 90 extra runs). Shannyn's framing (proposal, answer 2): looming already means "what you'll hit if you carry on", and adding gravity makes our collision course match that. **We don't claim flies use looming for gaps** (gap crossing is slow, parallax-based and driven by the central complex; option B, showing the edge, is future work).
+The encoding only shows the fly objects that overlap the cube's **current** height ("collision course", `interface/encoding.py`). Standing on a raised platform, the pits past its edge are below the cube, so they never loom: the fly gets no warning, walks off and falls in. In iteration 1, this was the second wall in Stereo Madness (33 of the 90 extra runs). Shannyn's framing (proposal, answer 2): looming already means "what you'll hit if you carry on", and adding gravity makes our collision course match that. **We don't claim flies use looming for gaps** (walking flies judge a gap by sight, most likely from parallax, and cross it by climbing, Pick & Strauss 2005; option B, showing the edge, is future work).
 
 ## The change, in two parts
 
