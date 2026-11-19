@@ -156,12 +156,30 @@ Hit or miss each, by the rules in the notes that hold them, no partial credit.
 
 ## L2. Limitations (in addition to Part 1's)
 
-**[Shannyn]** final wording; nothing dropped:
-- **(ii) is our construction:** no fly's eye predicts a fall. Reported beside (i), labelled in every replay frame where it's used.
-- **Stereo Madness was seen** before Part 2, so nothing in Part 2 is blind there; only the new held-out suite is.
-- **Landing onto things stays invisible** (agreed 2026-10-31), so getting onto a slab is a separate limit fix 1 doesn't touch.
-- **Iteration-2 "easy" isn't Part 1's "easy".**
+*Shannyn, 2026-11-18, written before the Stereo Madness new-seed runs were opened. Nothing from the earlier draft is dropped.*
+
+**How Part 2 was run**
+- **It's exploratory.** We changed our interface after seeing where the fly failed in Stereo Madness (D55). The new levels were built from the game's physics, not Stereo Madness's spacings, but the problems they test were chosen because Stereo Madness showed them.
+- **Stereo Madness was seen** before Part 2, so nothing in Part 2 is blind there. It shows only how far the fly gets (D60), never whether a fix works.
+- **Fix 1 was judged once.** The iteration-2 held-out suite is now spent (D61), so there's no second independent test of it. Any further fix would need a third suite.
+- **Iteration 1's held-out cube levels have now been run in Part 1 and again for the no-harm check,** which is why that check is a check, not a test (D55).
+- **Three seeds per level.** Each level's result is the median of three runs. That's enough to judge levels against each other, not to say how often one fly passes one particular drop.
+- **The sign tests on training levels are descriptive** (D57). Only the held-out test decides whether a fix counts.
+- **One decision was made after seeing results.** Fix 2's rule didn't say which encoding governs option (b); we chose (a), report it as a limit, after the check (D56) and logged that. Both readings are reported.
+
+**What fix 1 is, and isn't**
+- **(ii) is our construction.** No fly's eye predicts a fall: from on top of a platform the pits peak at 7–14°, far below the ~39° threshold (option (i), true optics, reported beside it). Fix 1's frames are labelled in every replay.
+- **Real flies don't cross gaps this way.** Walking flies judge a gap's width by sight, most likely from the parallax of its far edge, and cross it by climbing, not by an escape jump (Pick & Strauss 2005). So fix 1 shows that the fly's escape reflex can *time* a jump over a gap once our code supplies the warning; it doesn't show how flies handle gaps.
+- **Fix 1 works only when the pits start at or near the platform's edge.** When they start two cells out, the pits reach the threshold only after the cube has walked off, where it can't jump: 1 of 25 such drops cleared on held-out levels, 0 of 29 in training (D57, D61). This is a limit of a jump triggered by a fixed threshold, not something fix 1 can reach.
 - **The fix-case label is our engine's walk-off,** not a measure of how a real fly would fall.
+
+**What the fly still can't do**
+- **Close groups of spikes.** The real fly clears a double spike about half the time (48%), the rate its timing spread predicts, and never a triple spike or a 1-cell pair (D56, D57). A one-shot escape reflex fires at a size threshold and doesn't aim, so this is a property of the reflex in a timing game, not of our interface. We declined to move where a spike group appears to start, since that would be our code aiming the jump (D58).
+- **Landing onto things stays invisible** (agreed 2026-10-31), so getting onto a slab is a separate limit fix 1 doesn't touch.
+- **The ship wasn't revisited.** No run reached a ship section, so fix 3 stopped (D59), and the ship's limit is Part 1's (D53).
+
+**Comparing with Part 1**
+- **Iteration-2 "easy" isn't Part 1's "easy":** the new levels' press windows are as short as 8–21 ms, so tiers aren't compared across the two parts.
 
 ## Videos and figures
 
