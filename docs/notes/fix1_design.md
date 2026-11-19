@@ -145,6 +145,17 @@ The per-obstacle sweep (`scripts/ideal_fly.py --by-obstacle`, 50 cube training l
 | Levels where fix 1 changed no frame, both suites | **Every one plays identically in both arms** | Same input and same seed give the same run; this is a check that the runs are sound | High |
 | Jumps while on top of a plain step-down, both suites | **No more with the fix** | Nothing is on the path past a plain edge (0 and 0 in step 3) | High |
 
+**Scored 2026-11-17 (D61),** opened together, by the readings agreed before opening (`fix1_heldout_opening.md`, #88). **Fix 1 counts,** so **prediction 7 above is a hit.** These seven: **6 of 6 scored are hits, plus one check that held.**
+- **Better on ≥ 8, worse on ≤ 1:** 10 and 0. Hit.
+- **Fix-case drops cleared, unfixed ≤ 5%, fixed 40–65%:** 0 of 62 (0%) and 44 of 84 (52.4%). Hit.
+- **k = 2 with the fix ≤ 10%:** 1 of 25 (4%). Hit.
+- **No-harm check passes both parts:** yes, 1 better, 0 worse, 19 tied. Hit.
+  - *Dated note: the reason was wrong.* The prediction expected fix 1 to rarely change the input on these levels, but it changed frames on 16 of the 20. The check passed because those changes didn't alter which obstacles the fly passed.
+- **Iteration-1 levels tied on obstacles passed, ≥ 15 of 20:** 19. Hit.
+  - *Dated note: the reason was wrong.* Fix 1 changed frames on 16 of the 20 levels, not "rarely", and only 4 played identically on every seed. They tied because those changes didn't alter which obstacles the fly passed.
+- **Unchanged levels play identically:** 6 of 6 and 4 of 4. Recorded as a check that held, outside the tally: the report can't be written otherwise.
+- **Plain step-down jumps no more with the fix:** 0 and 0. Hit.
+
 ## Shannyn's answers (2026-11-15)
 
 1. **(ii) is defensible,** framed like ship B: our code supplies the foresight, the fly supplies the timing. Report (i) alongside, label it in the replay ("θ shown from landing level, our construction"), and word it as our choice, never as what the fly sees.

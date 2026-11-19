@@ -1103,6 +1103,63 @@ Jacob's plan (`docs/notes/sm_newseeds_plan.md`, #83, #86) with Shannyn's answers
 - **The report** (`scripts/sm_newseeds_report.py`, fixed before the runs): checks first (every run present, settings right, one clean commit, exact replay, stuck runs counted). Then completed **k of 100** and the **median progress** (the mean of the 50th and 51st runs; quartiles, range), never the best run as the headline; where runs ended; **milestones**, each with how many runs: past Part 1's furthest point (alive past the pits after the raised platform, which end at x 2899.5, 10.9%), the first ship portal, the first ship section cleared, a complete run; the frames fix 1 changed; Part 1's 100 runs by the same measures, as context; D54's showcase rule (closest to the median, ties to the lowest seed; optionally "the furthest of 100", labelled).
 - **Shannyn's fix 1 prediction 8,** scored at opening: "median unchanged at ~9.2%; the furthest run passes 10.9%". **Unchanged** = within ±1 percentage point (8.2–10.2%); a hit needs that **and** a run past Part 1's furthest point.
 
+**D61. Iteration 2: fix 1 counts by D55's bar** (2026-11-17)
+Fix 1, step 4 (`docs/notes/fix1_heldout_plan.md`):
+- **Runs:** the whole-brain fly of record, unfixed and with fix 1 (ii) as in step 3, seeds 0–2. The suites were the 40 iteration-2 held-out levels (opened once) and iteration 1's 20 held-out cube levels: 360 runs from `main` at `17d552e`, clean, blind.
+- **Report:** `scripts/fix1_heldout_report.py`, fixed before the runs. It passed every check: all 360 present, right settings, one clean commit, exact replays, the arms identical until fix 1 first changed a frame, and no stuck runs.
+- **Opening:** the report was checksummed before opening (`results/iteration2/fix1_heldout_report_sha256.txt`, verified at opening). Opened together by Jacob and Shannyn, in the order and with the scoring agreed beforehand (`docs/notes/fix1_heldout_opening.md`, #88). Exploratory (D55).
+
+- **The test (D55's bar), iteration-2 held-out levels:**
+  - The main measure: of 39 levels with a fix-case drop (1 has none), the fly gets past the feature (2 of 3 seeds) on **0 unfixed and 10 with fix 1 (ii)**: better on 10, worse on 0, tied on 29; **two-sided sign test p = 0.00195. Passed.**
+  - By the feature's k: k = 0, 5 better, 5 tied; k = 1, 5 better, 13 tied; k = 2, 11 tied.
+  - Fix 1 changed the input on 34 of 40 levels. On the other 6 the arms played identically.
+- **Per drop reached (test levels):**
+  - Fix-case drops cleared: unfixed **0 of 62**, with (ii) **44 of 84 (52.4%)**. Training gave 54.3% (D57); the ideal fly 58.1% (D56).
+  - By k, with (ii): k = 0, 20 of 25 (80%); k = 1, 23 of 34 (68%); k = 2, **1 of 25** (4%; training 0 of 29).
+  - By pit width, with (ii): 2 cells 14 of 20, 3 cells 29 of 53, 4 cells 1 of 11.
+  - Controls: 23 of 26 with (ii), 18 of 21 unfixed.
+  - Jumps while on top of a plain step-down: **0 in both** (72 reached with (ii), 38 unfixed).
+  - Runs completed: 4 with (ii), 0 unfixed; levels completed (2 of 3 seeds) 1 and 0; median progress 10.9% → 11.7%.
+  - Deaths at fix-case drops fall from 62 to 40; at the double spike they rise from 14 to 24, as in training.
+- **The no-harm check, iteration 1's held-out cube levels:**
+  - The score is the median obstacle groups passed over 3 seeds: better on 1 (`cube-hard-1000002`, 4 against 3), worse on 0, tied on 19; p = 1. (a) No significant drop: yes. (b) Worse on no more levels than better: yes. **Passed.**
+  - Fix 1 changed frames on 16 of 20 levels without changing the score on 15 of them.
+  - Runs completed: 6 and 6; levels completed: 2 and 2; median progress 18.0% → 18.6%; jumps on top of plain step-downs 0 and 0.
+  - Beside it, not used to judge: the fresh unfixed runs match Part 1's Step 4 intact runs **tick for tick on 60 of 60**.
+- **Verdict:** the test passed, the check passed, and fix 1's own condition was met (0 and 0 jumps). **Fix 1 counts.** No revision (D55 rule d), and the iteration-2 held-out suite is now spent. The foresight is still our code's (D55's framing); the fly supplies the timing.
+- **D56's condition for fix 2 (b) is now met:** "(b) may be raised again only if fix 1 passes its held-out bar". This entry records only that. **Nothing is decided on (b) here**; whether to raise it is for both of us, after the Stereo Madness runs.
+- **Interpretation, from replays watched after the opening** (labelled as such, not results; videos local in `results/replays/iteration2/`):
+  - **The one k = 2 clear** (`cube-easy-2000004`, seed 0, which also completed the level):
+    - the fly landed on the raised platform only ~50 units before its edge;
+    - with the pits shown from landing level, its Giant Fiber fired once at **θ = 29.4°**, on the last tick the cube was on the platform, and the jump cleared all three pits;
+    - a 39° fly reaches its threshold a few units past the edge, as on every other k = 2 drop.
+
+    So, on this one run, a k = 2 drop is clearable when the fly lands late on the platform and fires early: fix 1 made the clear possible, and an early spike from the fly's spread (37.1 ± 7.3°) made it happen.
+  - **A typical k = 0 clear** (`cube-hard-2000006`, seed 0): the arms are identical until fix 1 shows the pits from the platform.
+    - The fixed fly fires at θ = 39.2°, jumps and clears the pits.
+    - The unfixed fly sees 3°, walks off and dies in the pit.
+  - **The one better level in the no-harm check** (`cube-hard-1000002`, seed 1) is not chance drift. It's a slab bridge over pits:
+    - unfixed, the fly walks off the end of a slab into the pits;
+    - fixed, the pits ahead are shown from landing level (53°) and the fly jumps to the next slab.
+
+    This is the case fix 1's note predicted (once on a slab, (ii) warns about the slab's far end). Getting **onto** a slab is still the separate landing limit.
+- **The replay pipeline was rehearsed** on the k = 2 run for the Stereo Madness showcase:
+  - the viewer reads iteration-2 runs;
+  - fix 1's frames carry "θ shown from landing level, our construction", with our input shown apart from the fly's activity (hard rule 10);
+  - a 31 s run renders in ~80 s.
+
+**Shannyn's held-out predictions** (`docs/notes/fix1_design.md`), scored by the readings agreed in #88: **7 of 7 scored hits, plus H6, a check that held.**
+1. Prediction 7: fix 1 passes the bar: **Fix 1 counts.** Hit.
+2. Fixed better on ≥ 8 levels, worse on ≤ 1: 10 and 0. Hit.
+3. Fix-case drops cleared, unfixed ≤ 5%, fixed 40–65%: 0% and 52.4%. Hit.
+4. k = 2 with the fix ≤ 10%: 4% (1 of 25). Hit.
+5. The no-harm check passes both parts: yes. Hit. *The reason was wrong:* she expected fix 1 to rarely change the input on these levels, but it changed frames on 16 of 20. The check passed because those changes didn't alter which obstacles the fly passed.
+6. Iteration-1 levels tied on obstacles passed ≥ 15 of 20: 19. Hit. *The reason was wrong:* she expected fix 1 to change no frame on most of these levels, but it changed frames on 16 of 20, and only 4 played identically on every seed. The levels tied because the changes didn't alter which obstacles the fly passed.
+7. Levels fix 1 never changed play identically: held on 6 of 6 and 4 of 4. Recorded as a check that held, outside the tally, since the report can't be written otherwise.
+8. No more plain step-down jumps with the fix: 0 and 0. Hit.
+
+Prediction 8 (Stereo Madness) is scored when the new-seed runs are opened (D60).
+
 ## Open
 
 Still open:
@@ -1118,7 +1175,7 @@ Still open:
 - Step 5 (ship): Shannyn's draft is in (`docs/notes/ship_proposals.md`). Agreed with it on 2026-11-10, to log with the design: DNp22 as the readout (any spike releases the next tick, otherwise hold), R_ship the only ship dial (baseline 150 Hz), the whole brain, both eyes with the left–right asymmetry stated. Its first check failed: neither ideal ship completed any training ship level (`docs/notes/ship_ideal.md`), so the encoding is being rethought before any brain run. Also agreed 2026-11-05 (to log at the start of Step 5): ship mode stays in whatever happens in Stereo Madness; whether to tune it is decided after its baseline.
 - Brain panel (R3): version 1 of Shannyn's design is built; her five questions are answered in `docs/notes/brain_panel_design.md`, for her review.
 - Step 6 (Stereo Madness): **done** (D54, result 2026-11-14): the fly of record completes 0 of 10, median 9.2%; every run ends in the first cube section. Stereo Madness is now spent as a held-out test.
-- **Iteration 2** (exploratory, D55): started after the `v1.0-research` tag. Suites frozen. **Fix 1's gate passed** (D56) and **it works for the real fly on training levels, with no revision** (D57); it's judged on the held-out suite at the end. **Fix 2: a limit** (D56; (e) declined, D58). **Fix 3 stops** (D59): no run reached a ship section. Next: fix 1's held-out opening (`fix1_heldout_plan.md`), then Stereo Madness on new seeds (D60).
+- **Iteration 2** (exploratory, D55): started after the `v1.0-research` tag. Suites frozen. **Fix 1's gate passed** (D56) and **it works for the real fly on training levels, with no revision** (D57); **it counts by D55's bar on the held-out suite** (D61: 10 better, 0 worse, p = 0.00195; no harm on iteration 1's levels). **Fix 2: a limit** (D56; (e) declined, D58); D56's condition for raising (b) is now met, undecided (D61). **Fix 3 stops** (D59): no run reached a ship section. Next: Stereo Madness on new seeds (D60), then fix 1's prediction 8 and the write-up.
 - **Stereo Madness run N times, not once (changes D7; agreed in principle 2026-11-02, written up in D54).** A frozen fly with Poisson input is a distribution, not a single outcome, so one run can't tell luck from typical. Conditions:
   - N and the seeds are fixed before any Stereo Madness run, and nothing changes between or after the runs (D7 still holds: no tuning on it);
   - the headline is the full count and median progress (e.g. "3 of 10, median X%"), never the best run;
