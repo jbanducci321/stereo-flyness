@@ -112,6 +112,7 @@ On iteration 1's levels, fix 1 changed the input on 16 of 20 levels, and the fly
 - **The decision:**
   - **(a) Report it as a limit** (the default): "**[Shannyn's agreed wording]** Close groups of obstacles need an aimed jump. The Giant Fiber escape fires at a size threshold with a natural spread and doesn't aim, so the fly clears a double spike only when its threshold falls on the late side of its spread, and can't clear triple spikes or close pairs at any threshold measured in real flies. We report this as a limit of a one-shot escape reflex in this game."
   - **(b), only if the best shifted mean beat 37.1° by at least N levels:** a labelled variant, *"a late-threshold fly, inside the range measured in real flies"*, with its own design note, reported second, held to D55's bar. Never the fly of record.
+- **After fix 1 counted (D61), we chose not to raise (b) (D63).** D61 met the condition we set for raising it. As argued before any result (fix 2's note, 2026-11-15), the real fly's ±14° is variation between trials and flies, not a range of equally good means, so any mean other than the measured 39° is chosen for performance: tuning. The no-brain check found a window (7 training levels at a 50° mean, against 0), reported here as it is; whether the real fly would gain as much is untested and left as future work. **(a) stands.**
 
 ## P7. Fix 3: the ship
 
