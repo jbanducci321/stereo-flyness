@@ -9,6 +9,11 @@ A simulated fruit fly brain, built from the real wiring diagram of the *Drosophi
 - **Ship (Step 5):** steering works (6 of 20 held-out levels against 0 for its control), but the ship can't descend fast enough, a limit of our output rule against the game's physics.
 - **Mixed levels and the whole brain (Steps 6–7):** mode switching works with no mismatches, and the subcircuit plays tick for tick like the whole brain.
 
+**Part 2 (exploratory, in progress):** *interface adjusted after seeing Stereo Madness; brain wiring unchanged (D55).* After the `v1.0-research` tag we changed only our interface, one fix at a time, each judged once on fresh held-out levels and never on Stereo Madness.
+- **Fix 1, pits after a raised platform:** our input now shows pits from the level they sit at, so the fly gets a warning before it walks off. That's our construction, not what a fly's eye sees: our code supplies the foresight, the fly the timing. On 40 unseen levels the fly gets past the drop more often (10 levels better, 0 worse, p = 0.002), with no harm on Part 1's levels (D61).
+- **Stereo Madness again, 100 new runs:** no run dies in the pits any more, and 38 of 100 get further than any run in Part 1, but the median is unchanged at 9.2% and none reaches the ship (D62). The double spike still ends half the runs: the escape reflex fires with a natural timing spread and doesn't aim, a limit we report rather than fix (D56, D58).
+- **Still open:** whether to test a labelled later-threshold variant for the double spike, and the discussion. Part 2's write-up is `docs/notes/writeup_part2.md`.
+
 The full results are in `docs/notes/writeup_results.md`. Replays of Stereo Madness stay out of the repository (RobTop's level, D9); any shared video is labelled as a replay of a simulation, with our input shown separately from the fly's spikes.
 
 ## What this is (and isn't)
