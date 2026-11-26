@@ -17,7 +17,7 @@ Part 1 ended at two walls in Stereo Madness's first section (R8): the double spi
 
 - **Fix 1, the pits: (ii) the landing-level view, with (i) true optics reported alongside** (`docs/notes/fix1_design.md`). **[Shannyn's agreed wording]** "From on top of a platform, pits below the edge never loom with true optics (they peak at 7–14°, below the ~39° threshold). We therefore show on-course objects as they would look from the level the object stands at. This is our encoding's prediction, not something the fly's eye computes; the fly's contribution is when it jumps." Our code supplies the foresight; the fly supplies the timing. No claim that flies use looming to cross gaps.
 - **Fix 2, close obstacles** (`docs/notes/fix2_design.md`): first a no-brain check. The default is to report the double spike as a limit of a one-shot escape reflex; a later-threshold fly is allowed only as a labelled variant that passes a margin fixed in advance.
-- **Fix 3, the ship:** only after fixes 1 and 2 (D55). **[after fixes 1 and 2]**
+- **Fix 3, the ship:** only after fixes 1 and 2, and only if they let the cube reach a ship section (D55). None did, so fix 3 stopped (D59, P7).
 
 ## P2. The new levels
 
@@ -36,8 +36,6 @@ Part 1 ended at two walls in Stereo Madness's first section (R8): the double spi
 **The gate:** with (ii), fix-case drops with strips of ≤ 3 cells cleared: **17 of 28, 60.7%** against ≥ 50%. **Passed.**
 
 **Result, in the wording fixed above:** "With the landing-level view, an ideal fly at the real fly's average threshold clears 60.7% of the drops a jump at that moment can clear (17 of 28), against 0% with today's encoding and 0% with true optics. Fix 1 went on to fly runs." It fails every drop whose pits start two cells past the edge (0 of 11): the pits reach 39° only once the cube is already in the air.
-- **If it passed:** "With the landing-level view, an ideal fly at the real fly's average threshold clears __% of the drops a jump at that moment can clear (__ of __), against __% with today's encoding and __% with true optics. Fix 1 went on to fly runs."
-- **If it failed:** "With the landing-level view, an ideal fly at the real fly's average threshold clears only __% of the drops a jump at that moment can clear (gate: 50%). By the rule fixed beforehand, no fly runs were made with fix 1." Then why, from the per-obstacle table.
 
 **Table (D56):**
 
