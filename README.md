@@ -9,10 +9,10 @@ A simulated fruit fly brain, built from the real wiring diagram of the *Drosophi
 - **Ship (Step 5):** steering works (6 of 20 held-out levels against 0 for its control), but the ship can't descend fast enough, a limit of our output rule against the game's physics.
 - **Mixed levels and the whole brain (Steps 6–7):** mode switching works with no mismatches, and the subcircuit plays tick for tick like the whole brain.
 
-**Part 2 (exploratory, in progress):** *interface adjusted after seeing Stereo Madness; brain wiring unchanged (D55).* After the `v1.0-research` tag we changed only our interface, one fix at a time, each judged once on fresh held-out levels and never on Stereo Madness.
-- **Fix 1, pits after a raised platform:** our input now shows pits from the level they sit at, so the fly gets a warning before it walks off. That's our construction, not what a fly's eye sees: our code supplies the foresight, the fly the timing. On 40 unseen levels the fly gets past the drop more often (10 levels better, 0 worse, p = 0.002), with no harm on Part 1's levels (D61).
-- **Stereo Madness again, 100 new runs:** no run dies in the pits any more, and 38 of 100 get further than any run in Part 1, but the median is unchanged at 9.2% and none reaches the ship (D62). The double spike still ends half the runs: the escape reflex fires with a natural timing spread and doesn't aim, a limit we report rather than fix (D56, D58).
-- **Still open:** whether to test a labelled later-threshold variant for the double spike, and the discussion. Part 2's write-up is `docs/notes/writeup_part2.md`.
+**Part 2 (exploratory, in progress):** *interface adjusted after seeing Stereo Madness; brain wiring unchanged (D55).* After the `v1.0-research` tag we changed only our interface, one fix at a time, judged on fresh held-out levels, never on Stereo Madness. Fix 1 counts (D61); the double spike is a reported limit, and the ship wasn't revisited.
+- **Fix 1, pits after a raised platform:** our input now shows pits from the level they sit at, so the fly gets a warning before it walks off when the pits start at or near the edge. That's our construction, not what a fly's eye sees: our code supplies the foresight, the fly the timing. On 40 unseen levels the fly gets past the drop more often (10 levels better, 0 worse, p = 0.002), with no harm on Part 1's levels (D61).
+- **Stereo Madness again, 100 new runs:** no run dies in the pits any more, and 38 of 100 get further than any run in Part 1, but the median is unchanged at 9.2% and none reaches the ship (D62). The double spike still ends half the runs: the escape reflex fires with a natural timing spread and doesn't aim, a limit we report rather than fix (D56, D58). A labelled later-threshold variant was considered and not raised: any mean other than the measured threshold would be chosen for performance (D63).
+- **Still open:** the discussion. Part 2's write-up is `docs/notes/writeup_part2.md`.
 
 The full results are in `docs/notes/writeup_results.md`. Replays of Stereo Madness stay out of the repository (RobTop's level, D9); any shared video is labelled as a replay of a simulation, with our input shown separately from the fly's spikes.
 
@@ -53,7 +53,7 @@ These are ours, not the fly's, and every result should be read with them in mind
 - **Firing rates are unrealistic.** The model's Giant Fiber fires at 100–200 Hz while driven; a real one fires once or twice per approaching object. The jump rule only uses the first spike.
 - **The model sometimes gets stuck.** About 0.2% of the time per simulated second, activity locks into a self-sustaining state centred on the mushroom body and never stops. We treat this as a property of the model, not of the fly; our untested guess is that it comes from the model having no adaptation and no noise. Stuck runs are flagged and counted as they happen, not re-run.
 - **Tuning uses a subcircuit,** about a quarter of the brain (~33k neurons), checked against the whole brain on held-out tests. The whole brain is compared at the end.
-- **The ship pathway is the weaker claim.** We read the ship from DNp22 (DNOVS2), which in the real fly encodes rotation and reaches neck, wing and haltere motor regions (Suver et al. 2016), while our ship moves straight up and down. Its top firing rate, not the fly, limits how fast the ship can descend (D53).
+- **The ship pathway is the weaker claim.** We read the ship from DNp22 (DNOVS2), which in the real fly encodes rotation and reaches neck, wing and haltere motor regions (Suver et al. 2016), while our ship moves straight up and down. Our output rule, not the fly, limits how fast the ship can descend (D53).
 
 ### How we keep it honest
 
