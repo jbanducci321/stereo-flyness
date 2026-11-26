@@ -35,7 +35,7 @@ Part 1 ended at two walls in Stereo Madness's first section (R8): the double spi
 
 **The gate:** with (ii), fix-case drops with strips of ≤ 3 cells cleared: **17 of 28, 60.7%** against ≥ 50%. **Passed.**
 
-**Result, in the wording fixed above:** "With the landing-level view, an ideal fly at the real fly's average threshold clears 60.7% of the drops a jump at that moment can clear (17 of 28), against 0% with today's encoding and 0% with true optics. Fix 1 went on to fly runs." It fails every drop whose pits start two cells past the edge (0 of 11): the pits reach 39° only once the cube is already in the air.
+**Result, in the wording fixed before the result (#71):** "With the landing-level view, an ideal fly at the real fly's average threshold clears 60.7% of the drops a jump at that moment can clear (17 of 28), against 0% with today's encoding and 0% with true optics. Fix 1 went on to fly runs." It fails every drop whose pits start two cells past the edge (0 of 11): the pits reach 39° only once the cube is already in the air.
 
 **Table (D56):**
 
@@ -77,7 +77,7 @@ Part 1 ended at two walls in Stereo Madness's first section (R8): the double spi
 
 **Setup:** 40 iteration-2 held-out levels and iteration 1's 20 held-out cube levels × unfixed / fix 1 (ii) × seeds 0–2, 360 runs from `17d552e`, blind. Read from one report fixed before the runs, checksummed before opening, and scored by rules agreed beforehand (D61).
 
-**Result, in the wording fixed above:** "Fix 1 counts: on levels it was never designed on, the fly gets past the drop more often (10 better, 0 worse, 29 tied; p = 0.00195), and it does no harm on the levels of Part 1."
+**Result, in the wording fixed before the result (#71):** "Fix 1 counts: on levels it was never designed on, the fly gets past the drop more often (10 better, 0 worse, 29 tied; p = 0.00195), and it does no harm on the levels of Part 1."
 
 The fixed fly clears 52.4% of the fix-case drops it reaches (44 of 84), against 0 of 62 unfixed; training gave 54.3%, and the ideal fly 58.1%. As in training:
 - pits at or one cell from the edge are mostly cleared (80%, 68%);
